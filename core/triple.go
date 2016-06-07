@@ -5,42 +5,43 @@ import "errors"
 // Interface which represent a generic node in a RDF Graph
 type Node interface {
 	Equals(n Node) (bool, error)
+    Compare(n Node) (bool, error)
 	String() string
 }
 
-// Type which represent an URI Node in a RDF Graph
+// Type which represent a URI Node in a RDF Graph
 // RDF URI reference : https://www.w3.org/TR/2004/REC-rdf-concepts-20040210/#section-Graph-URIref
 type URI struct {
-	value  string
-	prefix string
+	Value  string
+	Prefix string
 }
 
 // Type which represent a Literal Node in a RDF Graph
 // RDF Literal reference : https://www.w3.org/TR/2004/REC-rdf-concepts-20040210/#section-Graph-Literal
 type Literal struct {
-	value string
+	Value string
 }
 
-// Type which represent an Blank Node in a RDF Graph
+// Type which represent a Blank Node in a RDF Graph
 // RDF Blank Node reference : https://www.w3.org/TR/2004/REC-rdf-concepts-20040210/#section-blank-nodes
 type BlankNode struct {
-	variable string
+	Variable string
 }
 
 // Type which represent a RDF triple
 // RDF Triple reference : https://www.w3.org/TR/2004/REC-rdf-concepts-20040210/#section-triples
 type Triple struct {
-	subject   Node
-	predicate Node
-	object    Node
+	Subject   Node
+	Predicate Node
+	Object    Node
 }
 
-// Expand an URI with it's prefix
+// Expand a URI with it's Value
 func (u URI) expandName() string {
-	if u.prefix != "" {
-		return "<" + u.prefix + ":" + u.value + ">"
+	if u.Prefix != "" {
+		return "<" + u.Prefix + ":" + u.Value + ">"
 	} else {
-		return "<" + u.value + ">"
+		return "<" + u.Value + ">"
 	}
 }
 
@@ -54,29 +55,61 @@ func (u URI) Equals(n Node) (bool, error) {
 	}
 }
 
-// Serialize an URI to string and return it
+// Compare two URIs, assuming that a URI and a Blank Node are equals, like in the context of a SPARQL Query
+// Return True if the two URIs are equal with this criteria, False if not
+func (u URI) Compare(n Node) (bool, error) {
+	equality, err := u.Equals(n)
+    if err != nil {
+        _, ok := n.(BlankNode)
+        if ok {
+            return true, nil
+        } else {
+            return false, errors.New("Error : can only compare a URI with another URI or a Blank Node")
+        }
+    } else {
+        return equality, nil
+    }
+}
+
+// Serialize a URI to string and return it
 func (u URI) String() string {
 	return u.expandName()
 }
 
-// Create an new URI
+// Create a new URI
 func NewURI(prefix, value string) URI {
 	return URI{value, prefix}
 }
 
-// Return True if Two Literals are equals, False if not
+// Return True if Two Literals are strictly equals, False if not
 func (l Literal) Equals(n Node) (bool, error) {
 	other, ok := n.(Literal)
 	if ok {
-		return l.value == other.value, nil
+		return l.Value == other.Value, nil
 	} else {
 		return false, errors.New("Error : mismatch type, can only compare two Literals")
 	}
 }
 
+// Compare a Literal with a Node, assuming that a Literal and a Blank Node are equals, like in the context of a SPARQL Query
+// Return True if the two Literals are equal with this criteria, False if not
+func (l Literal) Compare(n Node) (bool, error) {
+	equality, err := l.Equals(n)
+    if err != nil {
+        _, ok := n.(BlankNode)
+        if ok {
+            return true, nil
+        } else {
+            return false, errors.New("Error : can only compare a Literal with another Literal or a Blank Node")
+        }
+    } else {
+        return equality, nil
+    }
+}
+
 // Serialize a Literal to string and return it
 func (l Literal) String() string {
-	return "\"" + l.value + "\""
+	return "\"" + l.Value + "\""
 }
 
 // Create a new Literal
@@ -84,19 +117,24 @@ func NewLiteral(value string) Literal {
 	return Literal{value}
 }
 
-// Return True if Two Blank Node are equals, False if not
+// Return True if Two Blank Node are strictly equals, False if not
 func (b BlankNode) Equals(n Node) (bool, error) {
 	other, ok := n.(BlankNode)
 	if ok {
-		return b.variable == other.variable, nil
+		return b.Variable == other.Variable, nil
 	} else {
 		return false, errors.New("Error : mismatch type, can only compare two Blank Nodes")
 	}
 }
 
-// Serialize an Blank Node to string and return it
+// Always return true, assuming that a Blank Node is equal to any other node in a SPARQL Query
+func (b BlankNode) Compare(n Node) (bool, error) {
+	return true, nil
+}
+
+// Serialize a Blank Node to string and return it
 func (b BlankNode) String() string {
-	return "?" + b.variable
+	return "?" + b.Variable
 }
 
 // Create a new Literal
@@ -104,21 +142,39 @@ func NewBlankNode(variable string) BlankNode {
 	return BlankNode{variable}
 }
 
-// Return True if two triples are equals, False if not
+// Return True if two triples are strictly equals, False if not
 func (t Triple) Equals(other Triple) (bool, error) {
-	test_subj, err := t.subject.Equals(other.subject)
+	test_subj, err := t.Subject.Equals(other.Subject)
 	if err != nil {
 		return false, err
 	}
-	test_pred, err := t.predicate.Equals(other.predicate)
+	test_pred, err := t.Predicate.Equals(other.Predicate)
 	if err != nil {
 		return false, err
 	}
-	test_obj, err := t.object.Equals(other.object)
+	test_obj, err := t.Object.Equals(other.Object)
 	if err != nil {
 		return false, err
 	}
 	return test_subj && test_pred && test_obj, nil
+}
+
+// Compare two triples, assuming that blank node are equals to any other node types
+// Return True if the two triples are equal with this criteria, False if not
+func (t Triple) Compare(other Triple) (bool, error) {
+    test_subj, err := t.Subject.Compare(other.Subject)
+    if err != nil {
+        return false, err
+    }
+    test_pred, err := t.Predicate.Compare(other.Predicate)
+    if err != nil {
+        return false, err
+    }
+    test_obj, err := t.Object.Compare(other.Object)
+    if err != nil {
+        return false, err
+    }
+    return test_subj && test_pred && test_obj, nil
 }
 
 // Create a new Triple
