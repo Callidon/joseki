@@ -5,7 +5,7 @@ import "errors"
 // Interface which represent a generic node in a RDF Graph
 type Node interface {
 	Equals(n Node) (bool, error)
-    Compare(n Node) (bool, error)
+    Equivalent(n Node) (bool, error)
 	String() string
 }
 
@@ -55,9 +55,9 @@ func (u URI) Equals(n Node) (bool, error) {
 	}
 }
 
-// Compare two URIs, assuming that a URI and a Blank Node are equals, like in the context of a SPARQL Query
-// Return True if the two URIs are equal with this criteria, False if not
-func (u URI) Compare(n Node) (bool, error) {
+// Test if a URI is equivalent to a Node, assuming that a URI and a Blank Node are equals, like in the context of a SPARQL Query
+// Return True if the two URIs are equivalent with this criteria, False if not
+func (u URI) Equivalent(n Node) (bool, error) {
 	equality, err := u.Equals(n)
     if err != nil {
         _, ok := n.(BlankNode)
@@ -91,9 +91,9 @@ func (l Literal) Equals(n Node) (bool, error) {
 	}
 }
 
-// Compare a Literal with a Node, assuming that a Literal and a Blank Node are equals, like in the context of a SPARQL Query
-// Return True if the two Literals are equal with this criteria, False if not
-func (l Literal) Compare(n Node) (bool, error) {
+// Test if a Literal is equivalent to a Node, assuming that a Literal and a Blank Node are equals, like in the context of a SPARQL Query
+// Return True if the two nodes are equivalent with this criteria, False if not
+func (l Literal) Equivalent(n Node) (bool, error) {
 	equality, err := l.Equals(n)
     if err != nil {
         _, ok := n.(BlankNode)
@@ -127,8 +127,8 @@ func (b BlankNode) Equals(n Node) (bool, error) {
 	}
 }
 
-// Always return true, assuming that a Blank Node is equal to any other node in a SPARQL Query
-func (b BlankNode) Compare(n Node) (bool, error) {
+// Always return true, assuming that a Blank Node is equivalent to any other node in a SPARQL Query
+func (b BlankNode) Equivalent(n Node) (bool, error) {
 	return true, nil
 }
 
@@ -159,18 +159,18 @@ func (t Triple) Equals(other Triple) (bool, error) {
 	return test_subj && test_pred && test_obj, nil
 }
 
-// Compare two triples, assuming that blank node are equals to any other node types
-// Return True if the two triples are equal with this criteria, False if not
-func (t Triple) Compare(other Triple) (bool, error) {
-    test_subj, err := t.Subject.Compare(other.Subject)
+// Test if a Triple is equivalent to another triple, assuming that blank node are equals to any other node types
+// Return True if the two triples are equivalent with this criteria, False if not
+func (t Triple) Equivalent(other Triple) (bool, error) {
+    test_subj, err := t.Subject.Equivalent(other.Subject)
     if err != nil {
         return false, err
     }
-    test_pred, err := t.Predicate.Compare(other.Predicate)
+    test_pred, err := t.Predicate.Equivalent(other.Predicate)
     if err != nil {
         return false, err
     }
-    test_obj, err := t.Object.Compare(other.Object)
+    test_obj, err := t.Object.Equivalent(other.Object)
     if err != nil {
         return false, err
     }

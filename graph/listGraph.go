@@ -28,7 +28,7 @@ func (g *ListGraph) Filter(subject, predicate, object core.Node) ([]core.Triple,
 	ref_triple := core.NewTriple(subject, predicate, object)
 	// search for matching triple pattern in graph
 	for _, triple := range g.triples {
-		test, err := ref_triple.Compare(triple)
+		test, err := ref_triple.Equivalent(triple)
 		if err != nil {
 			return nil, err
 		} else if test {

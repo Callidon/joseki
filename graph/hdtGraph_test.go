@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-func TestAddIndexGraph(t *testing.T) {
-	graph := NewIndexGraph()
+func TestAddHDTGraph(t *testing.T) {
+	graph := NewHDTGraph()
 	subj := core.NewURI("dblp", "Thomas")
 	pred := core.NewURI("foaf", "age")
 	obj := core.NewLiteral("22")
@@ -14,8 +14,8 @@ func TestAddIndexGraph(t *testing.T) {
 	graph.Add(triple)
 }
 
-func TestFilterIndexGraph(t *testing.T) {
-	graph := NewIndexGraph()
+func TestFilterHDTGraph(t *testing.T) {
+	graph := NewHDTGraph()
 	subj := core.NewURI("dblp", "Thomas")
 	pred := core.NewURI("foaf", "age")
 	obj := core.NewLiteral("22")
@@ -33,11 +33,10 @@ func TestFilterIndexGraph(t *testing.T) {
 	}
 }
 
-func BenchmarkFilterIndexGraph(b *testing.B) {
-    graph := NewIndexGraph()
+func BenchmarkFilterHDTGraph(b *testing.B) {
+    graph := NewHDTGraph()
 	subj := core.NewURI("dblp", "Thomas")
 	pred := core.NewURI("foaf", "age")
-    for i := 0; i < 1000; 
 	obj := core.NewLiteral("22")
 	triple := core.NewTriple(subj, pred, obj)
 	graph.Add(triple)

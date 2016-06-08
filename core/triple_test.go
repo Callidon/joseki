@@ -26,26 +26,26 @@ func TestURIEquals(t *testing.T) {
 	}
 }
 
-// Test the Compare operator of the URI struct
-func TestURICompare(t *testing.T) {
+// Test the Equivalent operator of the URI struct
+func TestURIEquivalent(t *testing.T) {
     uri := NewURI("dbpl", "foo")
     other_uri := NewURI("foaf", "hasFriend")
     literal := NewLiteral("Toto")
     bnode := NewBlankNode("v")
 
-    if test, err := uri.Compare(uri); (!test) && (err != nil) {
+    if test, err := uri.Equivalent(uri); (!test) && (err != nil) {
         t.Error(" when comparing a URI with itself, the result should be true")
     }
 
-    if test, err := uri.Compare(other_uri); test && (err == nil) {
+    if test, err := uri.Equivalent(other_uri); test && (err == nil) {
 		t.Error(uri, "must be different of", other_uri)
 	}
 
-    if test, err := uri.Compare(bnode); (!test) && (err != nil) {
+    if test, err := uri.Equivalent(bnode); (!test) && (err != nil) {
         t.Error("when comparing a URI to a Blank Node, the result should be true")
     }
 
-    if test, err := uri.Compare(literal); test && (err == nil) {
+    if test, err := uri.Equivalent(literal); test && (err == nil) {
         t.Error("a URI and a Literal cannot be compare")
     }
 }
@@ -74,26 +74,26 @@ func TestLiteralEquals(t *testing.T) {
 	}
 }
 
-// Test the Compare operator of the Literal struct
-func TestLiteralCompare(t *testing.T) {
+// Test the Equivalent operator of the Literal struct
+func TestLiteralEquivalent(t *testing.T) {
     uri := NewURI("dbpl", "foo")
     literal := NewLiteral("Toto")
     other_literal := NewLiteral("20")
     bnode := NewBlankNode("v")
 
-    if test, err := literal.Compare(literal); (!test) && (err != nil) {
+    if test, err := literal.Equivalent(literal); (!test) && (err != nil) {
         t.Error("when comparing a Literal with itself, the result should be true")
     }
 
-    if test, err := literal.Compare(other_literal); test && (err == nil) {
+    if test, err := literal.Equivalent(other_literal); test && (err == nil) {
 		t.Error(literal, "must be different of", other_literal)
 	}
 
-    if test, err := literal.Compare(bnode); (!test) && (err != nil) {
+    if test, err := literal.Equivalent(bnode); (!test) && (err != nil) {
         t.Error("when comparing a Literal to a Blank Node, the result should be true")
     }
 
-    if test, err := literal.Compare(uri); test && (err == nil) {
+    if test, err := literal.Equivalent(uri); test && (err == nil) {
         t.Error("a Literal and a URI cannot be compare")
     }
 }
@@ -122,26 +122,26 @@ func TestBlankNodeEquals(t *testing.T) {
 	}
 }
 
-// Test the Compare operator of the BlankNode struct
-func TestBlankNodeCompare(t *testing.T) {
+// Test the Equivalent operator of the BlankNode struct
+func TestBlankNodeEquivalent(t *testing.T) {
     uri := NewURI("dbpl", "foo")
     literal := NewLiteral("Toto")
     bnode := NewBlankNode("v")
     other_bnode := NewBlankNode("w")
 
-    if test, err := bnode.Compare(bnode); (!test) && (err != nil) {
+    if test, err := bnode.Equivalent(bnode); (!test) && (err != nil) {
         t.Error("when comparing two Blank Node, the result should be true")
     }
 
-    if test, err := bnode.Compare(other_bnode); (!test) && (err != nil) {
+    if test, err := bnode.Equivalent(other_bnode); (!test) && (err != nil) {
 		t.Error("when comparing two Blank Node, the result should be true")
 	}
 
-    if test, err := bnode.Compare(uri); (!test) && (err != nil) {
+    if test, err := bnode.Equivalent(uri); (!test) && (err != nil) {
         t.Error("when comparing a Blank Node with a URI, the result should be true")
     }
 
-    if test, err := bnode.Compare(literal); (!test) && (err != nil) {
+    if test, err := bnode.Equivalent(literal); (!test) && (err != nil) {
         t.Error("when comparing a Blank Node with a Literal, the result should be true")
     }
 }

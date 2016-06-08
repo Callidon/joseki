@@ -5,19 +5,44 @@ import (
 	"os"
 )
 
-type IndexGraph struct {
+type bitmapNode struct {
+    id int
+    sons []*bitmapNode
+}
+
+type bitmapTriple struct {
+    subject_id int
+    predicate_id int
+    object_id int
+}
+
+// Implementation of a RDF Graph based on the HDT-MR model proposed by Giménez-García et al
+// For more details, see http://dataweb.infor.uva.es/projects/hdt-mr/
+type HDTGraph struct {
+    dictionnary bimap
 	triples map[string][]core.Triple
 }
 
-func NewIndexGraph() IndexGraph {
-	return IndexGraph{make(map[string][]core.Triple)}
+// Return a new Bitmap Node without any son
+func newBitmapNode(id int) bitmapNode {
+    return bitmapNode{id, make([]*bitmapNode, 0)}
 }
 
-func (g *IndexGraph) LoadFromFile(file *os.File) {
+// Add a son to a Bitmap Node
+func (n *bitmapNode) addSon(node *bitmapNode) {
+    n.sons = append(n.sons, node)
+}
+
+// Return a new empty HDT Graph
+func NewHDTGraph() HDTGraph {
+	return HDTGraph{newBimap(), make(map[string][]core.Triple)}
+}
+
+func (g *HDTGraph) LoadFromFile(file *os.File) {
 	//TODO
 }
 
-func (g *IndexGraph) Add(triple core.Triple) {
+func (g *HDTGraph) Add(triple core.Triple) {
 	key := triple.Subject.String()
 	_, isIndexed := g.triples[key]
 	if isIndexed {
@@ -28,7 +53,7 @@ func (g *IndexGraph) Add(triple core.Triple) {
 	}
 }
 
-func (g *IndexGraph) Filter(subject, predicate, object core.Node) ([]core.Triple, error) {
+func (g *HDTGraph) Filter(subject, predicate, object core.Node) ([]core.Triple, error) {
 	results := make([]core.Triple, 0)
 	ref_triple := core.NewTriple(subject, predicate, object)
 	_, ok := subject.(core.BlankNode)
@@ -37,7 +62,7 @@ func (g *IndexGraph) Filter(subject, predicate, object core.Node) ([]core.Triple
 		// search for matching triple pattern in graph
 		for _, triples := range g.triples {
 			for _, triple := range triples {
-				test, err := ref_triple.Compare(triple)
+				test, err := ref_triple.Equivalent(triple)
 				if err != nil {
 					return nil, err
 				} else if test {
@@ -50,7 +75,7 @@ func (g *IndexGraph) Filter(subject, predicate, object core.Node) ([]core.Triple
 		triples, isIndexed := g.triples[subject.String()]
 		if isIndexed {
             for _, triple := range triples {
-				test, err := ref_triple.Compare(triple)
+				test, err := ref_triple.Equivalent(triple)
 				if err != nil {
 					return nil, err
 				} else if test {
@@ -62,7 +87,7 @@ func (g *IndexGraph) Filter(subject, predicate, object core.Node) ([]core.Triple
 	return results, nil
 }
 
-func (g *IndexGraph) Serialize(format string) string {
+func (g *HDTGraph) Serialize(format string) string {
 	// TODO
 	return ""
 }
