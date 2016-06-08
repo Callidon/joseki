@@ -10,6 +10,6 @@ import (
 type Graph interface {
 	LoadFromFile(file *os.File)
 	Add(triple core.Triple)
-	Filter(subject, predicate, object core.Node) []core.Triple
+	Filter(subject, predicate, object core.Node) chan core.Triple
 	Serialize(format string) string
 }

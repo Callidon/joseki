@@ -23,19 +23,20 @@ func (g *ListGraph) Add(triple core.Triple) {
 	g.triples = append(g.triples, triple)
 }
 
-func (g *ListGraph) Filter(subject, predicate, object core.Node) ([]core.Triple, error) {
-	results := make([]core.Triple, 0)
+func (g *ListGraph) Filter(subject, predicate, object core.Node) chan core.Triple {
+    results := make(chan core.Triple)
 	ref_triple := core.NewTriple(subject, predicate, object)
 	// search for matching triple pattern in graph
-	for _, triple := range g.triples {
-		test, err := ref_triple.Equivalent(triple)
-		if err != nil {
-			return nil, err
-		} else if test {
-			results = append(results, triple)
-		}
-	}
-	return results, nil
+	go func() {
+        for _, triple := range g.triples {
+    		test, err := ref_triple.Equivalent(triple)
+    		if (err == nil) && test {
+    			results <- triple
+    		}
+    	}
+        close(results)
+    }()
+	return results
 }
 
 func (g *ListGraph) Serialize(format string) string {

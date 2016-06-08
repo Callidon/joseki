@@ -5,86 +5,98 @@ import (
 	"os"
 )
 
+// Node represented in the Bitmap standard, following the HDT-MR model
 type bitmapNode struct {
-    id int
-    sons []*bitmapNode
+	id   int
+	sons map[int]*bitmapNode
 }
 
+// Triple represented in the Bitmap standard, following the HDT-MR model
 type bitmapTriple struct {
-    subject_id int
-    predicate_id int
-    object_id int
+	subject_id   int
+	predicate_id int
+	object_id    int
 }
 
 // Implementation of a RDF Graph based on the HDT-MR model proposed by Giménez-García et al
 // For more details, see http://dataweb.infor.uva.es/projects/hdt-mr/
 type HDTGraph struct {
-    dictionnary bimap
-	triples map[string][]core.Triple
+	dictionnary bimap
+    root    bitmapNode
+	nextId      int
+	triples     map[string][]core.Triple
 }
 
 // Return a new Bitmap Node without any son
 func newBitmapNode(id int) bitmapNode {
-    return bitmapNode{id, make([]*bitmapNode, 0)}
+	return bitmapNode{id, make(map[int]*bitmapNode)}
 }
 
 // Add a son to a Bitmap Node
-func (n *bitmapNode) addSon(node *bitmapNode) {
-    n.sons = append(n.sons, node)
+func (n *bitmapNode) addSon(id int) {
+	n.sons[id] = &bitmapNode{id, make(map[int]*bitmapNode)}
 }
 
 // Return a new empty HDT Graph
 func NewHDTGraph() HDTGraph {
-	return HDTGraph{newBimap(), make(map[string][]core.Triple)}
+	return HDTGraph{newBimap(), newBitmapNode(-1), 0, make(map[string][]core.Triple)}
+}
+
+// Register a new Node in the graph dictionnary, then return its unique ID
+func (g *HDTGraph) registerNode(node core.Node) int {
+	// insert the node in dictionnary only if it's not in
+	key, inDict := g.dictionnary.locate(node)
+	if !inDict {
+		g.dictionnary.push(g.nextId, node)
+		g.nextId += 1
+		return g.nextId - 1
+	} else {
+		return key
+	}
+}
+
+// Recursively update the nodes of the graph with new datas
+func (g *HDTGraph) updateNodes(root *bitmapNode, datas []int) {
+    // if they are data to insert in the graph
+    if len(datas) > 0 {
+        id := datas[0]
+        // if the node's id in already in the root sons, continue the operation with it
+        node, inSons := root.sons[id]
+        if inSons {
+            g.updateNodes(node, datas[1:])
+        } else {
+            // add the new node, then continue the operation with its sons
+            root.addSon(id)
+            g.updateNodes(root.sons[id], datas[1:])
+        }
+    }
+}
+
+// Recursively collect datas from the graph in order to form triple pattern matching criterias
+func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*core.Node, triple []int) {
+    // if a triple pattern can be formed using the datas collected
+    if len(triple) == 3 {
+
+    } else {
+
+    }
 }
 
 func (g *HDTGraph) LoadFromFile(file *os.File) {
 	//TODO
 }
 
+// Add a new Triple pattern to the graph
 func (g *HDTGraph) Add(triple core.Triple) {
-	key := triple.Subject.String()
-	_, isIndexed := g.triples[key]
-	if isIndexed {
-		g.triples[key] = make([]core.Triple, 0)
-		g.triples[key] = append(g.triples[key], triple)
-	} else {
-		g.triples[key] = append(g.triples[key], triple)
-	}
+	// add each node of the triple to the dictionnary & then update the graph
+	subjId, predID, objId := g.registerNode(triple.Subject), g.registerNode(triple.Predicate), g.registerNode(triple.Object)
+    g.updateNodes(&g.root, []int{subjId, predID, objId})
 }
 
-func (g *HDTGraph) Filter(subject, predicate, object core.Node) ([]core.Triple, error) {
-	results := make([]core.Triple, 0)
-	ref_triple := core.NewTriple(subject, predicate, object)
-	_, ok := subject.(core.BlankNode)
-	// search for every subject
-	if ok {
-		// search for matching triple pattern in graph
-		for _, triples := range g.triples {
-			for _, triple := range triples {
-				test, err := ref_triple.Equivalent(triple)
-				if err != nil {
-					return nil, err
-				} else if test {
-					results = append(results, triple)
-				}
-			}
-		}
-	} else {
-		// search with a specific subject
-		triples, isIndexed := g.triples[subject.String()]
-		if isIndexed {
-            for _, triple := range triples {
-				test, err := ref_triple.Equivalent(triple)
-				if err != nil {
-					return nil, err
-				} else if test {
-					results = append(results, triple)
-				}
-			}
-		}
-	}
-	return results, nil
+func (g *HDTGraph) Filter(subject, predicate, object core.Node) chan core.Triple {
+	results := make(chan core.Triple)
+	// TODO
+	return results
 }
 
 func (g *HDTGraph) Serialize(format string) string {
