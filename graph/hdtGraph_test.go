@@ -4,15 +4,16 @@ import (
     "testing"
 	"github.com/Callidon/joseki/core"
     "math/rand"
+    //"fmt"
 )
 
 func TestAddHDTGraph(t *testing.T) {
     var node core.Node
 	graph := NewHDTGraph()
 
-	subj := core.NewURI("dblp", "Thomas")
-    predA := core.NewURI("foaf", "age")
-    predB := core.NewURI("schema", "livesIn")
+	subj := core.NewURI("dblp:Thomas")
+    predA := core.NewURI("foaf:age")
+    predB := core.NewURI("schema:livesIn")
     objA := core.NewLiteral("22")
     objB := core.NewLiteral("Nantes")
 	tripleA := core.NewTriple(subj, predA, objA)
@@ -57,25 +58,54 @@ func TestAddHDTGraph(t *testing.T) {
     }
 }
 
-func TestFilterHDTGraph(t *testing.T) {
+func TestSimpleFilterHDTGraph(t *testing.T) {
 	graph := NewHDTGraph()
+	subj := core.NewURI("dblp:Thomas")
+	predA := core.NewURI("foaf:age")
+    predB := core.NewURI("schema:livesIn")
+	objA := core.NewLiteral("22")
+    objB := core.NewURI("dbpedia:Nantes")
+	tripleA := core.NewTriple(subj, predA, objB)
+    tripleB := core.NewTriple(subj, predB, objA)
+	graph.Add(tripleA)
+    graph.Add(tripleB)
 
-	subj := core.NewURI("dblp", "Thomas")
-	pred := core.NewURI("foaf", "age")
-	obj := core.NewLiteral("22")
-	triple := core.NewTriple(subj, pred, obj)
-	graph.Add(triple)
+    // select one triple
+    /*for result := range graph.Filter(subj, predA, objA) {
+        if test, err := result.Equals(tripleA); test && (err != nil) {
+            t.Error(tripleA, "not in results :", result)
+        }
+    }*/
 
-	/*triples, _ := graph.Filter(subj, pred, obj)
+    // select multiple triples using Blank Nodes
+    cpt := 0
+    for _ = range graph.Filter(subj, core.NewBlankNode("v"), core.NewBlankNode("w")) {
+        cpt += 1
+    }
 
-	if len(triples) != 1 {
-		t.Error("expected length == 1 but got length ==", len(triples))
-	}
-
-	if test, _ := triples[0].Equals(triple); !test {
-		t.Error(triple, "not in results :", triples)
-	}*/
 }
+
+/*func TestComplexFilterHDTGraph(t *testing.T) {
+    graph := NewHDTGraph()
+    nbDatas := 1000
+    cpt := 0
+    subj := core.NewURI("dblp:foo")
+
+    // insert random triples in the graph
+    for i := 0; i < nbDatas; i++ {
+        triple := core.NewTriple(subj, core.NewURI(string(rand.Intn(nbDatas))), core.NewLiteral(string(rand.Intn(nbDatas))))
+        graph.Add(triple)
+    }
+
+    // select all triple of the graph
+    for _ = range graph.Filter(subj, core.NewBlankNode("v"), core.NewBlankNode("w")) {
+        cpt += 1
+    }
+
+    if cpt != nbDatas {
+        t.Error("expected ", nbDatas, "results but got ", cpt, "results")
+    }
+}*/
 
 func BenchmarkAddHDTGraph(b *testing.B) {
     graph := NewHDTGraph()
@@ -84,7 +114,7 @@ func BenchmarkAddHDTGraph(b *testing.B) {
 
     // create triples to be inserted
     for i := 0; i < nbDatas; i++ {
-        triple := core.NewTriple(core.NewURI("", string(rand.Int())), core.NewURI("", string(rand.Int())), core.NewLiteral(string(rand.Int())))
+        triple := core.NewTriple(core.NewURI(string(rand.Int())), core.NewURI(string(rand.Int())), core.NewLiteral(string(rand.Int())))
         datas = append(datas, triple)
     }
 

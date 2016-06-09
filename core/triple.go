@@ -13,7 +13,6 @@ type Node interface {
 // RDF URI reference : https://www.w3.org/TR/2004/REC-rdf-concepts-20040210/#section-Graph-URIref
 type URI struct {
 	Value  string
-	Prefix string
 }
 
 // Type which represent a Literal Node in a RDF Graph
@@ -36,20 +35,11 @@ type Triple struct {
 	Object    Node
 }
 
-// Expand a URI with it's Value
-func (u URI) expandName() string {
-	if u.Prefix != "" {
-		return "<" + u.Prefix + ":" + u.Value + ">"
-	} else {
-		return "<" + u.Value + ">"
-	}
-}
-
 // Return True if Two URIs are equals, False if not
 func (u URI) Equals(n Node) (bool, error) {
 	other, ok := n.(URI)
 	if ok {
-		return u.expandName() == other.expandName(), nil
+		return u.Value == other.Value, nil
 	} else {
 		return false, errors.New("Error : mismatch type, can only compare two URIs")
 	}
@@ -73,12 +63,12 @@ func (u URI) Equivalent(n Node) (bool, error) {
 
 // Serialize a URI to string and return it
 func (u URI) String() string {
-	return u.expandName()
+	return "<" + u.Value + ">"
 }
 
 // Create a new URI
-func NewURI(prefix, value string) URI {
-	return URI{value, prefix}
+func NewURI(value string) URI {
+	return URI{value}
 }
 
 // Return True if Two Literals are strictly equals, False if not

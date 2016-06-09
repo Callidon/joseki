@@ -4,22 +4,25 @@ import (
 	"github.com/Callidon/joseki/core"
 	"testing"
     "math/rand"
-    "fmt"
 )
 
 func TestAddListGraph(t *testing.T) {
 	graph := NewListGraph()
-	subj := core.NewURI("dblp", "Thomas")
-	pred := core.NewURI("foaf", "age")
+	subj := core.NewURI("dblp:Thomas")
+	pred := core.NewURI("foaf:age")
 	obj := core.NewLiteral("22")
 	triple := core.NewTriple(subj, pred, obj)
 	graph.Add(triple)
+
+    if test, err := graph.triples[0].Equals(triple); !test && (err != nil) {
+        t.Error(triple, "hasn't been inserted into the graph")
+    }
 }
 
 func TestSimpleFilterListGraph(t *testing.T) {
 	graph := NewListGraph()
-	subj := core.NewURI("dblp", "Thomas")
-	pred := core.NewURI("foaf", "age")
+	subj := core.NewURI("dblp:Thomas")
+	pred := core.NewURI("foaf:age")
 	obj := core.NewLiteral("22")
 	triple := core.NewTriple(subj, pred, obj)
 	graph.Add(triple)
@@ -35,15 +38,15 @@ func TestComplexFilterListGraph(t *testing.T) {
     graph := NewListGraph()
     nbDatas := 1000
     cpt := 0
-    subj := core.NewURI("dblp", "foo")
-    datas := make([]core.Triple, 0)
+    subj := core.NewURI("dblp:foo")
 
-    // create triples to be inserted
+    // insert random triples in the graph
     for i := 0; i < nbDatas; i++ {
-        triple := core.NewTriple(subj, core.NewURI("", string(rand.Intn(nbDatas))), core.NewLiteral(string(rand.Intn(nbDatas))))
-        datas = append(datas, triple)
+        triple := core.NewTriple(subj, core.NewURI(string(rand.Intn(nbDatas))), core.NewLiteral(string(rand.Intn(nbDatas))))
+        graph.Add(triple)
     }
 
+    // select all triple of the graph
     for _ = range graph.Filter(subj, core.NewBlankNode("v"), core.NewBlankNode("w")) {
         cpt += 1
     }
@@ -60,7 +63,7 @@ func BenchmarkAddListGraph(b *testing.B) {
 
     // create triples to be inserted
     for i := 0; i < nbDatas; i++ {
-        triple := core.NewTriple(core.NewURI("", string(rand.Intn(nbDatas))), core.NewURI("", string(rand.Intn(nbDatas))), core.NewLiteral(string(rand.Intn(nbDatas))))
+        triple := core.NewTriple(core.NewURI(string(rand.Intn(nbDatas))), core.NewURI(string(rand.Intn(nbDatas))), core.NewLiteral(string(rand.Intn(nbDatas))))
         datas = append(datas, triple)
     }
 
@@ -71,21 +74,46 @@ func BenchmarkAddListGraph(b *testing.B) {
     }
 }
 
-func BenchmarkFilterListGraph(b *testing.B) {
+func BenchmarkAllFilterListGraph(b *testing.B) {
     graph := NewListGraph()
     nbDatas := 1000
     cpt := 0
-    subj := core.NewURI("dblp", "foo")
-    datas := make([]core.Triple, 0)
+    subj := core.NewURI("dblp:foo")
 
-    // create triples to be inserted
+    // insert random triples in the graph
     for i := 0; i < nbDatas; i++ {
-        triple := core.NewTriple(subj, core.NewURI("", string(rand.Intn(nbDatas))), core.NewLiteral(string(rand.Intn(nbDatas))))
-        datas = append(datas, triple)
+        triple := core.NewTriple(subj, core.NewURI(string(rand.Intn(nbDatas))), core.NewLiteral(string(rand.Intn(nbDatas))))
+        graph.Add(triple)
     }
 
     for i := 0; i < b.N; i++ {
+        // select all triple of the graph
         for _ = range graph.Filter(subj, core.NewBlankNode("v"), core.NewBlankNode("w")) {
+            cpt += 1
+        }
+    }
+}
+
+func BenchmarkSpecificFilterListGraph(b *testing.B) {
+    graph := NewListGraph()
+    nbDatas := 1000
+    cpt := 0
+    subj := core.NewURI("dblp:foo")
+    pred := core.NewURI("foaf:age")
+    obj := core.NewURI("22")
+
+    // insert random triples in the graph
+    for i := 0; i < nbDatas; i++ {
+        triple := core.NewTriple(subj, core.NewURI(string(rand.Intn(nbDatas))), core.NewLiteral(string(rand.Intn(nbDatas))))
+        graph.Add(triple)
+    }
+    // insert a specific triple at the end
+    triple := core.NewTriple(subj, pred, obj)
+    graph.Add(triple)
+
+    for i := 0; i < b.N; i++ {
+        // fetch the last inserted triple into the graph
+        for _ = range graph.Filter(subj, pred, obj) {
             cpt += 1
         }
     }

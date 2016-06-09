@@ -4,8 +4,8 @@ import "testing"
 
 // Test the Equals operator of the URI struct
 func TestURIEquals(t *testing.T) {
-	uri := NewURI("dblp", "foo")
-    other_uri := NewURI("foaf", "hasFriend")
+	uri := NewURI("dblp:foo")
+    other_uri := NewURI("foaf:hasFriend")
 	literal := NewLiteral("Toto")
 	bnode := NewBlankNode("v")
 
@@ -28,8 +28,8 @@ func TestURIEquals(t *testing.T) {
 
 // Test the Equivalent operator of the URI struct
 func TestURIEquivalent(t *testing.T) {
-    uri := NewURI("dbpl", "foo")
-    other_uri := NewURI("foaf", "hasFriend")
+    uri := NewURI("dblp:foo")
+    other_uri := NewURI("foaf:hasFriend")
     literal := NewLiteral("Toto")
     bnode := NewBlankNode("v")
 
@@ -52,7 +52,7 @@ func TestURIEquivalent(t *testing.T) {
 
 // Test the Equals operator of the Literal struct
 func TestLiteralEquals(t *testing.T) {
-	uri := NewURI("dbpl", "foo")
+	uri := NewURI("dblp:foo")
 	literal := NewLiteral("Toto")
     other_literal := NewLiteral("20")
 	bnode := NewBlankNode("v")
@@ -76,7 +76,7 @@ func TestLiteralEquals(t *testing.T) {
 
 // Test the Equivalent operator of the Literal struct
 func TestLiteralEquivalent(t *testing.T) {
-    uri := NewURI("dbpl", "foo")
+    uri := NewURI("dblp:foo")
     literal := NewLiteral("Toto")
     other_literal := NewLiteral("20")
     bnode := NewBlankNode("v")
@@ -100,7 +100,7 @@ func TestLiteralEquivalent(t *testing.T) {
 
 // Test the Equals operator of the BlankNode struct
 func TestBlankNodeEquals(t *testing.T) {
-	uri := NewURI("dbpl", "foo")
+	uri := NewURI("dblp:foo")
 	literal := NewLiteral("Toto")
 	bnode := NewBlankNode("v")
     other_bnode := NewBlankNode("w")
@@ -124,7 +124,7 @@ func TestBlankNodeEquals(t *testing.T) {
 
 // Test the Equivalent operator of the BlankNode struct
 func TestBlankNodeEquivalent(t *testing.T) {
-    uri := NewURI("dbpl", "foo")
+    uri := NewURI("dblp:foo")
     literal := NewLiteral("Toto")
     bnode := NewBlankNode("v")
     other_bnode := NewBlankNode("w")
@@ -148,9 +148,9 @@ func TestBlankNodeEquivalent(t *testing.T) {
 
 // Test the Equals operator for Triple struct
 func TestTripleEquals(t *testing.T) {
-    tripleA := NewTriple(NewURI("", "foo"), NewURI("", "bar"), NewLiteral("22"))
-    tripleB := NewTriple(NewURI("", "bar"), NewURI("", "foo"), NewLiteral("22"))
-    tripleC := NewTriple(NewBlankNode("v"), NewURI("", "bar"), NewLiteral("22"))
+    tripleA := NewTriple(NewURI("foaf:foo"), NewURI("schema:bar"), NewLiteral("22"))
+    tripleB := NewTriple(NewURI("schema:bar"), NewURI("foaf:foo"), NewLiteral("22"))
+    tripleC := NewTriple(NewBlankNode("v"), NewURI("schema:bar"), NewLiteral("22"))
 
     if test, err := tripleA.Equals(tripleA); (err != nil) && !test {
         t.Error("a triple should be equals to itself")
@@ -165,9 +165,9 @@ func TestTripleEquals(t *testing.T) {
 
 // Test the Equals operator for Triple struct
 func TestTripleEquivalent(t *testing.T) {
-    tripleA := NewTriple(NewURI("", "foo"), NewURI("", "bar"), NewLiteral("22"))
-    tripleB := NewTriple(NewURI("", "bar"), NewURI("", "foo"), NewLiteral("22"))
-    tripleC := NewTriple(NewBlankNode("v"), NewURI("", "bar"), NewLiteral("22"))
+    tripleA := NewTriple(NewURI("foaf:foo"), NewURI("schema:bar"), NewLiteral("22"))
+    tripleB := NewTriple(NewURI("schema:bar"), NewURI("foaf:foo"), NewLiteral("22"))
+    tripleC := NewTriple(NewBlankNode("v"), NewURI("schema:bar"), NewLiteral("22"))
 
     if test, err := tripleA.Equivalent(tripleA); (err != nil) && !test {
         t.Error("a triple should be equivalent to itself")
