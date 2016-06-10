@@ -1,3 +1,4 @@
+// Package joseki/rdf provides primitives to work with RDF
 package rdf
 
 import "errors"
@@ -9,25 +10,25 @@ type Node interface {
 	String() string
 }
 
-// Type which represent a URI Node in a RDF Graph
+// Type which represent a URI Node in a RDF Graph.
 // RDF URI reference : https://www.w3.org/TR/2004/REC-rdf-concepts-20040210/#section-Graph-URIref
 type URI struct {
 	Value string
 }
 
-// Type which represent a Literal Node in a RDF Graph
+// Type which represent a Literal Node in a RDF Graph.
 // RDF Literal reference : https://www.w3.org/TR/2004/REC-rdf-concepts-20040210/#section-Graph-Literal
 type Literal struct {
 	Value string
 }
 
-// Type which represent a Blank Node in a RDF Graph
+// Type which represent a Blank Node in a RDF Graph.
 // RDF Blank Node reference : https://www.w3.org/TR/2004/REC-rdf-concepts-20040210/#section-blank-nodes
 type BlankNode struct {
 	Variable string
 }
 
-// Type which represent a RDF triple
+// Type which represent a RDF triple.
 // RDF Triple reference : https://www.w3.org/TR/2004/REC-rdf-concepts-20040210/#section-triples
 type Triple struct {
 	Subject   Node
@@ -45,7 +46,7 @@ func (u URI) Equals(n Node) (bool, error) {
 	}
 }
 
-// Test if a URI is equivalent to a Node, assuming that a URI and a Blank Node are equals, like in the context of a SPARQL Query
+// Test if a URI is equivalent to a Node, assuming that a URI and a Blank Node are equals, like in the context of a SPARQL Query.s
 // Return True if the two URIs are equivalent with this criteria, False if not
 func (u URI) Equivalent(n Node) (bool, error) {
 	equality, err := u.Equals(n)
@@ -81,7 +82,7 @@ func (l Literal) Equals(n Node) (bool, error) {
 	}
 }
 
-// Test if a Literal is equivalent to a Node, assuming that a Literal and a Blank Node are equals, like in the context of a SPARQL Query
+// Test if a Literal is equivalent to a Node, assuming that a Literal and a Blank Node are equals, like in the context of a SPARQL Query.
 // Return True if the two nodes are equivalent with this criteria, False if not
 func (l Literal) Equivalent(n Node) (bool, error) {
 	equality, err := l.Equals(n)
@@ -124,7 +125,7 @@ func (b BlankNode) Equivalent(n Node) (bool, error) {
 
 // Serialize a Blank Node to string and return it
 func (b BlankNode) String() string {
-	return "?" + b.Variable
+	return "_:" + b.Variable
 }
 
 // Create a new Literal
@@ -149,7 +150,7 @@ func (t Triple) Equals(other Triple) (bool, error) {
 	return test_subj && test_pred && test_obj, nil
 }
 
-// Test if a Triple is equivalent to another triple, assuming that blank node are equals to any other node types
+// Test if a Triple is equivalent to another triple, assuming that blank node are equals to any other node types.
 // Return True if the two triples are equivalent with this criteria, False if not
 func (t Triple) Equivalent(other Triple) (bool, error) {
 	test_subj, err := t.Subject.Equivalent(other.Subject)
