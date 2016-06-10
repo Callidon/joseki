@@ -1,23 +1,23 @@
 package graph
 
 import (
-	"github.com/Callidon/joseki/core"
+	"github.com/Callidon/joseki/rdf"
 	"math/rand"
 	"testing"
 	//"fmt"
 )
 
 func TestAddHDTGraph(t *testing.T) {
-	var node core.Node
+	var node rdf.Node
 	graph := NewHDTGraph()
 
-	subj := core.NewURI("dblp:Thomas")
-	predA := core.NewURI("foaf:age")
-	predB := core.NewURI("schema:livesIn")
-	objA := core.NewLiteral("22")
-	objB := core.NewLiteral("Nantes")
-	tripleA := core.NewTriple(subj, predA, objA)
-	tripleB := core.NewTriple(subj, predB, objB)
+	subj := rdf.NewURI("dblp:Thomas")
+	predA := rdf.NewURI("foaf:age")
+	predB := rdf.NewURI("schema:livesIn")
+	objA := rdf.NewLiteral("22")
+	objB := rdf.NewLiteral("Nantes")
+	tripleA := rdf.NewTriple(subj, predA, objA)
+	tripleB := rdf.NewTriple(subj, predB, objB)
 	graph.Add(tripleA)
 	graph.Add(tripleB)
 
@@ -60,13 +60,13 @@ func TestAddHDTGraph(t *testing.T) {
 
 func TestSimpleFilterHDTGraph(t *testing.T) {
 	graph := NewHDTGraph()
-	subj := core.NewURI("dblp:Thomas")
-	predA := core.NewURI("foaf:age")
-	predB := core.NewURI("schema:livesIn")
-	objA := core.NewLiteral("22")
-	objB := core.NewURI("dbpedia:Nantes")
-	tripleA := core.NewTriple(subj, predA, objA)
-	tripleB := core.NewTriple(subj, predB, objB)
+	subj := rdf.NewURI("dblp:Thomas")
+	predA := rdf.NewURI("foaf:age")
+	predB := rdf.NewURI("schema:livesIn")
+	objA := rdf.NewLiteral("22")
+	objB := rdf.NewURI("dbpedia:Nantes")
+	tripleA := rdf.NewTriple(subj, predA, objA)
+	tripleB := rdf.NewTriple(subj, predB, objB)
 	graph.Add(tripleA)
 	graph.Add(tripleB)
 
@@ -79,7 +79,7 @@ func TestSimpleFilterHDTGraph(t *testing.T) {
 
 	// select multiple triples using Blank Nodes
 	cpt := 0
-	for _ = range graph.Filter(subj, core.NewBlankNode("v"), core.NewBlankNode("w")) {
+	for _ = range graph.Filter(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w")) {
 		cpt += 1
 	}
 
@@ -89,16 +89,16 @@ func TestComplexFilterHDTGraph(t *testing.T) {
 	graph := NewHDTGraph()
 	nbDatas := 1000
 	cpt := 0
-	subj := core.NewURI("dblp:foo")
+	subj := rdf.NewURI("dblp:foo")
 
 	// insert random triples in the graph
 	for i := 0; i < nbDatas; i++ {
-		triple := core.NewTriple(subj, core.NewURI(string(rand.Intn(nbDatas))), core.NewLiteral(string(rand.Intn(nbDatas))))
+		triple := rdf.NewTriple(subj, rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
 		graph.Add(triple)
 	}
 
 	// select all triple of the graph
-	for _ = range graph.Filter(subj, core.NewBlankNode("v"), core.NewBlankNode("w")) {
+	for _ = range graph.Filter(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w")) {
 		cpt += 1
 	}
 
@@ -110,11 +110,11 @@ func TestComplexFilterHDTGraph(t *testing.T) {
 func BenchmarkAddHDTGraph(b *testing.B) {
 	graph := NewHDTGraph()
 	nbDatas := 1000
-	datas := make([]core.Triple, 0)
+	datas := make([]rdf.Triple, 0)
 
 	// create triples to be inserted
 	for i := 0; i < nbDatas; i++ {
-		triple := core.NewTriple(core.NewURI(string(rand.Int())), core.NewURI(string(rand.Int())), core.NewLiteral(string(rand.Int())))
+		triple := rdf.NewTriple(rdf.NewURI(string(rand.Int())), rdf.NewURI(string(rand.Int())), rdf.NewLiteral(string(rand.Int())))
 		datas = append(datas, triple)
 	}
 
@@ -129,17 +129,17 @@ func BenchmarkAllFilterHDTGraph(b *testing.B) {
 	graph := NewHDTGraph()
 	nbDatas := 1000
 	cpt := 0
-	subj := core.NewURI("dblp:foo")
+	subj := rdf.NewURI("dblp:foo")
 
 	// insert random triples in the graph
 	for i := 0; i < nbDatas; i++ {
-		triple := core.NewTriple(subj, core.NewURI(string(rand.Intn(nbDatas))), core.NewLiteral(string(rand.Intn(nbDatas))))
+		triple := rdf.NewTriple(subj, rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
 		graph.Add(triple)
 	}
 
 	for i := 0; i < b.N; i++ {
 		// select all triple of the graph
-		for _ = range graph.Filter(subj, core.NewBlankNode("v"), core.NewBlankNode("w")) {
+		for _ = range graph.Filter(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w")) {
 			cpt += 1
 		}
 	}
@@ -149,17 +149,17 @@ func BenchmarkSpecificFilterHDTGraph(b *testing.B) {
 	graph := NewHDTGraph()
 	nbDatas := 1000
 	cpt := 0
-	subj := core.NewURI("dblp:foo")
-	pred := core.NewURI("foaf:age")
-	obj := core.NewURI("22")
+	subj := rdf.NewURI("dblp:foo")
+	pred := rdf.NewURI("foaf:age")
+	obj := rdf.NewURI("22")
 
 	// insert random triples in the graph
 	for i := 0; i < nbDatas; i++ {
-		triple := core.NewTriple(subj, core.NewURI(string(rand.Intn(nbDatas))), core.NewLiteral(string(rand.Intn(nbDatas))))
+		triple := rdf.NewTriple(subj, rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
 		graph.Add(triple)
 	}
 	// insert a specific triple at the end
-	triple := core.NewTriple(subj, pred, obj)
+	triple := rdf.NewTriple(subj, pred, obj)
 	graph.Add(triple)
 
 	for i := 0; i < b.N; i++ {

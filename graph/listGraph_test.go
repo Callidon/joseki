@@ -1,17 +1,17 @@
 package graph
 
 import (
-	"github.com/Callidon/joseki/core"
+	"github.com/Callidon/joseki/rdf"
 	"math/rand"
 	"testing"
 )
 
 func TestAddListGraph(t *testing.T) {
 	graph := NewListGraph()
-	subj := core.NewURI("dblp:Thomas")
-	pred := core.NewURI("foaf:age")
-	obj := core.NewLiteral("22")
-	triple := core.NewTriple(subj, pred, obj)
+	subj := rdf.NewURI("dblp:Thomas")
+	pred := rdf.NewURI("foaf:age")
+	obj := rdf.NewLiteral("22")
+	triple := rdf.NewTriple(subj, pred, obj)
 	graph.Add(triple)
 
 	if test, err := graph.triples[0].Equals(triple); !test && (err != nil) {
@@ -21,10 +21,10 @@ func TestAddListGraph(t *testing.T) {
 
 func TestSimpleFilterListGraph(t *testing.T) {
 	graph := NewListGraph()
-	subj := core.NewURI("dblp:Thomas")
-	pred := core.NewURI("foaf:age")
-	obj := core.NewLiteral("22")
-	triple := core.NewTriple(subj, pred, obj)
+	subj := rdf.NewURI("dblp:Thomas")
+	pred := rdf.NewURI("foaf:age")
+	obj := rdf.NewLiteral("22")
+	triple := rdf.NewTriple(subj, pred, obj)
 	graph.Add(triple)
 
 	for result := range graph.Filter(subj, pred, obj) {
@@ -38,16 +38,16 @@ func TestComplexFilterListGraph(t *testing.T) {
 	graph := NewListGraph()
 	nbDatas := 1000
 	cpt := 0
-	subj := core.NewURI("dblp:foo")
+	subj := rdf.NewURI("dblp:foo")
 
 	// insert random triples in the graph
 	for i := 0; i < nbDatas; i++ {
-		triple := core.NewTriple(subj, core.NewURI(string(rand.Intn(nbDatas))), core.NewLiteral(string(rand.Intn(nbDatas))))
+		triple := rdf.NewTriple(subj, rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
 		graph.Add(triple)
 	}
 
 	// select all triple of the graph
-	for _ = range graph.Filter(subj, core.NewBlankNode("v"), core.NewBlankNode("w")) {
+	for _ = range graph.Filter(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w")) {
 		cpt += 1
 	}
 
@@ -59,11 +59,11 @@ func TestComplexFilterListGraph(t *testing.T) {
 func BenchmarkAddListGraph(b *testing.B) {
 	graph := NewListGraph()
 	nbDatas := 1000
-	datas := make([]core.Triple, 0)
+	datas := make([]rdf.Triple, 0)
 
 	// create triples to be inserted
 	for i := 0; i < nbDatas; i++ {
-		triple := core.NewTriple(core.NewURI(string(rand.Intn(nbDatas))), core.NewURI(string(rand.Intn(nbDatas))), core.NewLiteral(string(rand.Intn(nbDatas))))
+		triple := rdf.NewTriple(rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
 		datas = append(datas, triple)
 	}
 
@@ -78,17 +78,17 @@ func BenchmarkAllFilterListGraph(b *testing.B) {
 	graph := NewListGraph()
 	nbDatas := 1000
 	cpt := 0
-	subj := core.NewURI("dblp:foo")
+	subj := rdf.NewURI("dblp:foo")
 
 	// insert random triples in the graph
 	for i := 0; i < nbDatas; i++ {
-		triple := core.NewTriple(subj, core.NewURI(string(rand.Intn(nbDatas))), core.NewLiteral(string(rand.Intn(nbDatas))))
+		triple := rdf.NewTriple(subj, rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
 		graph.Add(triple)
 	}
 
 	for i := 0; i < b.N; i++ {
 		// select all triple of the graph
-		for _ = range graph.Filter(subj, core.NewBlankNode("v"), core.NewBlankNode("w")) {
+		for _ = range graph.Filter(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w")) {
 			cpt += 1
 		}
 	}
@@ -98,17 +98,17 @@ func BenchmarkSpecificFilterListGraph(b *testing.B) {
 	graph := NewListGraph()
 	nbDatas := 1000
 	cpt := 0
-	subj := core.NewURI("dblp:foo")
-	pred := core.NewURI("foaf:age")
-	obj := core.NewURI("22")
+	subj := rdf.NewURI("dblp:foo")
+	pred := rdf.NewURI("foaf:age")
+	obj := rdf.NewURI("22")
 
 	// insert random triples in the graph
 	for i := 0; i < nbDatas; i++ {
-		triple := core.NewTriple(subj, core.NewURI(string(rand.Intn(nbDatas))), core.NewLiteral(string(rand.Intn(nbDatas))))
+		triple := rdf.NewTriple(subj, rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
 		graph.Add(triple)
 	}
 	// insert a specific triple at the end
-	triple := core.NewTriple(subj, pred, obj)
+	triple := rdf.NewTriple(subj, pred, obj)
 	graph.Add(triple)
 
 	for i := 0; i < b.N; i++ {

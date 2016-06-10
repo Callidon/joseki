@@ -1,7 +1,7 @@
 package graph
 
 import (
-	"github.com/Callidon/joseki/core"
+	"github.com/Callidon/joseki/rdf"
 	"os"
 )
 
@@ -9,7 +9,7 @@ import (
 // Various implementation are proposed in the joseki/graph package
 type Graph interface {
 	LoadFromFile(file *os.File)
-	Add(triple core.Triple)
-	Filter(subject, predicate, object core.Node) chan core.Triple
+	Add(triple rdf.Triple)
+	Filter(subject, predicate, object rdf.Node) chan rdf.Triple
 	Serialize(format string) string
 }

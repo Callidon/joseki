@@ -1,16 +1,16 @@
 package graph
 
 import (
-	"github.com/Callidon/joseki/core"
+	"github.com/Callidon/joseki/rdf"
 	"testing"
 )
 
 func TestBimap(t *testing.T) {
-	var value core.Node
+	var value rdf.Node
 	bimap := newBimap()
-	nodeA := core.NewLiteral("foo")
-	nodeB := core.NewLiteral("bar")
-	nodeC := core.NewLiteral("test")
+	nodeA := rdf.NewLiteral("foo")
+	nodeB := rdf.NewLiteral("bar")
+	nodeC := rdf.NewLiteral("test")
 
 	// test with classic insertion
 	bimap.push(1, nodeA)

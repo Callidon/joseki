@@ -2,7 +2,7 @@ package graph
 
 import (
 	"errors"
-	"github.com/Callidon/joseki/core"
+	"github.com/Callidon/joseki/rdf"
 	"os"
 	"sync"
 )
@@ -31,7 +31,7 @@ type HDTGraph struct {
 	dictionnary bimap
 	root        bitmapNode
 	nextId      int
-	triples     map[string][]core.Triple
+	triples     map[string][]rdf.Triple
 }
 
 // Return a new Bitmap Node without any son
@@ -70,8 +70,8 @@ func newBitmapTriple(subj, pred, obj int) bitmapTriple {
 }
 
 // Convert a BitMap Triple to a RDF Triple
-func (t *bitmapTriple) Triple(dict *bimap) (core.Triple, error) {
-	var triple core.Triple
+func (t *bitmapTriple) Triple(dict *bimap) (rdf.Triple, error) {
+	var triple rdf.Triple
 	subj, foundSubj := dict.extract(t.subject_id)
 	if !foundSubj {
 		return triple, errors.New("Error : cannot found the subject id in the dictionnary")
@@ -84,17 +84,17 @@ func (t *bitmapTriple) Triple(dict *bimap) (core.Triple, error) {
 	if !foundObj {
 		return triple, errors.New("Error : cannot found the object id in the dictionnary")
 	}
-	triple = core.NewTriple(subj, pred, obj)
+	triple = rdf.NewTriple(subj, pred, obj)
 	return triple, nil
 }
 
 // Return a new empty HDT Graph
 func NewHDTGraph() HDTGraph {
-	return HDTGraph{newBimap(), newBitmapNode(-1), 0, make(map[string][]core.Triple)}
+	return HDTGraph{newBimap(), newBitmapNode(-1), 0, make(map[string][]rdf.Triple)}
 }
 
 // Register a new Node in the graph dictionnary, then return its unique ID
-func (g *HDTGraph) registerNode(node core.Node) int {
+func (g *HDTGraph) registerNode(node rdf.Node) int {
 	// insert the node in dictionnary only if it's not in
 	key, inDict := g.dictionnary.locate(node)
 	if !inDict {
@@ -124,7 +124,7 @@ func (g *HDTGraph) updateNodes(root *bitmapNode, datas []int) {
 }
 
 // Recursively collect datas from the graph in order to form triple pattern matching criterias
-func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*core.Node, triple []int, out chan core.Triple, wg *sync.WaitGroup) {
+func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int, out chan rdf.Triple, wg *sync.WaitGroup) {
 	defer wg.Done()
 	// when possible, create a new triple pattern & send it into the output pipeline
 	if len(triple) == 3 {
@@ -137,7 +137,7 @@ func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*core.Node, triple []int
 	} else {
 		node := (*datas[0])
 		// if the current node to search is a blank node, search in every sons
-		_, isBnode := node.(core.BlankNode)
+		_, isBnode := node.(rdf.BlankNode)
 		if isBnode {
 			// IDEA : allow a pool of workers to query datas from all the sons of the root
 			go func() {
@@ -166,19 +166,19 @@ func (g *HDTGraph) LoadFromFile(file *os.File) {
 }
 
 // Add a new Triple pattern to the graph
-func (g *HDTGraph) Add(triple core.Triple) {
+func (g *HDTGraph) Add(triple rdf.Triple) {
 	// add each node of the triple to the dictionnary & then update the graph
 	subjId, predID, objId := g.registerNode(triple.Subject), g.registerNode(triple.Predicate), g.registerNode(triple.Object)
 	g.updateNodes(&g.root, []int{subjId, predID, objId})
 }
 
 // Fetch triples form the graph that match a BGP given in parameters
-func (g *HDTGraph) Filter(subject, predicate, object core.Node) chan core.Triple {
+func (g *HDTGraph) Filter(subject, predicate, object rdf.Node) chan rdf.Triple {
 	var wg sync.WaitGroup
-	results := make(chan core.Triple)
+	results := make(chan rdf.Triple)
 	// fetch data in the tree & wait for the operation to be complete before closing the pipeline
 	wg.Add(g.root.depth() + 1)
-	go g.queryNodes(&g.root, []*core.Node{&subject, &predicate, &object}, make([]int, 0), results, &wg)
+	go g.queryNodes(&g.root, []*rdf.Node{&subject, &predicate, &object}, make([]int, 0), results, &wg)
 	go func() {
 		defer close(results)
 		wg.Wait()

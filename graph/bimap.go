@@ -1,22 +1,22 @@
 package graph
 
-import "github.com/Callidon/joseki/core"
+import "github.com/Callidon/joseki/rdf"
 
 // Data structure that represents bidirectional relations between elements of two collections
 // used as a dictionnary in the HDT-MR Graph implementation
 type bimap struct {
-	keyToValue map[int]core.Node
-	valueToKey map[core.Node]int
+	keyToValue map[int]rdf.Node
+	valueToKey map[rdf.Node]int
 }
 
 // Return a new empty Bimap
 func newBimap() bimap {
-	return bimap{make(map[int]core.Node), make(map[core.Node]int)}
+	return bimap{make(map[int]rdf.Node), make(map[rdf.Node]int)}
 }
 
 // Add a (key, value) to the Bimap
 // If a key or a value already exist in the bimap, erase the associate relation
-func (b *bimap) push(key int, value core.Node) {
+func (b *bimap) push(key int, value rdf.Node) {
 	// insert value in map, but check if it's already present before
 	previousValue, inMap := b.keyToValue[key]
 	if inMap {
@@ -38,13 +38,13 @@ func (b *bimap) push(key int, value core.Node) {
 }
 
 // Return the key associated to a value in the Bimap
-func (b *bimap) locate(value core.Node) (int, bool) {
+func (b *bimap) locate(value rdf.Node) (int, bool) {
 	key, test := b.valueToKey[value]
 	return key, test
 }
 
 // Return the value associated to a key in the Bimap
-func (b *bimap) extract(key int) (core.Node, bool) {
+func (b *bimap) extract(key int) (rdf.Node, bool) {
 	value, test := b.keyToValue[key]
 	return value, test
 }
