@@ -5,11 +5,11 @@ import (
 	"github.com/Callidon/joseki/core"
 	"os"
 	"sync"
-    "fmt"
 )
 
 const (
-	MAX_GOROUTINES_MR = 5.0
+	// Max number of goroutines allowed in worker pools
+	MAX_GOROUTINES_WP = 5.0
 )
 
 // Node represented in the Bitmap standard, following the HDT-MR model
@@ -44,10 +44,32 @@ func (n *bitmapNode) addSon(id int) {
 	n.sons[id] = &bitmapNode{id, make(map[int]*bitmapNode)}
 }
 
+// Return the depth of the tree starting to this node
+func (n *bitmapNode) depth() int {
+	res := 0
+	if len(n.sons) > 0 {
+		res += len(n.sons)
+		for _, son := range n.sons {
+			res += son.depth()
+		}
+	}
+	return res
+}
+
+// Update a Wait Group counter for a node & his sons recursively
+func (n *bitmapNode) updateCounter(wg *sync.WaitGroup) {
+	wg.Done()
+	for _, son := range n.sons {
+		son.updateCounter(wg)
+	}
+}
+
+// Return a New Bitmap Triple
 func newBitmapTriple(subj, pred, obj int) bitmapTriple {
 	return bitmapTriple{subj, pred, obj}
 }
 
+// Convert a BitMap Triple to a RDF Triple
 func (t *bitmapTriple) Triple(dict *bimap) (core.Triple, error) {
 	var triple core.Triple
 	subj, foundSubj := dict.extract(t.subject_id)
@@ -102,11 +124,8 @@ func (g *HDTGraph) updateNodes(root *bitmapNode, datas []int) {
 }
 
 // Recursively collect datas from the graph in order to form triple pattern matching criterias
-func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*core.Node, triple []int, out chan core.Triple, wgRoot *sync.WaitGroup) {
-    defer func() {
-        fmt.Println("done -1 to", root.id)
-        wgRoot.Done()
-    }()
+func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*core.Node, triple []int, out chan core.Triple, wg *sync.WaitGroup) {
+	defer wg.Done()
 	// when possible, create a new triple pattern & send it into the output pipeline
 	if len(triple) == 3 {
 		bitmapTriple := newBitmapTriple(triple[0], triple[1], triple[2])
@@ -115,35 +134,30 @@ func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*core.Node, triple []int
 			panic(err)
 		}
 		out <- triple
-        fmt.Println("sent", triple)
-        wgRoot.Wait()
 	} else {
-        fmt.Println("in node", root.id)
-		var wg sync.WaitGroup
-        node := (*datas[0])
+		node := (*datas[0])
 		// if the current node to search is a blank node, search in every sons
 		_, isBnode := node.(core.BlankNode)
 		if isBnode {
-            fmt.Println("blank node detected for", root.id)
 			// IDEA : allow a pool of workers to query datas from all the sons of the root
 			go func() {
-                fmt.Println("add", len(root.sons), "to", root.id)
-				wg.Add(len(root.sons))
 				for _, son := range root.sons {
-					g.queryNodes(son, datas[1:], append(triple, son.id), out, &wg)
+					g.queryNodes(son, datas[1:], append(triple, son.id), out, wg)
 				}
 			}()
 		} else {
 			// search for a specific node
-            fmt.Println("searching for", node)
 			id, inDict := g.dictionnary.locate(node)
 			if _, inSons := root.sons[id]; inDict && (inSons || root.sons[id] == nil) {
-                fmt.Println("add", 1, "to", root.id)
-                wg.Add(1)
-                go g.queryNodes(root.sons[id], datas[1:], append(triple, id), out, &wg)
+				go g.queryNodes(root.sons[id], datas[1:], append(triple, id), out, wg)
+			}
+			// update the counter for the sons that will not be visited
+			for key, son := range root.sons {
+				if key != id {
+					son.updateCounter(wg)
+				}
 			}
 		}
-        wg.Wait()
 	}
 }
 
@@ -158,17 +172,16 @@ func (g *HDTGraph) Add(triple core.Triple) {
 	g.updateNodes(&g.root, []int{subjId, predID, objId})
 }
 
+// Fetch triples form the graph that match a BGP given in parameters
 func (g *HDTGraph) Filter(subject, predicate, object core.Node) chan core.Triple {
 	var wg sync.WaitGroup
 	results := make(chan core.Triple)
-    //fmt.Println("add", len(g.root.sons), "to root")
-    //wg.Add(len(g.root.sons))
 	// fetch data in the tree & wait for the operation to be complete before closing the pipeline
+	wg.Add(g.root.depth() + 1)
 	go g.queryNodes(&g.root, []*core.Node{&subject, &predicate, &object}, make([]int, 0), results, &wg)
 	go func() {
 		defer close(results)
 		wg.Wait()
-        fmt.Println("channel closed")
 	}()
 	return results
 }

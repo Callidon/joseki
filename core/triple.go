@@ -5,14 +5,14 @@ import "errors"
 // Interface which represent a generic node in a RDF Graph
 type Node interface {
 	Equals(n Node) (bool, error)
-    Equivalent(n Node) (bool, error)
+	Equivalent(n Node) (bool, error)
 	String() string
 }
 
 // Type which represent a URI Node in a RDF Graph
 // RDF URI reference : https://www.w3.org/TR/2004/REC-rdf-concepts-20040210/#section-Graph-URIref
 type URI struct {
-	Value  string
+	Value string
 }
 
 // Type which represent a Literal Node in a RDF Graph
@@ -49,16 +49,16 @@ func (u URI) Equals(n Node) (bool, error) {
 // Return True if the two URIs are equivalent with this criteria, False if not
 func (u URI) Equivalent(n Node) (bool, error) {
 	equality, err := u.Equals(n)
-    if err != nil {
-        _, ok := n.(BlankNode)
-        if ok {
-            return true, nil
-        } else {
-            return false, errors.New("Error : can only compare a URI with another URI or a Blank Node")
-        }
-    } else {
-        return equality, nil
-    }
+	if err != nil {
+		_, ok := n.(BlankNode)
+		if ok {
+			return true, nil
+		} else {
+			return false, errors.New("Error : can only compare a URI with another URI or a Blank Node")
+		}
+	} else {
+		return equality, nil
+	}
 }
 
 // Serialize a URI to string and return it
@@ -85,16 +85,16 @@ func (l Literal) Equals(n Node) (bool, error) {
 // Return True if the two nodes are equivalent with this criteria, False if not
 func (l Literal) Equivalent(n Node) (bool, error) {
 	equality, err := l.Equals(n)
-    if err != nil {
-        _, ok := n.(BlankNode)
-        if ok {
-            return true, nil
-        } else {
-            return false, errors.New("Error : can only compare a Literal with another Literal or a Blank Node")
-        }
-    } else {
-        return equality, nil
-    }
+	if err != nil {
+		_, ok := n.(BlankNode)
+		if ok {
+			return true, nil
+		} else {
+			return false, errors.New("Error : can only compare a Literal with another Literal or a Blank Node")
+		}
+	} else {
+		return equality, nil
+	}
 }
 
 // Serialize a Literal to string and return it
@@ -152,19 +152,19 @@ func (t Triple) Equals(other Triple) (bool, error) {
 // Test if a Triple is equivalent to another triple, assuming that blank node are equals to any other node types
 // Return True if the two triples are equivalent with this criteria, False if not
 func (t Triple) Equivalent(other Triple) (bool, error) {
-    test_subj, err := t.Subject.Equivalent(other.Subject)
-    if err != nil {
-        return false, err
-    }
-    test_pred, err := t.Predicate.Equivalent(other.Predicate)
-    if err != nil {
-        return false, err
-    }
-    test_obj, err := t.Object.Equivalent(other.Object)
-    if err != nil {
-        return false, err
-    }
-    return test_subj && test_pred && test_obj, nil
+	test_subj, err := t.Subject.Equivalent(other.Subject)
+	if err != nil {
+		return false, err
+	}
+	test_pred, err := t.Predicate.Equivalent(other.Predicate)
+	if err != nil {
+		return false, err
+	}
+	test_obj, err := t.Object.Equivalent(other.Object)
+	if err != nil {
+		return false, err
+	}
+	return test_subj && test_pred && test_obj, nil
 }
 
 // Create a new Triple
