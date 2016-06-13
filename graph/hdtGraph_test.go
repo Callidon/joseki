@@ -80,7 +80,7 @@ func TestSimpleFilterHDTGraph(t *testing.T) {
 	// select multiple triples using Blank Nodes
 	cpt := 0
 	for _ = range graph.Filter(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w")) {
-		cpt += 1
+		cpt++
 	}
 
 }
@@ -99,7 +99,7 @@ func TestComplexFilterHDTGraph(t *testing.T) {
 
 	// select all triple of the graph
 	for _ = range graph.Filter(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w")) {
-		cpt += 1
+		cpt++
 	}
 
 	if cpt != nbDatas {
@@ -110,7 +110,7 @@ func TestComplexFilterHDTGraph(t *testing.T) {
 func BenchmarkAddHDTGraph(b *testing.B) {
 	graph := NewHDTGraph()
 	nbDatas := 1000
-	datas := make([]rdf.Triple, 0)
+	var datas []rdf.Triple
 
 	// create triples to be inserted
 	for i := 0; i < nbDatas; i++ {
@@ -140,7 +140,7 @@ func BenchmarkAllFilterHDTGraph(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		// select all triple of the graph
 		for _ = range graph.Filter(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w")) {
-			cpt += 1
+			cpt++
 		}
 	}
 }
@@ -165,7 +165,7 @@ func BenchmarkSpecificFilterHDTGraph(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		// fetch the last inserted triple into the graph
 		for _ = range graph.Filter(subj, pred, obj) {
-			cpt += 1
+			cpt++
 		}
 	}
 }

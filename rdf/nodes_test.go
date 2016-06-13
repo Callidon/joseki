@@ -5,7 +5,7 @@ import "testing"
 // Test the Equals operator of the URI struct
 func TestURIEquals(t *testing.T) {
 	uri := NewURI("dblp:foo")
-	other_uri := NewURI("foaf:hasFriend")
+	otherURI := NewURI("foaf:hasFriend")
 	literal := NewLiteral("Toto")
 	bnode := NewBlankNode("v")
 
@@ -13,8 +13,8 @@ func TestURIEquals(t *testing.T) {
 		t.Error("a URI must be equals to itself")
 	}
 
-	if test, err := uri.Equals(other_uri); test && (err == nil) {
-		t.Error(uri, "must be different of", other_uri)
+	if test, err := uri.Equals(otherURI); test && (err == nil) {
+		t.Error(uri, "must be different of", otherURI)
 	}
 
 	if test, err := uri.Equals(literal); test && (err == nil) {
@@ -29,7 +29,7 @@ func TestURIEquals(t *testing.T) {
 // Test the Equivalent operator of the URI struct
 func TestURIEquivalent(t *testing.T) {
 	uri := NewURI("dblp:foo")
-	other_uri := NewURI("foaf:hasFriend")
+	otherURI := NewURI("foaf:hasFriend")
 	literal := NewLiteral("Toto")
 	bnode := NewBlankNode("v")
 
@@ -37,8 +37,8 @@ func TestURIEquivalent(t *testing.T) {
 		t.Error(" when comparing a URI with itself, the result should be true")
 	}
 
-	if test, err := uri.Equivalent(other_uri); test && (err == nil) {
-		t.Error(uri, "must be different of", other_uri)
+	if test, err := uri.Equivalent(otherURI); test && (err == nil) {
+		t.Error(uri, "must be different of", otherURI)
 	}
 
 	if test, err := uri.Equivalent(bnode); !test || (err != nil) {
@@ -54,15 +54,15 @@ func TestURIEquivalent(t *testing.T) {
 func TestLiteralEquals(t *testing.T) {
 	uri := NewURI("dblp:foo")
 	literal := NewLiteral("Toto")
-	other_literal := NewLiteral("20")
+	otherLiteral := NewLiteral("20")
 	bnode := NewBlankNode("v")
 
-	if test, err := literal.Equals(literal);!test || (err != nil) {
+	if test, err := literal.Equals(literal); !test || (err != nil) {
 		t.Error("a Literal must be equals to itself")
 	}
 
-	if test, err := literal.Equals(other_literal); test && (err == nil) {
-		t.Error(literal, "must be different of", other_literal)
+	if test, err := literal.Equals(otherLiteral); test && (err == nil) {
+		t.Error(literal, "must be different of", otherLiteral)
 	}
 
 	if test, err := literal.Equals(uri); test && (err == nil) {
@@ -78,15 +78,15 @@ func TestLiteralEquals(t *testing.T) {
 func TestLiteralEquivalent(t *testing.T) {
 	uri := NewURI("dblp:foo")
 	literal := NewLiteral("Toto")
-	other_literal := NewLiteral("20")
+	otherLiteral := NewLiteral("20")
 	bnode := NewBlankNode("v")
 
 	if test, err := literal.Equivalent(literal); !test || (err != nil) {
 		t.Error("when comparing a Literal with itself, the result should be true")
 	}
 
-	if test, err := literal.Equivalent(other_literal); test && (err == nil) {
-		t.Error(literal, "must be different of", other_literal)
+	if test, err := literal.Equivalent(otherLiteral); test && (err == nil) {
+		t.Error(literal, "must be different of", otherLiteral)
 	}
 
 	if test, err := literal.Equivalent(bnode); !test || (err != nil) {
@@ -103,14 +103,14 @@ func TestBlankNodeEquals(t *testing.T) {
 	uri := NewURI("dblp:foo")
 	literal := NewLiteral("Toto")
 	bnode := NewBlankNode("v")
-	other_bnode := NewBlankNode("w")
+	otherBnode := NewBlankNode("w")
 
 	if test, err := bnode.Equals(bnode); !test || (err != nil) {
 		t.Error("a Blank Node must be equals to itself")
 	}
 
-	if test, err := bnode.Equals(other_bnode); test && (err == nil) {
-		t.Error(bnode, "must be different of", other_bnode)
+	if test, err := bnode.Equals(otherBnode); test && (err == nil) {
+		t.Error(bnode, "must be different of", otherBnode)
 	}
 
 	if test, err := bnode.Equals(uri); test && (err == nil) {
@@ -127,13 +127,13 @@ func TestBlankNodeEquivalent(t *testing.T) {
 	uri := NewURI("dblp:foo")
 	literal := NewLiteral("Toto")
 	bnode := NewBlankNode("v")
-	other_bnode := NewBlankNode("w")
+	otherBnode := NewBlankNode("w")
 
 	if test, err := bnode.Equivalent(bnode); !test || (err != nil) {
 		t.Error("when comparing two Blank Node, the result should be true")
 	}
 
-	if test, err := bnode.Equivalent(other_bnode); !test || (err != nil) {
+	if test, err := bnode.Equivalent(otherBnode); !test || (err != nil) {
 		t.Error("when comparing two Blank Node, the result should be true")
 	}
 

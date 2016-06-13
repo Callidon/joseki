@@ -48,7 +48,7 @@ func TestComplexFilterListGraph(t *testing.T) {
 
 	// select all triple of the graph
 	for _ = range graph.Filter(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w")) {
-		cpt += 1
+		cpt++
 	}
 
 	if cpt != nbDatas {
@@ -59,7 +59,7 @@ func TestComplexFilterListGraph(t *testing.T) {
 func BenchmarkAddListGraph(b *testing.B) {
 	graph := NewListGraph()
 	nbDatas := 1000
-	datas := make([]rdf.Triple, 0)
+	var datas []rdf.Triple
 
 	// create triples to be inserted
 	for i := 0; i < nbDatas; i++ {
@@ -89,7 +89,7 @@ func BenchmarkAllFilterListGraph(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		// select all triple of the graph
 		for _ = range graph.Filter(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w")) {
-			cpt += 1
+			cpt++
 		}
 	}
 }
@@ -114,7 +114,7 @@ func BenchmarkSpecificFilterListGraph(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		// fetch the last inserted triple into the graph
 		for _ = range graph.Filter(subj, pred, obj) {
-			cpt += 1
+			cpt++
 		}
 	}
 }

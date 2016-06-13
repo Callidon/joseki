@@ -1,28 +1,17 @@
-// Package joseki/parser provides parser to work with several RDF formats (N-Triples, Turtles, JSON-LD, ...)
+// Package parser provides parser to work with several RDF formats (N-Triples, Turtles, JSON-LD, ...)
 package parser
 
 import (
-    "github.com/Callidon/joseki/rdf"
 	"errors"
-    "regexp"
+	"github.com/Callidon/joseki/rdf"
+	"regexp"
 )
 
-// Generic parser interface for every RDF format.
+// Parser represent a generic interface for parsing every RDF format.
 //
-// Package joseki/parser provides several implementations for these parsers.
+// Package parser provides several implementations for this interface.
 type Parser interface {
 	Read(filename string) chan rdf.Triple
-}
-
-// RDF file reader wich can be used with multiples formats.
-//
-// Works using different separators depending of the format used.
-type rdfReader struct {
-    separator string
-    predListSeparator string
-    objectListSeparator string
-    nestingBegin string
-    nestingEnd string
 }
 
 // Utility function for checking errors
@@ -34,7 +23,7 @@ func check(err error) {
 
 // Send RDF Node of a triple pattern throught a channel
 func sendTriple(subject rdf.Node, predicate rdf.Node, object rdf.Node, out chan rdf.Triple) {
-    out <- rdf.NewTriple(subject, predicate, object)
+	out <- rdf.NewTriple(subject, predicate, object)
 }
 
 // Parse a string node to find its type & return the corresponding RDF Node
@@ -54,7 +43,9 @@ func parseNode(elt string) (rdf.Node, error) {
 	return node, err
 }
 
+// extractSegments parse a string and split the segments into a slice.
+// A segment is a string quoted or separated from the other by whitespaces.
 func extractSegments(line string) []string {
-    r := regexp.MustCompile("'.*?'|\".*?\"|\\S+")
-    return r.FindAllString(line, -1)
+	r := regexp.MustCompile("'.*?'|\".*?\"|\\S+")
+	return r.FindAllString(line, -1)
 }
