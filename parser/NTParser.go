@@ -1,3 +1,4 @@
+// Package joseki/parser provides parser to work with several RDF formats (N-Triples, Turtles, JSON-LD, ...)
 package parser
 
 import (
@@ -8,15 +9,20 @@ import (
 	"strings"
 )
 
+// Parser for reading & loading triples in N-Triples format.
+//
+// N-Triples reference : https://www.w3.org/2011/rdf-wg/wiki/N-Triples-Format
 type NTParser struct {
 }
 
+// Utility function for checking errors
 func check(err error) {
 	if err != nil {
 		panic(err)
 	}
 }
 
+//
 func parseNode(elt string) (rdf.Node, error) {
 	var node rdf.Node
 	var err error
@@ -33,6 +39,8 @@ func parseNode(elt string) (rdf.Node, error) {
 	return node, err
 }
 
+// Read a file containg RDF triples in N-Triples format & convert them in triples.
+// Triples generated are send throught a channel, which is closed when the parsing of the file has been completed.
 func (p *NTParser) Read(filename string) chan rdf.Triple {
 	out := make(chan rdf.Triple)
 	// walk through the file using a goroutine

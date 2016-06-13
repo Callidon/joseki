@@ -1,9 +1,9 @@
+// Package joseki/graph provides various implementation for RDF Graph
 package graph
 
 import (
 	"errors"
 	"github.com/Callidon/joseki/rdf"
-	"os"
 	"sync"
 )
 
@@ -12,20 +12,21 @@ const (
 	MAX_GOROUTINES_WP = 5.0
 )
 
-// Node represented in the Bitmap standard, following the HDT-MR model
+// Node represented in the Bitmap standard, following the HDT-MR model.
 type bitmapNode struct {
 	id   int
 	sons map[int]*bitmapNode
 }
 
-// Triple represented in the Bitmap standard, following the HDT-MR model
+// Triple represented in the Bitmap standard, following the HDT-MR model.
 type bitmapTriple struct {
 	subject_id   int
 	predicate_id int
 	object_id    int
 }
 
-// Implementation of a RDF Graph based on the HDT-MR model proposed by Giménez-García et al
+// Implementation of a RDF Graph based on the HDT-MR model proposed by Giménez-García et al.
+//
 // For more details, see http://dataweb.infor.uva.es/projects/hdt-mr/
 type HDTGraph struct {
 	dictionnary bimap
@@ -34,17 +35,17 @@ type HDTGraph struct {
 	triples     map[string][]rdf.Triple
 }
 
-// Return a new Bitmap Node without any son
+// Return a new Bitmap Node without any son.
 func newBitmapNode(id int) bitmapNode {
 	return bitmapNode{id, make(map[int]*bitmapNode)}
 }
 
-// Add a son to a Bitmap Node
+// Add a son to a Bitmap Node.
 func (n *bitmapNode) addSon(id int) {
 	n.sons[id] = &bitmapNode{id, make(map[int]*bitmapNode)}
 }
 
-// Return the depth of the tree starting to this node
+// Return the depth of the tree starting to this node.
 func (n *bitmapNode) depth() int {
 	res := 0
 	if len(n.sons) > 0 {
@@ -56,7 +57,7 @@ func (n *bitmapNode) depth() int {
 	return res
 }
 
-// Update a Wait Group counter for a node & his sons recursively
+// Update a Wait Group counter for a node & his sons recursively.
 func (n *bitmapNode) updateCounter(wg *sync.WaitGroup) {
 	wg.Done()
 	for _, son := range n.sons {
@@ -64,12 +65,12 @@ func (n *bitmapNode) updateCounter(wg *sync.WaitGroup) {
 	}
 }
 
-// Return a New Bitmap Triple
+// Return a New Bitmap Triple.
 func newBitmapTriple(subj, pred, obj int) bitmapTriple {
 	return bitmapTriple{subj, pred, obj}
 }
 
-// Convert a BitMap Triple to a RDF Triple
+// Convert a BitMap Triple to a RDF Triple.
 func (t *bitmapTriple) Triple(dict *bimap) (rdf.Triple, error) {
 	var triple rdf.Triple
 	subj, foundSubj := dict.extract(t.subject_id)
@@ -88,12 +89,12 @@ func (t *bitmapTriple) Triple(dict *bimap) (rdf.Triple, error) {
 	return triple, nil
 }
 
-// Return a new empty HDT Graph
+// Create a new empty HDT Graph.
 func NewHDTGraph() HDTGraph {
 	return HDTGraph{newBimap(), newBitmapNode(-1), 0, make(map[string][]rdf.Triple)}
 }
 
-// Register a new Node in the graph dictionnary, then return its unique ID
+// Register a new Node in the graph dictionnary, then return its unique ID.
 func (g *HDTGraph) registerNode(node rdf.Node) int {
 	// insert the node in dictionnary only if it's not in
 	key, inDict := g.dictionnary.locate(node)
@@ -106,7 +107,7 @@ func (g *HDTGraph) registerNode(node rdf.Node) int {
 	}
 }
 
-// Recursively update the nodes of the graph with new datas
+// Recursively update the nodes of the graph with new datas.
 func (g *HDTGraph) updateNodes(root *bitmapNode, datas []int) {
 	// if they are data to insert in the graph
 	if len(datas) > 0 {
@@ -123,7 +124,7 @@ func (g *HDTGraph) updateNodes(root *bitmapNode, datas []int) {
 	}
 }
 
-// Recursively collect datas from the graph in order to form triple pattern matching criterias
+// Recursively collect datas from the graph in order to form triple pattern matching criterias.
 func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int, out chan rdf.Triple, wg *sync.WaitGroup) {
 	defer wg.Done()
 	// when possible, create a new triple pattern & send it into the output pipeline
@@ -161,18 +162,19 @@ func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int,
 	}
 }
 
-func (g *HDTGraph) LoadFromFile(file *os.File) {
+// Load the content of a RDF graph stored in a file into the current graph.
+func (g *HDTGraph) LoadFromFile(filename, format string) {
 	//TODO
 }
 
-// Add a new Triple pattern to the graph
+// Add a new Triple pattern to the graph.
 func (g *HDTGraph) Add(triple rdf.Triple) {
 	// add each node of the triple to the dictionnary & then update the graph
 	subjId, predID, objId := g.registerNode(triple.Subject), g.registerNode(triple.Predicate), g.registerNode(triple.Object)
 	g.updateNodes(&g.root, []int{subjId, predID, objId})
 }
 
-// Fetch triples form the graph that match a BGP given in parameters
+// Fetch triples form the graph that match a BGP given in parameters.
 func (g *HDTGraph) Filter(subject, predicate, object rdf.Node) chan rdf.Triple {
 	var wg sync.WaitGroup
 	results := make(chan rdf.Triple)
@@ -186,6 +188,7 @@ func (g *HDTGraph) Filter(subject, predicate, object rdf.Node) chan rdf.Triple {
 	return results
 }
 
+// Serialize the graph into a given format and return it as a string.
 func (g *HDTGraph) Serialize(format string) string {
 	// TODO
 	return ""
