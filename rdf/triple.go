@@ -1,4 +1,3 @@
-// Package joseki/rdf provides primitives to work with RDF
 package rdf
 
 // Type which represent a RDF triple.

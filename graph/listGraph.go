@@ -1,4 +1,3 @@
-// Package joseki/graph provides various implementation for RDF Graph
 package graph
 
 import "github.com/Callidon/joseki/rdf"

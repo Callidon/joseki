@@ -1,12 +1,12 @@
 package parser
 
 import (
-	"testing"
+    "testing"
     "github.com/Callidon/joseki/rdf"
 )
 
-func TestReadNTParser(t *testing.T) {
-	parser := NTParser{}
+func TestReadTurtleParser(t *testing.T) {
+    parser := TurtleParser{}
     cpt := 0
     datas := []rdf.Triple{
         rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples/"),
@@ -19,13 +19,19 @@ func TestReadNTParser(t *testing.T) {
             rdf.NewURI("http://purl.org/dc/terms/title"),
             rdf.NewLiteral("N-Triples")),
         rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples/"),
+            rdf.NewURI("http://purl.org/dc/terms/title"),
+            rdf.NewLiteral("Turtle")),
+        rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples/"),
             rdf.NewURI("http://xmlns.com/foaf/0.1/maker"),
-            rdf.NewBlankNode("art")),
+            rdf.NewBlankNode("v0")),
+        rdf.NewTriple(rdf.NewBlankNode("v0"),
+            rdf.NewURI("http://purl.org/dc/terms/title"),
+            rdf.NewLiteral("My Title")),
     }
 
-	for elt := range parser.Read("datas/test.nt") {
+    for elt := range parser.Read("datas/test.ttl") {
 		if test, err := elt.Equals(datas[cpt]); !test || (err != nil) {
-            t.Error(datas[cpt], "should be equal to", elt)
+            t.Error(elt, "should be equal to", datas[cpt])
         }
         cpt++
 	}
