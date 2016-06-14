@@ -13,10 +13,15 @@ import (
 type NTParser struct {
 }
 
+// NewNTParser creates a new NTParser
+func NewNTParser() NTParser {
+    return NTParser{}
+}
+
 // Read a file containg RDF triples in N-Triples format & convert them in triples.
 //
 // Triples generated are send throught a channel, which is closed when the parsing of the file has been completed.
-func (p *NTParser) Read(filename string) chan rdf.Triple {
+func (p NTParser) Read(filename string) chan rdf.Triple {
 	var subject, predicate, object rdf.Node
 	out := make(chan rdf.Triple)
 	// walk through the file using a goroutine

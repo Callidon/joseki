@@ -14,10 +14,15 @@ import (
 type TurtleParser struct {
 }
 
+// NewTurtleParser creates a new TurtleParser
+func NewTurtleParser() TurtleParser {
+    return TurtleParser{}
+}
+
 // Read a file containg RDF triples in Turtle format & convert them in triples.
 //
 // Triples generated are send throught a channel, which is closed when the parsing of the file has been completed.
-func (p *TurtleParser) Read(filename string) chan rdf.Triple {
+func (p TurtleParser) Read(filename string) chan rdf.Triple {
 	var subject, predicate, object rdf.Node
 	out := make(chan rdf.Triple)
 	// walk through the file using a goroutine

@@ -6,11 +6,6 @@ import (
 	"sync"
 )
 
-const (
-	// maxGoroutinesWP is the max number of goroutines allowed in worker pools
-	maxGoroutinesWP = 5.0
-)
-
 // Node represented in the Bitmap standard, following the HDT-MR model.
 type bitmapNode struct {
 	id   int
@@ -32,6 +27,7 @@ type HDTGraph struct {
 	root        bitmapNode
 	nextID      int
 	triples     map[string][]rdf.Triple
+	lock        *sync.Mutex
 }
 
 // newBitmapNode creates a new Bitmap Node without any son.
@@ -64,6 +60,14 @@ func (n *bitmapNode) updateCounter(wg *sync.WaitGroup) {
 	}
 }
 
+// Recursively remove the sons of a Bitmap Node
+func (n *bitmapNode) removeSons() {
+	for key, son := range n.sons {
+		son.removeSons()
+		delete(n.sons, key)
+	}
+}
+
 // newBitmapTriple creates a New Bitmap Triple.
 func newBitmapTriple(subj, pred, obj int) bitmapTriple {
 	return bitmapTriple{subj, pred, obj}
@@ -90,7 +94,7 @@ func (t *bitmapTriple) Triple(dict *bimap) (rdf.Triple, error) {
 
 // NewHDTGraph creates a new empty HDT Graph.
 func NewHDTGraph() HDTGraph {
-	return HDTGraph{newBimap(), newBitmapNode(-1), 0, make(map[string][]rdf.Triple)}
+	return HDTGraph{newBimap(), newBitmapNode(-1), 0, make(map[string][]rdf.Triple), &sync.Mutex{}}
 }
 
 // Register a new Node in the graph dictionnary, then return its unique ID.
@@ -122,6 +126,25 @@ func (g *HDTGraph) updateNodes(root *bitmapNode, datas []int) {
 	}
 }
 
+// Recursively remove nodes that match criteria
+func (g *HDTGraph) removeNodes(root *bitmapNode, datas []*rdf.Node) {
+	// it's a blank node, delete all his sons
+	node := (*datas[0])
+	if _, isBnode := node.(rdf.BlankNode); isBnode {
+		root.removeSons()
+	} else {
+		// search for the specific node in the root's sons
+		refNodeID, inDict := g.dictionnary.locate(node)
+		if inDict {
+			son, inSons := root.sons[refNodeID]
+			if inSons {
+				// delete his sons that match the next criteria
+				g.removeNodes(son, datas[1:])
+			}
+		}
+	}
+}
+
 // Recursively collect datas from the graph in order to form triple pattern matching criterias.
 func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int, out chan rdf.Triple, wg *sync.WaitGroup) {
 	defer wg.Done()
@@ -138,7 +161,6 @@ func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int,
 		// if the current node to search is a blank node, search in every sons
 		_, isBnode := node.(rdf.BlankNode)
 		if isBnode {
-			// IDEA : allow a pool of workers to query datas from all the sons of the root
 			go func() {
 				for _, son := range root.sons {
 					g.queryNodes(son, datas[1:], append(triple, son.id), out, wg)
@@ -162,14 +184,23 @@ func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int,
 
 // LoadFromFile load the content of a RDF graph stored in a file into the current graph.
 func (g *HDTGraph) LoadFromFile(filename, format string) {
-	//TODO
+	loadFromFile(g, filename, format)
 }
 
 // Add a new Triple pattern to the graph.
 func (g *HDTGraph) Add(triple rdf.Triple) {
 	// add each node of the triple to the dictionnary & then update the graph
 	subjID, predID, objID := g.registerNode(triple.Subject), g.registerNode(triple.Predicate), g.registerNode(triple.Object)
+	g.lock.Lock()
+	defer g.lock.Unlock()
 	g.updateNodes(&g.root, []int{subjID, predID, objID})
+}
+
+// Delete triples from the graph that match a BGP given in parameters.
+func (g *HDTGraph) Delete(subject, object, predicate rdf.Node) {
+	g.lock.Lock()
+	defer g.lock.Unlock()
+	g.removeNodes(&g.root, []*rdf.Node{&subject, &predicate, &object})
 }
 
 // Filter fetch triples form the graph that match a BGP given in parameters.
@@ -177,10 +208,12 @@ func (g *HDTGraph) Filter(subject, predicate, object rdf.Node) chan rdf.Triple {
 	var wg sync.WaitGroup
 	results := make(chan rdf.Triple)
 	// fetch data in the tree & wait for the operation to be complete before closing the pipeline
+	g.lock.Lock()
 	wg.Add(g.root.depth() + 1)
 	go g.queryNodes(&g.root, []*rdf.Node{&subject, &predicate, &object}, make([]int, 0), results, &wg)
 	go func() {
 		defer close(results)
+		defer g.lock.Unlock()
 		wg.Wait()
 	}()
 	return results

@@ -56,6 +56,33 @@ func TestComplexFilterListGraph(t *testing.T) {
 	}
 }
 
+func TestDeleteListGraph(t *testing.T) {
+	graph := NewListGraph()
+	nbDatas := 1000
+	cpt := 0
+	subj := rdf.NewURI("dblp:foo")
+
+	// insert random triples in the graph
+	for i := 0; i < nbDatas; i++ {
+		triple := rdf.NewTriple(subj, rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
+		graph.Add(triple)
+	}
+
+	// remove all triple with a given subject
+	graph.Delete(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w"))
+
+	// select all triple of the graph
+	for _ = range graph.Filter(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w")) {
+		cpt++
+	}
+
+	if cpt > 0 {
+		t.Error("Error : the graph should be empty")
+	}
+}
+
+// Benchmarking
+
 func BenchmarkAddListGraph(b *testing.B) {
 	graph := NewListGraph()
 	nbDatas := 1000
@@ -71,6 +98,22 @@ func BenchmarkAddListGraph(b *testing.B) {
 		for _, triple := range datas {
 			graph.Add(triple)
 		}
+	}
+}
+
+func BenchmarkDeleteAllListGraph(b *testing.B) {
+	graph := NewListGraph()
+	nbDatas := 1000
+	subj := rdf.NewURI("dblp:foo")
+
+	// insert random triples in the graph
+	for i := 0; i < nbDatas; i++ {
+		triple := rdf.NewTriple(subj, rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
+		graph.Add(triple)
+	}
+
+	for i := 0; i < b.N; i++ {
+		graph.Delete(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w"))
 	}
 }
 
