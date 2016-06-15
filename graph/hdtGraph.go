@@ -27,7 +27,8 @@ type HDTGraph struct {
 	root        bitmapNode
 	nextID      int
 	triples     map[string][]rdf.Triple
-	lock        *sync.Mutex
+	*sync.Mutex
+    *rdfReader
 }
 
 // newBitmapNode creates a new Bitmap Node without any son.
@@ -93,8 +94,11 @@ func (t *bitmapTriple) Triple(dict *bimap) (rdf.Triple, error) {
 }
 
 // NewHDTGraph creates a new empty HDT Graph.
-func NewHDTGraph() HDTGraph {
-	return HDTGraph{newBimap(), newBitmapNode(-1), 0, make(map[string][]rdf.Triple), &sync.Mutex{}}
+func NewHDTGraph() *HDTGraph {
+    reader := newRDFReader()
+    g := &HDTGraph{newBimap(), newBitmapNode(-1), 0, make(map[string][]rdf.Triple), &sync.Mutex{}, reader}
+    reader.graph = g
+	return g
 }
 
 // Register a new Node in the graph dictionnary, then return its unique ID.
@@ -182,24 +186,19 @@ func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int,
 	}
 }
 
-// LoadFromFile load the content of a RDF graph stored in a file into the current graph.
-func (g *HDTGraph) LoadFromFile(filename, format string) {
-	loadFromFile(g, filename, format)
-}
-
 // Add a new Triple pattern to the graph.
 func (g *HDTGraph) Add(triple rdf.Triple) {
 	// add each node of the triple to the dictionnary & then update the graph
 	subjID, predID, objID := g.registerNode(triple.Subject), g.registerNode(triple.Predicate), g.registerNode(triple.Object)
-	g.lock.Lock()
-	defer g.lock.Unlock()
+	g.Lock()
+	defer g.Unlock()
 	g.updateNodes(&g.root, []int{subjID, predID, objID})
 }
 
 // Delete triples from the graph that match a BGP given in parameters.
 func (g *HDTGraph) Delete(subject, object, predicate rdf.Node) {
-	g.lock.Lock()
-	defer g.lock.Unlock()
+	g.Lock()
+	defer g.Unlock()
 	g.removeNodes(&g.root, []*rdf.Node{&subject, &predicate, &object})
 }
 
@@ -208,12 +207,12 @@ func (g *HDTGraph) Filter(subject, predicate, object rdf.Node) chan rdf.Triple {
 	var wg sync.WaitGroup
 	results := make(chan rdf.Triple)
 	// fetch data in the tree & wait for the operation to be complete before closing the pipeline
-	g.lock.Lock()
+	g.Lock()
 	wg.Add(g.root.depth() + 1)
 	go g.queryNodes(&g.root, []*rdf.Node{&subject, &predicate, &object}, make([]int, 0), results, &wg)
 	go func() {
 		defer close(results)
-		defer g.lock.Unlock()
+		defer g.Unlock()
 		wg.Wait()
 	}()
 	return results

@@ -77,7 +77,22 @@ func TestDeleteListGraph(t *testing.T) {
 	}
 
 	if cpt > 0 {
-		t.Error("Error : the graph should be empty")
+		t.Error("the graph should be empty")
+	}
+}
+
+func TestLoadFromFileListGraph(t *testing.T) {
+    graph := NewListGraph()
+    cpt := 0
+    graph.LoadFromFile("../parser/datas/test.nt", "nt")
+
+    // select all triple of the graph
+	for _ = range graph.Filter(rdf.NewBlankNode("y"), rdf.NewBlankNode("v"), rdf.NewBlankNode("w")) {
+		cpt++
+	}
+
+	if cpt != 4 {
+		t.Error("the graph should contains 4 triples, but it contains", cpt, "triples")
 	}
 }
 

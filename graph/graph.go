@@ -12,8 +12,6 @@ import (
 //
 // Package graph provides several implementations for this interface.
 type Graph interface {
-	// Load the content of a RDF graph stored in a file into the current graph.
-	LoadFromFile(filename, format string)
 	// Add a new Triple pattern to the graph.
 	Add(triple rdf.Triple)
 	// Delete triples from the graph that match a BGP given in parameters.
@@ -24,8 +22,22 @@ type Graph interface {
 	Serialize(format string) string
 }
 
+// rdfReader represent a reader capable of reading RDF data encoded in various format.
+//
+// This structure is designed to be embedded into types which implement the Graph interface
+type rdfReader struct {
+    graph Graph
+    // list of prefixes used in some RDF formats (Turtle, JSON-LD, ...)
+    prefixes map[string]string
+}
+
+// newRDFReader creates a new rdfReader
+func newRDFReader() *rdfReader {
+    return &rdfReader{nil, make(map[string]string)}
+}
+
 // Generic function for loading triples from a file into a graph, with a given format
-func loadFromFile(g Graph, filename string, format string) {
+func (r *rdfReader) LoadFromFile(filename string, format string) {
 	var p parser.Parser
 	// determine which parser to use depending on the format
 	switch strings.ToLower(format) {
@@ -38,6 +50,6 @@ func loadFromFile(g Graph, filename string, format string) {
 			"Please see the documentation at https://godoc.org/github.com/Callidon/joseki/parser to see the available parsers."))
 	}
 	for triple := range p.Read(filename) {
-		g.Add(triple)
+		r.graph.Add(triple)
 	}
 }

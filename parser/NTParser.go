@@ -15,7 +15,16 @@ type NTParser struct {
 
 // NewNTParser creates a new NTParser
 func NewNTParser() NTParser {
-    return NTParser{}
+	return NTParser{}
+}
+
+// Prefixes returns a channel which will be used to fetch prefixes during the parsing of a file.
+// As N-Triples doesn't use prefixes in its syntax, the channel returned by this function will never emit anything
+// and is closed by default.
+func (p NTParser) Prefixes() chan string {
+	out := make(chan string)
+	close(out)
+	return out
 }
 
 // Read a file containg RDF triples in N-Triples format & convert them in triples.
