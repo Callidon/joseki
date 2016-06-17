@@ -1,3 +1,5 @@
+@prefix sw: <http://www.w3.org/2001/sw/RDFCore/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
 <http://www.w3.org/2001/sw/RDFCore/ntriples/> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Document> ;
 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Document> .
 <http://www.w3.org/2001/sw/RDFCore/ntriples/> <http://purl.org/dc/terms/title> "N-Triples" , "Turtle" .

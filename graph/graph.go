@@ -33,23 +33,29 @@ type rdfReader struct {
 
 // newRDFReader creates a new rdfReader
 func newRDFReader() *rdfReader {
-    return &rdfReader{nil, make(map[string]string)}
+    return &rdfReader{nil, nil}
 }
 
 // Generic function for loading triples from a file into a graph, with a given format
 func (r *rdfReader) LoadFromFile(filename string, format string) {
 	var p parser.Parser
+    hasPrefixes := false
 	// determine which parser to use depending on the format
 	switch strings.ToLower(format) {
 	case "nt", "n-triples":
 		p = parser.NewNTParser()
 	case "ttl", "turtle":
 		p = parser.NewTurtleParser()
+        hasPrefixes = true
 	default:
 		panic(errors.New("Error : " + format + " is not a supported format." +
 			"Please see the documentation at https://godoc.org/github.com/Callidon/joseki/parser to see the available parsers."))
 	}
+    // read triples from file, then load prefixes if necessary
 	for triple := range p.Read(filename) {
 		r.graph.Add(triple)
 	}
+    if hasPrefixes {
+        r.prefixes = p.Prefixes()
+    }
 }

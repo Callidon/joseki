@@ -12,24 +12,23 @@ import (
 //
 // Turtle reference : https://www.w3.org/TR/turtle/
 type TurtleParser struct {
-	prefixesOut chan string
+	prefixes map[string]string
 }
 
 // NewTurtleParser creates a new TurtleParser
 func NewTurtleParser() TurtleParser {
-	return TurtleParser{}
+	return TurtleParser{make(map[string]string)}
 }
 
-// Prefixes returns a channel which will be used to fetch prefixes during the parsing of a file.
-func (p TurtleParser) Prefixes() chan string {
-	p.prefixesOut = make(chan string)
-	return p.prefixesOut
+// Prefixes returns the prefixes read by the parser during the last parsing.
+func (p TurtleParser) Prefixes() map[string]string {
+	return p.prefixes
 }
 
 // Read a file containg RDF triples in Turtle format & convert them in triples.
 //
 // Triples generated are send throught a channel, which is closed when the parsing of the file has been completed.
-func (p TurtleParser) Read(filename string) chan rdf.Triple {
+func (p *TurtleParser) Read(filename string) chan rdf.Triple {
 	out := make(chan rdf.Triple)
 	// walk through the file using a goroutine
 	go func() {
@@ -48,21 +47,26 @@ func (p TurtleParser) Read(filename string) chan rdf.Triple {
 		bnodeCpt := 0
 		for scanner.Scan() {
 			line := extractSegments(scanner.Text())
-			scanPrefixesDone = (line[0] != "@prefix") || (p.prefixesOut == nil)
+			scanPrefixesDone = (line[0] != "@prefix")
 			for _, elt := range line {
 				// scan for prefixes until they have been all found, then scan for triples
 				if !scanPrefixesDone {
-					// skip to next element if reading the @prefix keyword
-					if elt == "@prefix" {
+					// skip to next element if reading the @prefix keyword or the ":" separator
+					if (elt == "@prefix") || (elt == ":") {
 						continue
 					} else if elt == "." {
-						// when hitting the separator, send the prefix (name & value)
-						p.prefixesOut <- prefixName
-						p.prefixesOut <- prefixValue
+						// when hitting the separator, add the prefix
+						p.prefixes[prefixName] = prefixValue
 						prefixName, prefixValue = "", ""
 					} else if prefixName == "" {
+                        if string(elt[len(elt) - 1]) == ":" {
+                            elt = elt[0:len(elt) - 1]
+                        }
 						prefixName = elt
 					} else if prefixValue == "" {
+                        if (string(elt[0]) == "<") && (string(elt[len(elt)-1]) == ">") {
+                    		elt = elt[1 : len(elt)-1]
+                        }
 						prefixValue = elt
 					} else {
 						err = errors.New("Error at line " + string(lineNumber) + " of file during prefixes scan : bad syntax")
@@ -104,9 +108,6 @@ func (p TurtleParser) Read(filename string) chan rdf.Triple {
 			}
 		}
 		close(out)
-        if p.prefixesOut != nil {
-            close(p.prefixesOut)
-        }
 	}()
 	return out
 }

@@ -6,7 +6,7 @@ import (
 )
 
 func TestReadNTParser(t *testing.T) {
-	parser := NTParser{}
+	parser := NewNTParser()
 	cpt := 0
 	datas := []rdf.Triple{
 		rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples/"),
