@@ -12,7 +12,7 @@ import (
 // Package parser provides several implementations for this interface.
 type Parser interface {
 	Read(filename string) chan rdf.Triple
-    Prefixes() map[string]string
+	Prefixes() map[string]string
 }
 
 // Utility function for checking errors

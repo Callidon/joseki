@@ -59,14 +59,14 @@ func (p *TurtleParser) Read(filename string) chan rdf.Triple {
 						p.prefixes[prefixName] = prefixValue
 						prefixName, prefixValue = "", ""
 					} else if prefixName == "" {
-                        if string(elt[len(elt) - 1]) == ":" {
-                            elt = elt[0:len(elt) - 1]
-                        }
+						if string(elt[len(elt)-1]) == ":" {
+							elt = elt[0 : len(elt)-1]
+						}
 						prefixName = elt
 					} else if prefixValue == "" {
-                        if (string(elt[0]) == "<") && (string(elt[len(elt)-1]) == ">") {
-                    		elt = elt[1 : len(elt)-1]
-                        }
+						if (string(elt[0]) == "<") && (string(elt[len(elt)-1]) == ">") {
+							elt = elt[1 : len(elt)-1]
+						}
 						prefixValue = elt
 					} else {
 						err = errors.New("Error at line " + string(lineNumber) + " of file during prefixes scan : bad syntax")
