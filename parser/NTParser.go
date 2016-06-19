@@ -14,8 +14,8 @@ type NTParser struct {
 }
 
 // NewNTParser creates a new NTParser
-func NewNTParser() NTParser {
-	return NTParser{}
+func NewNTParser() *NTParser {
+	return &NTParser{}
 }
 
 // Prefixes returns the prefixes read by the parser during the last parsing.

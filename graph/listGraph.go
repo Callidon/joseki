@@ -11,14 +11,14 @@ import (
 type ListGraph struct {
 	triples []rdf.Triple
 	*sync.Mutex
-    *rdfReader
+	*rdfReader
 }
 
 // NewListGraph creates a new List Graph.
 func NewListGraph() *ListGraph {
-    reader := newRDFReader()
-    g := &ListGraph{make([]rdf.Triple, 0), &sync.Mutex{}, reader}
-    reader.graph = g
+	reader := newRDFReader()
+	g := &ListGraph{make([]rdf.Triple, 0), &sync.Mutex{}, reader}
+	reader.graph = g
 	return g
 }
 

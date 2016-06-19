@@ -16,8 +16,8 @@ type TurtleParser struct {
 }
 
 // NewTurtleParser creates a new TurtleParser
-func NewTurtleParser() TurtleParser {
-	return TurtleParser{make(map[string]string)}
+func NewTurtleParser() *TurtleParser {
+	return &TurtleParser{make(map[string]string)}
 }
 
 // Prefixes returns the prefixes read by the parser during the last parsing.

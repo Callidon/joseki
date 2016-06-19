@@ -132,11 +132,11 @@ func TestDeleteHDTGraph(t *testing.T) {
 }
 
 func TestLoadFromFileHDTGraph(t *testing.T) {
-    graph := NewListGraph()
-    cpt := 0
-    graph.LoadFromFile("../parser/datas/test.nt", "nt")
+	graph := NewListGraph()
+	cpt := 0
+	graph.LoadFromFile("../parser/datas/test.nt", "nt")
 
-    // select all triple of the graph
+	// select all triple of the graph
 	for _ = range graph.Filter(rdf.NewBlankNode("y"), rdf.NewBlankNode("v"), rdf.NewBlankNode("w")) {
 		cpt++
 	}
