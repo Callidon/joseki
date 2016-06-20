@@ -7,12 +7,55 @@ import (
 	"regexp"
 )
 
+// Token is the type for a token read by a scanner
+type Token float64
+
+const (
+	_ = iota
+	// TokenIllegal is an illegal token in a RDF syntax
+	TokenIllegal Token = 1 << (10 * iota)
+	// TokenEnd ends a triple declaration
+	TokenEnd
+	// TokenSep is a RDF separator (for object/literal list, etc)
+	TokenSep
+	// TokenURI is a RDF URI
+	TokenURI
+	// TokenLiteral is a RDF Literal
+	TokenLiteral
+	// TokenTypedLiteral is a RDF typed Literal
+	TokenTypedLiteral
+	// TokenLangLiteral is a RDF Literal with lang informations
+	TokenLangLiteral
+	// TokenBlankNode is a RDF Blank Node
+	TokenBlankNode
+)
+
 // Parser represent a generic interface for parsing every RDF format.
 //
 // Package parser provides several implementations for this interface.
 type Parser interface {
 	Read(filename string) chan rdf.Triple
 	Prefixes() map[string]string
+}
+
+// RDFScanner represent a generic interface for scanning an RDF file in every format.
+// This interface act as a Lexer during the parsing process.
+//
+// Package parser provides several implementations for this interface.
+type RDFScanner interface {
+	Scan(filename string) chan RDFToken
+}
+
+// RDFToken is a token extracted during the scan of a RDF file.
+// It's meant to be used by a Parser implementation during the parsing phase.
+type RDFToken struct {
+	Type  Token
+	Value string
+}
+
+// NewRDFToken creates a new RDFToken
+func NewRDFToken(tokType Token, value string) RDFToken {
+	return RDFToken{tokType, value}
 }
 
 // Utility function for checking errors
