@@ -78,8 +78,11 @@ func (s *TurtleScanner) Scan(filename string) chan RDFToken {
 					} else if (string(elt[0]) == "<") && (string(elt[len(elt)-1]) == ">") {
 						out <- NewRDFToken(TokenURI, elt[1:len(elt)-1])
 					} else if (string(elt[0]) == "\"") && (string(elt[len(elt)-1]) == "\"") {
-						// TODO add a security when a xml type or a lang is given with the literal
 						out <- NewRDFToken(TokenLiteral, elt[1:len(elt)-1])
+					} else if elt[0:2] == "^^" {
+						out <- NewRDFToken(TokenTypedLiteral, elt[2:])
+					} else if string(elt[0]) == "@" {
+						out <- NewRDFToken(TokenLangLiteral, elt[1:])
 					} else if (string(elt[0]) == "_") && (string(elt[1]) == ":") {
 						out <- NewRDFToken(TokenBlankNode, elt[2:])
 					} else {
@@ -109,6 +112,7 @@ func (p TurtleParser) Prefixes() map[string]string {
 func (p *TurtleParser) Read(filename string) chan rdf.Triple {
 	var subject, predicate, object rdf.Node
 	var prefixName string
+	var literalValue string
 	out := make(chan rdf.Triple, bufferSize)
 	// utility function for assigning a value to the first available node
 	assignNode := func(value rdf.Node) {
@@ -160,6 +164,21 @@ func (p *TurtleParser) Read(filename string) chan rdf.Triple {
 				assignNode(rdf.NewBlankNode(token.Value))
 			case TokenLiteral:
 				assignNode(rdf.NewLiteral(token.Value))
+				literalValue = token.Value
+			case TokenTypedLiteral:
+				_, ok := object.(rdf.Literal)
+				if ok {
+					object = rdf.NewTypedLiteral(literalValue, token.Value)
+				} else {
+					panic(errors.New("Trying to assign a type to a non literal object"))
+				}
+			case TokenLangLiteral:
+				_, ok := object.(rdf.Literal)
+				if ok {
+					object = rdf.NewLangLiteral(literalValue, token.Value)
+				} else {
+					panic(errors.New("Trying to assign a language to a non literal object"))
+				}
 			case TokenIllegal:
 				panic(token.Value)
 			default:

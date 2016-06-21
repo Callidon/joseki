@@ -3,5 +3,6 @@
 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>
 <http://xmlns.com/foaf/0.1/Document>
 .
-<http://www.w3.org/2001/sw/RDFCore/ntriples/> <http://purl.org/dc/terms/title> "N-Triples" .
+<http://www.w3.org/2001/sw/RDFCore/ntriples/> <http://purl.org/dc/terms/title> "N-Triples"@en .
+<http://www.w3.org/2001/sw/RDFCore/ntriples/> <http://purl.org/dc/terms/title> "My Typed Literal"^^<http://www.w3.org/2001/XMLSchema#string> .
 <http://www.w3.org/2001/sw/RDFCore/ntriples/> <http://xmlns.com/foaf/0.1/maker> _:art .

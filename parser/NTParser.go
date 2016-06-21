@@ -47,13 +47,16 @@ func (s *NTScanner) Scan(filename string) chan RDFToken {
 					out <- NewRDFToken(TokenEnd, ".")
 				} else if (string(elt[0]) == "<") && (string(elt[len(elt)-1]) == ">") {
 					out <- NewRDFToken(TokenURI, elt[1:len(elt)-1])
-				} else if (string(elt[0]) == "\"") && (string(elt[len(elt)-1]) == "\"") {
-					// TODO add a security when a xml type or a lang is given with the literal
-					out <- NewRDFToken(TokenLiteral, elt[1:len(elt)-1])
 				} else if (string(elt[0]) == "_") && (string(elt[1]) == ":") {
 					out <- NewRDFToken(TokenBlankNode, elt[2:])
+				} else if (string(elt[0]) == "\"") && (string(elt[len(elt)-1]) == "\"") {
+					out <- NewRDFToken(TokenLiteral, elt[1:len(elt)-1])
+				} else if elt[0:2] == "^^" {
+					out <- NewRDFToken(TokenTypedLiteral, elt[2:])
+				} else if string(elt[0]) == "@" {
+					out <- NewRDFToken(TokenLangLiteral, elt[1:])
 				} else {
-					out <- NewRDFToken(TokenIllegal, "Unexpected token at line "+string(lineNumber)+" of file : bad syntax")
+					out <- NewRDFToken(TokenIllegal, "Unexpected token when scanning "+elt)
 				}
 				lineNumber++
 			}
@@ -78,6 +81,7 @@ func (p NTParser) Prefixes() map[string]string {
 // Triples generated are send through a channel, which is closed when the parsing of the file has been completed.
 func (p NTParser) Read(filename string) chan rdf.Triple {
 	var subject, predicate, object rdf.Node
+	var literalValue string
 	out := make(chan rdf.Triple, bufferSize)
 	// utility function for assigning a value to the first available node
 	assignNode := func(value rdf.Node) {
@@ -105,6 +109,21 @@ func (p NTParser) Read(filename string) chan rdf.Triple {
 				assignNode(rdf.NewBlankNode(token.Value))
 			case TokenLiteral:
 				assignNode(rdf.NewLiteral(token.Value))
+				literalValue = token.Value
+			case TokenTypedLiteral:
+				_, ok := object.(rdf.Literal)
+				if ok {
+					object = rdf.NewTypedLiteral(literalValue, token.Value)
+				} else {
+					panic(errors.New("Trying to assign a type to a non literal object"))
+				}
+			case TokenLangLiteral:
+				_, ok := object.(rdf.Literal)
+				if ok {
+					object = rdf.NewLangLiteral(literalValue, token.Value)
+				} else {
+					panic(errors.New("Trying to assign a language to a non literal object"))
+				}
 			case TokenIllegal:
 				panic(token.Value)
 			default:

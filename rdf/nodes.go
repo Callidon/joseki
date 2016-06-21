@@ -28,6 +28,8 @@ type URI struct {
 // RDF Literal reference : https://www.w3.org/TR/2004/REC-rdf-concepts-20040210/#section-Graph-Literal
 type Literal struct {
 	Value string
+	Type  string
+	Lang  string
 }
 
 // BlankNode represent a Blank Node in a RDF Graph.
@@ -75,7 +77,7 @@ func NewURI(value string) URI {
 func (l Literal) Equals(n Node) (bool, error) {
 	other, ok := n.(Literal)
 	if ok {
-		return l.Value == other.Value, nil
+		return (l.Value == other.Value) && (l.Type == other.Type) && (l.Lang == other.Lang), nil
 	}
 	return false, errors.New("Error : mismatch type, can only compare two Literals")
 }
@@ -97,12 +99,27 @@ func (l Literal) Equivalent(n Node) (bool, error) {
 
 // Serialize a Literal to string and return it.
 func (l Literal) String() string {
+	if l.Type != "" {
+		return "\"" + l.Value + "\"^^" + l.Type
+	} else if l.Lang != "" {
+		return "\"" + l.Value + "\"@" + l.Lang
+	}
 	return "\"" + l.Value + "\""
 }
 
 // NewLiteral creates a new Literal.
 func NewLiteral(value string) Literal {
-	return Literal{value}
+	return Literal{value, "", ""}
+}
+
+// NewTypedLiteral returns a new Literal with a type.
+func NewTypedLiteral(value, xmlType string) Literal {
+	return Literal{value, xmlType, ""}
+}
+
+// NewLangLiteral returns a new Literal with a language.
+func NewLangLiteral(value, lang string) Literal {
+	return Literal{value, "", lang}
 }
 
 // Equals is a function that compare two Blank Nodes and return True if they are equals, False otherwise.
