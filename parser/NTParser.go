@@ -30,16 +30,17 @@ func NewNTScanner() *NTScanner {
 //
 // The results are sent through a channel, which is closed when the scan of the file has been completed.
 func (s *NTScanner) Scan(filename string) chan RDFToken {
-	out := make(chan RDFToken)
+	out := make(chan RDFToken, bufferSize)
 	// walk through the file using a goroutine
 	go func() {
+		defer close(out)
 		f, err := os.Open(filename)
 		check(err)
 		defer f.Close()
 
 		scanner := bufio.NewScanner(bufio.NewReader(f))
+		lineNumber := 0
 		for scanner.Scan() {
-			lineNumber := 0
 			line := extractSegments(scanner.Text())
 			for _, elt := range line {
 				if elt == "." {
@@ -57,7 +58,6 @@ func (s *NTScanner) Scan(filename string) chan RDFToken {
 				lineNumber++
 			}
 		}
-		close(out)
 	}()
 	return out
 }
@@ -78,8 +78,8 @@ func (p NTParser) Prefixes() map[string]string {
 // Triples generated are send through a channel, which is closed when the parsing of the file has been completed.
 func (p NTParser) Read(filename string) chan rdf.Triple {
 	var subject, predicate, object rdf.Node
-	out := make(chan rdf.Triple)
-
+	out := make(chan rdf.Triple, bufferSize)
+	// utility function for assigning a value to the first available node
 	assignNode := func(value rdf.Node) {
 		if subject == nil {
 			subject = value
@@ -91,6 +91,7 @@ func (p NTParser) Read(filename string) chan rdf.Triple {
 	}
 	// scan the file & analyse the tokens using a goroutine
 	go func() {
+		defer close(out)
 		scanner := NewNTScanner()
 		for token := range scanner.Scan(filename) {
 			switch token.Type {
@@ -110,7 +111,6 @@ func (p NTParser) Read(filename string) chan rdf.Triple {
 				panic(errors.New("Unexpected token " + token.Value))
 			}
 		}
-		close(out)
 	}()
 	return out
 }

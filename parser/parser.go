@@ -11,6 +11,11 @@ import (
 	"regexp"
 )
 
+const (
+	// Max size for the buffer of this package
+	bufferSize = 100
+)
+
 // Token is the type for a token read by a scanner
 type Token float64
 
@@ -32,6 +37,10 @@ const (
 	TokenLangLiteral
 	// TokenBlankNode is a RDF Blank Node
 	TokenBlankNode
+	// TokenPrefixName is the name of a prefix
+	TokenPrefixName
+	// TokenPrefixValue is the value of a prefix
+	TokenPrefixValue
 )
 
 // Parser represent a generic interface for parsing every RDF format.
