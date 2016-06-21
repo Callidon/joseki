@@ -145,7 +145,7 @@ func (p *TurtleParser) Read(filename string) chan rdf.Triple {
 					sendTriple(subject, predicate, object, out)
 					object = nil
 				case "[":
-					// generate a new objectn send triple and then use the new blank Node as the new subject
+					// generate a new object & send triple and then use the new blank Node as the new subject
 					object = rdf.NewBlankNode("v" + strconv.Itoa(bnodeCpt))
 					sendTriple(subject, predicate, object, out)
 					subject = object
