@@ -71,6 +71,7 @@
 //  }
 //
 // For more informations about specific features, see the documentation of each subpackage.
+//
 // Author : Thomas Minier
 package joseki
 
