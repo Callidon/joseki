@@ -10,6 +10,7 @@ import (
 	"github.com/Callidon/joseki/rdf"
 	"os"
 	"strconv"
+	"strings"
 )
 
 // TurtleParser is a parser for reading & loading triples in Turtle format.
@@ -47,7 +48,12 @@ func (s *turtleScanner) scan(filename string) chan rdfToken {
 		lineNumber := 0
 		for scanner.Scan() {
 			line := extractSegments(scanner.Text())
+			// skip blank lines
+			if len(line) == 0 {
+				continue
+			}
 			scanPrefixesDone = (line[0] != "@prefix")
+			// scan elements of the line
 			for _, elt := range line {
 				if !scanPrefixesDone {
 					if (elt == "@prefix") || (elt == ":") {
@@ -85,6 +91,8 @@ func (s *turtleScanner) scan(filename string) chan rdfToken {
 						out <- newRDFToken(tokenLangLiteral, elt[1:])
 					} else if (string(elt[0]) == "_") && (string(elt[1]) == ":") {
 						out <- newRDFToken(tokenBlankNode, elt[2:])
+					} else if strings.Index(elt, ":") > -1 {
+						out <- newRDFToken(tokenPrefixedURI, elt)
 					} else {
 						out <- newRDFToken(tokenIllegal, "Unexpected token at line "+string(lineNumber)+" of file : bad syntax")
 					}
@@ -160,6 +168,14 @@ func (p *TurtleParser) Read(filename string) chan rdf.Triple {
 				p.prefixes[prefixName] = token.Value
 			case tokenURI:
 				assignNode(rdf.NewURI(token.Value))
+			case tokenPrefixedURI:
+				sepIndex := strings.Index(token.Value, ":")
+				prefixURI, knownPrefix := p.prefixes[token.Value[0:sepIndex]]
+				if knownPrefix {
+					assignNode(rdf.NewURI(prefixURI + token.Value[sepIndex+1:]))
+				} else {
+					panic(errors.New("Unknown prefix " + token.Value[0:sepIndex] + " found"))
+				}
 			case tokenBlankNode:
 				assignNode(rdf.NewBlankNode(token.Value))
 			case tokenLiteral:

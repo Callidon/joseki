@@ -42,6 +42,11 @@ func (s *ntScanner) scan(filename string) chan rdfToken {
 		lineNumber := 0
 		for scanner.Scan() {
 			line := extractSegments(scanner.Text())
+			// skip blank lines
+			if len(line) == 0 {
+				continue
+			}
+			// scan elements of the line
 			for _, elt := range line {
 				if elt == "." {
 					out <- newRDFToken(tokenEnd, ".")

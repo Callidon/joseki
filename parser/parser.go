@@ -6,7 +6,6 @@
 package parser
 
 import (
-	"errors"
 	"github.com/Callidon/joseki/rdf"
 	"regexp"
 )
@@ -29,6 +28,8 @@ const (
 	tokenSep
 	// tokenURI is a RDF URI
 	tokenURI
+	// tokenPrefixedURI is a RDF URI with a prefix
+	tokenPrefixedURI
 	// tokenLiteral is a RDF Literal
 	tokenLiteral
 	// tokenTypedLiteral is a RDF typed Literal
@@ -66,7 +67,7 @@ type rdfToken struct {
 	Value string
 }
 
-// NewRDFToken creates a new rdfToken
+// newRDFToken creates a new rdfToken
 func newRDFToken(tokType token, value string) rdfToken {
 	return rdfToken{tokType, value}
 }
@@ -81,23 +82,6 @@ func check(err error) {
 // Send RDF Node of a triple pattern throught a channel
 func sendTriple(subject rdf.Node, predicate rdf.Node, object rdf.Node, out chan rdf.Triple) {
 	out <- rdf.NewTriple(subject, predicate, object)
-}
-
-// Parse a string node to find its type & return the corresponding RDF Node
-func parseNode(elt string) (rdf.Node, error) {
-	var node rdf.Node
-	var err error
-	if (string(elt[0]) == "<") && (string(elt[len(elt)-1]) == ">") {
-		node = rdf.NewURI(elt[1 : len(elt)-1])
-	} else if (string(elt[0]) == "\"") && (string(elt[len(elt)-1]) == "\"") {
-		// TODO add a security when a xml type is given with the literal
-		node = rdf.NewLiteral(elt[1 : len(elt)-1])
-	} else if (string(elt[0]) == "_") && (string(elt[1]) == ":") {
-		node = rdf.NewBlankNode(elt[2:])
-	} else {
-		err = errors.New("Error : cannot parse " + elt + " into a RDF Node")
-	}
-	return node, err
 }
 
 // extractSegments parse a string and split the segments into a slice.

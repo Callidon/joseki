@@ -13,19 +13,19 @@ func TestReadNTParser(t *testing.T) {
 	parser := NewNTParser()
 	cpt := 0
 	datas := []rdf.Triple{
-		rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples/"),
+		rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples"),
 			rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
 			rdf.NewURI("http://xmlns.com/foaf/0.1/Document")),
-		rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples/"),
+		rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples"),
 			rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
 			rdf.NewURI("http://xmlns.com/foaf/0.1/Document")),
-		rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples/"),
+		rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples"),
 			rdf.NewURI("http://purl.org/dc/terms/title"),
 			rdf.NewLangLiteral("N-Triples", "en")),
-		rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples/"),
+		rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples"),
 			rdf.NewURI("http://purl.org/dc/terms/title"),
 			rdf.NewTypedLiteral("My Typed Literal", "<http://www.w3.org/2001/XMLSchema#string>")),
-		rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples/"),
+		rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples"),
 			rdf.NewURI("http://xmlns.com/foaf/0.1/maker"),
 			rdf.NewBlankNode("art")),
 	}
