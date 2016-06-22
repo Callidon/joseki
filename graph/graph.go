@@ -15,6 +15,7 @@ import (
 // Graph represents a generic RDF Graph
 //
 // Package graph provides several implementations for this interface.
+// RDF Graph reference : https://www.w3.org/TR/rdf11-concepts/#section-rdf-graph
 type Graph interface {
 	// Add a new Triple pattern to the graph.
 	Add(triple rdf.Triple)
