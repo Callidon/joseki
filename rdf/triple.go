@@ -6,7 +6,7 @@ package rdf
 
 // Triple represent a RDF Triple
 //
-// RDF Triple reference : https://www.w3.org/TR/2004/REC-rdf-concepts-20040210/#section-triples
+// RDF Triple reference : https://www.w3.org/TR/rdf11-concepts/#section-triples
 type Triple struct {
 	Subject   Node
 	Predicate Node

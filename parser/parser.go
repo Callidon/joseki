@@ -21,7 +21,7 @@ type Token float64
 
 const (
 	_ = iota
-	// TokenIllegal is an illegal token in a RDF syntax
+	// TokenIllegal is an illegal token in the RDF syntax
 	TokenIllegal Token = 1 << (10 * iota)
 	// TokenEnd ends a triple declaration
 	TokenEnd

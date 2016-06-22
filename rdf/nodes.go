@@ -9,7 +9,7 @@ import "errors"
 
 // Node represent a generic node in a RDF Grapg
 //
-// RDF Graph reference : https://www.w3.org/TR/2004/REC-rdf-concepts-20040210/#section-data-model
+// RDF Graph reference : https://www.w3.org/TR/rdf11-concepts/#section-rdf-graph
 type Node interface {
 	Equals(n Node) (bool, error)
 	Equivalent(n Node) (bool, error)
@@ -18,14 +18,14 @@ type Node interface {
 
 // URI represent a URI node in a RDF Graph
 //
-// RDF URI reference : https://www.w3.org/TR/2004/REC-rdf-concepts-20040210/#section-Graph-URIref
+// RDF URI reference : https://www.w3.org/TR/rdf11-concepts/#section-IRIs
 type URI struct {
 	Value string
 }
 
 // Literal represent a Literal node in a RDF Graph.
 //
-// RDF Literal reference : https://www.w3.org/TR/2004/REC-rdf-concepts-20040210/#section-Graph-Literal
+// RDF Literal reference : https://www.w3.org/TR/rdf11-concepts/#section-Graph-Literal
 type Literal struct {
 	Value string
 	Type  string
@@ -34,7 +34,7 @@ type Literal struct {
 
 // BlankNode represent a Blank Node in a RDF Graph.
 //
-// RDF Blank Node reference : https://www.w3.org/TR/2004/REC-rdf-concepts-20040210/#section-blank-nodes
+// RDF Blank Node reference : https://www.w3.org/TR/rdf11-concepts/#section-blank-nodes
 type BlankNode struct {
 	Variable string
 }
