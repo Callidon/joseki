@@ -42,13 +42,15 @@ func (s *ntScanner) scan(filename string) chan rdfToken {
 		lineNumber := 0
 		for scanner.Scan() {
 			line := extractSegments(scanner.Text())
-			// skip blank lines
-			if len(line) == 0 {
+			// skip blank lines & comments
+			if (len(line) == 0) || (line[0] == "#") {
 				continue
 			}
 			// scan elements of the line
 			for _, elt := range line {
-				if elt == "." {
+				if string(elt[0]) == "#" {
+					break
+				} else if elt == "." {
 					out <- newRDFToken(tokenEnd, ".")
 				} else if (string(elt[0]) == "<") && (string(elt[len(elt)-1]) == ">") {
 					out <- newRDFToken(tokenURI, elt[1:len(elt)-1])
@@ -63,8 +65,8 @@ func (s *ntScanner) scan(filename string) chan rdfToken {
 				} else {
 					out <- newRDFToken(tokenIllegal, "Unexpected token when scanning "+elt)
 				}
-				lineNumber++
 			}
+			lineNumber++
 		}
 	}()
 	return out

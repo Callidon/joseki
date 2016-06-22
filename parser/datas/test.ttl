@@ -1,9 +1,10 @@
 @prefix sw: <http://www.w3.org/2001/sw/RDFCore/> .
-@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> . # a sneaky comment
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix purl: <http://purl.org/dc/terms/> .
 
 sw:ntriples rdf:type foaf:Document ;
 rdf:type foaf:Document .
+# a filthy comment
 sw:ntriples purl:title "N-Triples"@en , "Turtle"^^<http://www.w3.org/2001/XMLSchema#string> .
-sw:ntriples foaf:maker [ purl:title "My Title" ]
+sw:ntriples foaf:maker [ purl:title "My Title" ] # another sneaky comment

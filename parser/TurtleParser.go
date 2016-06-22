@@ -48,13 +48,17 @@ func (s *turtleScanner) scan(filename string) chan rdfToken {
 		lineNumber := 0
 		for scanner.Scan() {
 			line := extractSegments(scanner.Text())
-			// skip blank lines
-			if len(line) == 0 {
+			// skip blank lines & comments
+			if (len(line) == 0) || (line[0] == "#") {
 				continue
 			}
 			scanPrefixesDone = (line[0] != "@prefix")
 			// scan elements of the line
 			for _, elt := range line {
+				// skip comments
+				if string(elt[0]) == "#" {
+					break
+				}
 				if !scanPrefixesDone {
 					if (elt == "@prefix") || (elt == ":") {
 						continue
