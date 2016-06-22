@@ -4,7 +4,7 @@
 
 package rdf
 
-// Triple represent a RDF Triple
+// Triple represents a RDF Triple
 //
 // RDF Triple reference : https://www.w3.org/TR/rdf11-concepts/#section-triples
 type Triple struct {

@@ -7,7 +7,7 @@ package rdf
 
 import "errors"
 
-// Node represent a generic node in a RDF Grapg
+// Node represents a generic node in a RDF Grapg
 //
 // RDF Graph reference : https://www.w3.org/TR/rdf11-concepts/#section-rdf-graph
 type Node interface {
@@ -16,14 +16,14 @@ type Node interface {
 	String() string
 }
 
-// URI represent a URI node in a RDF Graph
+// URI represents a URI node in a RDF Graph
 //
 // RDF URI reference : https://www.w3.org/TR/rdf11-concepts/#section-IRIs
 type URI struct {
 	Value string
 }
 
-// Literal represent a Literal node in a RDF Graph.
+// Literal represents a Literal node in a RDF Graph.
 //
 // RDF Literal reference : https://www.w3.org/TR/rdf11-concepts/#section-Graph-Literal
 type Literal struct {
@@ -32,7 +32,7 @@ type Literal struct {
 	Lang  string
 }
 
-// BlankNode represent a Blank Node in a RDF Graph.
+// BlankNode represents a Blank Node in a RDF Graph.
 //
 // RDF Blank Node reference : https://www.w3.org/TR/rdf11-concepts/#section-blank-nodes
 type BlankNode struct {

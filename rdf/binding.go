@@ -4,7 +4,7 @@
 
 package rdf
 
-// Binding represent a binding, a pair (variable, RDF term), as described in SPARQL 1.1 language reference.
+// Binding represents a binding, a pair (variable, RDF term), as described in SPARQL 1.1 language reference.
 //
 // SPARQL 1.1 reference : https://www.w3.org/TR/sparql11-query/
 type Binding struct {

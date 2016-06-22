@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-// Graph represent a generic RDF Graph
+// Graph represents a generic RDF Graph
 //
 // Package graph provides several implementations for this interface.
 type Graph interface {
@@ -26,7 +26,7 @@ type Graph interface {
 	Serialize(format string) string
 }
 
-// rdfReader represent a reader capable of reading RDF data encoded in various format.
+// rdfReader represents a reader capable of reading RDF data encoded in various format.
 //
 // This structure is designed to be embedded into types which implement the Graph interface
 type rdfReader struct {
