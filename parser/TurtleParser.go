@@ -19,20 +19,20 @@ type TurtleParser struct {
 	prefixes map[string]string
 }
 
-// TurtleScanner is a scanner for reading triples in Turtle format.
-type TurtleScanner struct {
+// rdfToken is a scanner for reading triples in Turtle format.
+type turtleScanner struct {
 }
 
-// NewTurtleScanner creates a new TurtleScanner
-func NewTurtleScanner() *TurtleScanner {
-	return &TurtleScanner{}
+// newTurtleScanner creates a new rdfToken
+func newTurtleScanner() *turtleScanner {
+	return &turtleScanner{}
 }
 
-// Scan read a file in Turtle format, identify and extract token with their values.
+// scan read a file in Turtle format, identify and extract token with their values.
 //
 // The results are sent through a channel, which is closed when the scan of the file has been completed.
-func (s *TurtleScanner) Scan(filename string) chan RDFToken {
-	out := make(chan RDFToken, bufferSize)
+func (s *turtleScanner) scan(filename string) chan rdfToken {
+	out := make(chan rdfToken, bufferSize)
 	// walk through the file using a goroutine
 	go func() {
 		defer close(out)
@@ -53,18 +53,18 @@ func (s *TurtleScanner) Scan(filename string) chan RDFToken {
 					if (elt == "@prefix") || (elt == ":") {
 						continue
 					} else if elt == "." {
-						out <- NewRDFToken(TokenPrefixName, prefixName)
-						out <- NewRDFToken(TokenPrefixValue, prefixValue)
+						out <- newRDFToken(tokenPrefixName, prefixName)
+						out <- newRDFToken(tokenPrefixValue, prefixValue)
 						prefixName, prefixValue = "", ""
 					} else if prefixName == "" {
 						if string(elt[len(elt)-1]) != ":" {
-							out <- NewRDFToken(TokenIllegal, "Unexpected token at line "+string(lineNumber)+" : "+elt)
+							out <- newRDFToken(tokenIllegal, "Unexpected token at line "+string(lineNumber)+" : "+elt)
 							return
 						}
 						prefixName = elt[0 : len(elt)-1]
 					} else if prefixValue == "" {
 						if (string(elt[0]) != "<") && (string(elt[len(elt)-1]) != ">") {
-							out <- NewRDFToken(TokenIllegal, "Unexpected token at line "+string(lineNumber)+" : "+elt)
+							out <- newRDFToken(tokenIllegal, "Unexpected token at line "+string(lineNumber)+" : "+elt)
 							return
 						}
 						prefixValue = elt[1 : len(elt)-1]
@@ -72,21 +72,21 @@ func (s *TurtleScanner) Scan(filename string) chan RDFToken {
 				} else {
 					// when hitting the separator, send triple into channel
 					if (elt == ".") || (elt == "]") {
-						out <- NewRDFToken(TokenEnd, elt)
+						out <- newRDFToken(tokenEnd, elt)
 					} else if (elt == ";") || (elt == ",") || (elt == "[") {
-						out <- NewRDFToken(TokenSep, elt)
+						out <- newRDFToken(tokenSep, elt)
 					} else if (string(elt[0]) == "<") && (string(elt[len(elt)-1]) == ">") {
-						out <- NewRDFToken(TokenURI, elt[1:len(elt)-1])
+						out <- newRDFToken(tokenURI, elt[1:len(elt)-1])
 					} else if (string(elt[0]) == "\"") && (string(elt[len(elt)-1]) == "\"") {
-						out <- NewRDFToken(TokenLiteral, elt[1:len(elt)-1])
+						out <- newRDFToken(tokenLiteral, elt[1:len(elt)-1])
 					} else if elt[0:2] == "^^" {
-						out <- NewRDFToken(TokenTypedLiteral, elt[2:])
+						out <- newRDFToken(tokenTypedLiteral, elt[2:])
 					} else if string(elt[0]) == "@" {
-						out <- NewRDFToken(TokenLangLiteral, elt[1:])
+						out <- newRDFToken(tokenLangLiteral, elt[1:])
 					} else if (string(elt[0]) == "_") && (string(elt[1]) == ":") {
-						out <- NewRDFToken(TokenBlankNode, elt[2:])
+						out <- newRDFToken(tokenBlankNode, elt[2:])
 					} else {
-						out <- NewRDFToken(TokenIllegal, "Unexpected token at line "+string(lineNumber)+" of file : bad syntax")
+						out <- newRDFToken(tokenIllegal, "Unexpected token at line "+string(lineNumber)+" of file : bad syntax")
 					}
 				}
 			}
@@ -128,13 +128,13 @@ func (p *TurtleParser) Read(filename string) chan rdf.Triple {
 	go func() {
 		defer close(out)
 		bnodeCpt := 0
-		scanner := NewTurtleScanner()
-		for token := range scanner.Scan(filename) {
+		scanner := newTurtleScanner()
+		for token := range scanner.scan(filename) {
 			switch token.Type {
-			case TokenEnd:
+			case tokenEnd:
 				sendTriple(subject, predicate, object, out)
 				subject, predicate, object = nil, nil, nil
-			case TokenSep:
+			case tokenSep:
 				switch token.Value {
 				case ";":
 					// send previous value & keep subject for the next triple
@@ -154,32 +154,32 @@ func (p *TurtleParser) Read(filename string) chan rdf.Triple {
 				default:
 					panic(errors.New("Unexpected separator token " + token.Value))
 				}
-			case TokenPrefixName:
+			case tokenPrefixName:
 				prefixName = token.Value
-			case TokenPrefixValue:
+			case tokenPrefixValue:
 				p.prefixes[prefixName] = token.Value
-			case TokenURI:
+			case tokenURI:
 				assignNode(rdf.NewURI(token.Value))
-			case TokenBlankNode:
+			case tokenBlankNode:
 				assignNode(rdf.NewBlankNode(token.Value))
-			case TokenLiteral:
+			case tokenLiteral:
 				assignNode(rdf.NewLiteral(token.Value))
 				literalValue = token.Value
-			case TokenTypedLiteral:
+			case tokenTypedLiteral:
 				_, ok := object.(rdf.Literal)
 				if ok {
 					object = rdf.NewTypedLiteral(literalValue, token.Value)
 				} else {
 					panic(errors.New("Trying to assign a type to a non literal object"))
 				}
-			case TokenLangLiteral:
+			case tokenLangLiteral:
 				_, ok := object.(rdf.Literal)
 				if ok {
 					object = rdf.NewLangLiteral(literalValue, token.Value)
 				} else {
 					panic(errors.New("Trying to assign a language to a non literal object"))
 				}
-			case TokenIllegal:
+			case tokenIllegal:
 				panic(token.Value)
 			default:
 				panic(errors.New("Unexpected token " + token.Value))

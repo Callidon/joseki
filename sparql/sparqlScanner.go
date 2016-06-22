@@ -10,68 +10,68 @@ const (
 )
 
 // Token is the type for a SPARQL token read by a scanner.
-type SparqlToken float64
+type sparqlToken float64
 
 const (
-    _ = iota
-    // TokenIllegal is an illegal token in the SPARQL syntax
-    IllegalToken SparqlToken = 1 << (10 * iota)
-    // TokenSelect is a SPARQL SELECT keyword
-    TokenSelect
-    // TokenConstruct is a SPARQL CONSTRUCT keyword
-    TokenConstruct
-    // TokenDescribe is a SPARQL DESCRIBE keyword
-    TokenDescribe
-    // TokenAsk is a SPARQL ASK keyword
-    TokenAsk
-    // TokenCount is a SPARQL COUNT keyword
-    TokenCount
-    // TokenWhere is a SPARQL WHERE keyword
-    TokenWhere
-    // TokenOptionnal is a SPARQL OPTIONNAL keyword
-    TokenOptionnal
-    // TokenUnion is a SPARQL UNION keyword
-    TokenUnion
-    // TokenOrderBy is a SPARQL ORDER BY keyword
-    TokenOrderBy
-    // TokenLimit is a SPARQL LIMIT keyword
-    TokenLimit
-    // TokenOffset is a SPARQL OFFSET keyword
-    TokenOffset
-    // TokenEnd ends a triple declaration
-	TokenEnd
-	// TokenSep is a RDF separator (for object/literal list, etc)
-	TokenSep
-	// TokenURI is a RDF URI
-	TokenURI
-	// TokenLiteral is a RDF Literal
-	TokenLiteral
-	// TokenTypedLiteral is a RDF typed Literal
-	TokenTypedLiteral
-	// TokenLangLiteral is a RDF Literal with lang informations
-	TokenLangLiteral
-	// TokenVariable is a SPARQL variable
-	TokenVariable
+	_ = iota
+	// illegalToken is an illegal token in the SPARQL syntax
+	illegalToken sparqlToken = 1 << (10 * iota)
+	// tokenSelect is a SPARQL SELECT keyword
+	tokenSelect
+	// tokenConstruct is a SPARQL CONSTRUCT keyword
+	tokenConstruct
+	// tokenDescribe is a SPARQL DESCRIBE keyword
+	tokenDescribe
+	// tokenAsk is a SPARQL ASK keyword
+	tokenAsk
+	// tokenCount is a SPARQL COUNT keyword
+	tokenCount
+	// tokenWhere is a SPARQL WHERE keyword
+	tokenWhere
+	// tokenOptionnal is a SPARQL OPTIONNAL keyword
+	tokenOptionnal
+	// tokenUnion is a SPARQL UNION keyword
+	tokenUnion
+	// tokenOrderBy is a SPARQL ORDER BY keyword
+	tokenOrderBy
+	// tokenLimit is a SPARQL LIMIT keyword
+	tokenLimit
+	// tokenOffset is a SPARQL OFFSET keyword
+	tokenOffset
+	// tokenEnd ends a triple declaration
+	tokenEnd
+	// tokenSep is a RDF separator (for object/literal list, etc)
+	tokenSep
+	// tokenURI is a RDF URI
+	tokenURI
+	// tokenLiteral is a RDF Literal
+	tokenLiteral
+	// tokenTypedLiteral is a RDF typed Literal
+	tokenTypedLiteral
+	// tokenLangLiteral is a RDF Literal with lang informations
+	tokenLangLiteral
+	// tokenVariable is a SPARQL variable
+	tokenVariable
 )
 
-// SparqlScanner is a scanner for reading a SPARQL request & extracting tokens.
-type SparqlScanner struct {
+// sparqlScanner is a scanner for reading a SPARQL request & extracting tokens.
+type sparqlScanner struct {
 }
 
-// NewSparqlScanner creates a new SparqlScanner.
-func NewSparqlScanner() *SparqlScanner {
-    return &SparqlScanner{}
+// NewsparqlScanner creates a new sparqlScanner.
+func newSparqlScanner() *sparqlScanner {
+	return &sparqlScanner{}
 }
 
-// Scan analyze a SPARQL request in string format and decompose it into tokens.
+// Analyze a SPARQL request in string format and decompose it into tokens.
 //
 // Tokens are send through a channel, which is closed when the scan of the request is finished.
-func (s *SparqlScanner) Scan(request string) chan SparqlToken {
-    out := make(chan SparqlToken, bufferSize)
-    // scan the request using a goroutine
-    go func() {
-        defer close(out)
-        // TODO
-    }()
-    return out
+func (s *sparqlScanner) scan(request string) chan sparqlToken {
+	out := make(chan sparqlToken, bufferSize)
+	// scan the request using a goroutine
+	go func() {
+		defer close(out)
+		// TODO
+	}()
+	return out
 }

@@ -17,20 +17,20 @@ import (
 type NTParser struct {
 }
 
-// NTScanner is a scanner for reading triples in N-Triples format.
-type NTScanner struct {
+// ntScanner is a scanner for reading triples in N-Triples format.
+type ntScanner struct {
 }
 
-// NewNTScanner creates a new NTScanner
-func NewNTScanner() *NTScanner {
-	return &NTScanner{}
+// newNTScanner creates a new ntScanner
+func newNTScanner() *ntScanner {
+	return &ntScanner{}
 }
 
 // Scan read a file in N-Triples format, identify and extract token with their values.
 //
 // The results are sent through a channel, which is closed when the scan of the file has been completed.
-func (s *NTScanner) Scan(filename string) chan RDFToken {
-	out := make(chan RDFToken, bufferSize)
+func (s *ntScanner) scan(filename string) chan rdfToken {
+	out := make(chan rdfToken, bufferSize)
 	// walk through the file using a goroutine
 	go func() {
 		defer close(out)
@@ -44,19 +44,19 @@ func (s *NTScanner) Scan(filename string) chan RDFToken {
 			line := extractSegments(scanner.Text())
 			for _, elt := range line {
 				if elt == "." {
-					out <- NewRDFToken(TokenEnd, ".")
+					out <- newRDFToken(tokenEnd, ".")
 				} else if (string(elt[0]) == "<") && (string(elt[len(elt)-1]) == ">") {
-					out <- NewRDFToken(TokenURI, elt[1:len(elt)-1])
+					out <- newRDFToken(tokenURI, elt[1:len(elt)-1])
 				} else if (string(elt[0]) == "_") && (string(elt[1]) == ":") {
-					out <- NewRDFToken(TokenBlankNode, elt[2:])
+					out <- newRDFToken(tokenBlankNode, elt[2:])
 				} else if (string(elt[0]) == "\"") && (string(elt[len(elt)-1]) == "\"") {
-					out <- NewRDFToken(TokenLiteral, elt[1:len(elt)-1])
+					out <- newRDFToken(tokenLiteral, elt[1:len(elt)-1])
 				} else if elt[0:2] == "^^" {
-					out <- NewRDFToken(TokenTypedLiteral, elt[2:])
+					out <- newRDFToken(tokenTypedLiteral, elt[2:])
 				} else if string(elt[0]) == "@" {
-					out <- NewRDFToken(TokenLangLiteral, elt[1:])
+					out <- newRDFToken(tokenLangLiteral, elt[1:])
 				} else {
-					out <- NewRDFToken(TokenIllegal, "Unexpected token when scanning "+elt)
+					out <- newRDFToken(tokenIllegal, "Unexpected token when scanning "+elt)
 				}
 				lineNumber++
 			}
@@ -96,35 +96,35 @@ func (p NTParser) Read(filename string) chan rdf.Triple {
 	// scan the file & analyse the tokens using a goroutine
 	go func() {
 		defer close(out)
-		scanner := NewNTScanner()
-		for token := range scanner.Scan(filename) {
+		scanner := newNTScanner()
+		for token := range scanner.scan(filename) {
 			switch token.Type {
-			case TokenEnd:
+			case tokenEnd:
 				sendTriple(subject, predicate, object, out)
 				// reset the values
 				subject, predicate, object = nil, nil, nil
-			case TokenURI:
+			case tokenURI:
 				assignNode(rdf.NewURI(token.Value))
-			case TokenBlankNode:
+			case tokenBlankNode:
 				assignNode(rdf.NewBlankNode(token.Value))
-			case TokenLiteral:
+			case tokenLiteral:
 				assignNode(rdf.NewLiteral(token.Value))
 				literalValue = token.Value
-			case TokenTypedLiteral:
+			case tokenTypedLiteral:
 				_, ok := object.(rdf.Literal)
 				if ok {
 					object = rdf.NewTypedLiteral(literalValue, token.Value)
 				} else {
 					panic(errors.New("Trying to assign a type to a non literal object"))
 				}
-			case TokenLangLiteral:
+			case tokenLangLiteral:
 				_, ok := object.(rdf.Literal)
 				if ok {
 					object = rdf.NewLangLiteral(literalValue, token.Value)
 				} else {
 					panic(errors.New("Trying to assign a language to a non literal object"))
 				}
-			case TokenIllegal:
+			case tokenIllegal:
 				panic(token.Value)
 			default:
 				panic(errors.New("Unexpected token " + token.Value))

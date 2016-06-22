@@ -16,31 +16,31 @@ const (
 	bufferSize = 100
 )
 
-// Token is the type for a token read by a scanner
-type Token float64
+// token is the type for a token read by a scanner
+type token float64
 
 const (
 	_ = iota
-	// TokenIllegal is an illegal token in the RDF syntax
-	TokenIllegal Token = 1 << (10 * iota)
-	// TokenEnd ends a triple declaration
-	TokenEnd
-	// TokenSep is a RDF separator (for object/literal list, etc)
-	TokenSep
-	// TokenURI is a RDF URI
-	TokenURI
-	// TokenLiteral is a RDF Literal
-	TokenLiteral
-	// TokenTypedLiteral is a RDF typed Literal
-	TokenTypedLiteral
-	// TokenLangLiteral is a RDF Literal with lang informations
-	TokenLangLiteral
-	// TokenBlankNode is a RDF Blank Node
-	TokenBlankNode
-	// TokenPrefixName is the name of a prefix
-	TokenPrefixName
-	// TokenPrefixValue is the value of a prefix
-	TokenPrefixValue
+	// tokenIllegal is an illegal token in the RDF syntax
+	tokenIllegal token = 1 << (10 * iota)
+	// tokenEnd ends a triple declaration
+	tokenEnd
+	// tokenSep is a RDF separator (for object/literal list, etc)
+	tokenSep
+	// tokenURI is a RDF URI
+	tokenURI
+	// tokenLiteral is a RDF Literal
+	tokenLiteral
+	// tokenTypedLiteral is a RDF typed Literal
+	tokenTypedLiteral
+	// tokenLangLiteral is a RDF Literal with lang informations
+	tokenLangLiteral
+	// tokenBlankNode is a RDF Blank Node
+	tokenBlankNode
+	// tokenPrefixName is the name of a prefix
+	tokenPrefixName
+	// tokenPrefixValue is the value of a prefix
+	tokenPrefixValue
 )
 
 // Parser represent a generic interface for parsing every RDF format.
@@ -51,24 +51,24 @@ type Parser interface {
 	Prefixes() map[string]string
 }
 
-// RDFScanner represent a generic interface for scanning an RDF file in every format.
+// rdfScanner represent a generic interface for scanning an RDF file in every format.
 // This interface act as a Lexer during the parsing process.
 //
 // Package parser provides several implementations for this interface.
-type RDFScanner interface {
-	Scan(filename string) chan RDFToken
+type rdfScanner interface {
+	Scan(filename string) chan rdfToken
 }
 
-// RDFToken is a token extracted during the scan of a RDF file.
+// rdfToken is a token extracted during the scan of a RDF file.
 // It's meant to be used by a Parser implementation during the parsing phase.
-type RDFToken struct {
-	Type  Token
+type rdfToken struct {
+	Type  token
 	Value string
 }
 
-// NewRDFToken creates a new RDFToken
-func NewRDFToken(tokType Token, value string) RDFToken {
-	return RDFToken{tokType, value}
+// NewRDFToken creates a new rdfToken
+func newRDFToken(tokType token, value string) rdfToken {
+	return rdfToken{tokType, value}
 }
 
 // Utility function for checking errors

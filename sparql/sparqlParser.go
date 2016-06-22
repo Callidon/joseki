@@ -4,14 +4,14 @@
 
 package sparql
 
-// SparqlParser is a parser for reading & decomposing a SPARQL request in a query execution plan.
+// RequestParser is a parser for reading & decomposing a SPARQL request in a query execution plan.
 //
 // SPARQL 1.1 reference : https://www.w3.org/TR/sparql11-overview/
-type SparqlParser struct {
-    *SparqlScanner
+type RequestParser struct {
+	*sparqlScanner
 }
 
-// NewSparqlParser creates a new SparqlParser.
-func NewSparqlParser() *SparqlParser {
-    return &SparqlParser{NewSparqlScanner()}
+// NewRequestParser creates a new RequestParser.
+func NewRequestParser() *SparqlParser {
+	return &RequestParser{newSparqlScanner()}
 }

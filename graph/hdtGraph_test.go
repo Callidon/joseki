@@ -145,7 +145,7 @@ func TestLoadFromFileHDTGraph(t *testing.T) {
 		cpt++
 	}
 
-	if cpt != 4 {
+	if cpt != 5 {
 		t.Error("the graph should contains 4 triples, but it contains", cpt, "triples")
 	}
 }
