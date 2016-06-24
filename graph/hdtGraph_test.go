@@ -88,6 +88,30 @@ func TestSimpleFilterHDTGraph(t *testing.T) {
 
 }
 
+func TestFilterNoResultHDTGraph(t *testing.T) {
+	graph := NewHDTGraph()
+	subj := rdf.NewURI("dblp:Thomas")
+	predA := rdf.NewURI("foaf:age")
+	predB := rdf.NewURI("schema:livesIn")
+	objA := rdf.NewLiteral("22")
+	objB := rdf.NewURI("dbpedia:Nantes")
+	tripleA := rdf.NewTriple(subj, predA, objA)
+	tripleB := rdf.NewTriple(subj, predB, objB)
+	graph.Add(tripleA)
+	graph.Add(tripleB)
+
+	// select a triple that doesn't exist in the graph
+	cpt := 0
+	for _ = range graph.Filter(rdf.NewURI("<htt://example.org>"), rdf.NewBlankNode("v1"), rdf.NewBlankNode("v2")) {
+		cpt++;
+	}
+
+	if cpt > 0 {
+		t.Error("expected no result but found", cpt, "results")
+	}
+
+}
+
 func TestComplexFilterHDTGraph(t *testing.T) {
 	graph := NewHDTGraph()
 	nbDatas := 1000

@@ -5,6 +5,7 @@
 package sparql
 
 import (
+	"fmt"
 	"github.com/Callidon/joseki/graph"
 	"github.com/Callidon/joseki/rdf"
 	"testing"
@@ -13,21 +14,23 @@ import (
 func TestExecuteBGPNode(t *testing.T) {
 	var graph = graph.NewHDTGraph()
 	graph.LoadFromFile("../parser/datas/test.nt", "nt")
-	triple := rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples/"),
+	triple := rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples"),
 		rdf.NewURI("http://purl.org/dc/terms/title"),
 		rdf.NewBlankNode("v1"))
 	node := newBgpNode(triple, graph)
 
-	datas := []rdf.Binding{
-		rdf.NewBinding("v1", rdf.NewLangLiteral("N-Triples", "en")),
-		rdf.NewBinding("v1", rdf.NewTypedLiteral("My Typed Literal", "<http://www.w3.org/2001/XMLSchema#string>")),
+	datas := []rdf.BindingsGroup{
+		rdf.NewBindingsGroup(),
+		rdf.NewBindingsGroup(),
 	}
+	datas[0].Bindings["v1"] = rdf.NewLangLiteral("N-Triples", "en")
+	datas[1].Bindings["v1"] = rdf.NewTypedLiteral("My Typed Literal", "<http://www.w3.org/2001/XMLSchema#string>")
 	cpt := 0
 
 	for binding := range node.execute() {
 		testA, errA := binding.Equals(datas[0])
 		testB, errB := binding.Equals(datas[1])
-		if (!testA || errA != nil) || (!testB || errB != nil) {
+		if (!testA && errA != nil) && (!testB && errB != nil) {
 			t.Error(binding, "should be one of", datas)
 		}
 		cpt++
@@ -41,22 +44,28 @@ func TestExecuteBGPNode(t *testing.T) {
 func TestExecuteWithBGPNode(t *testing.T) {
 	var graph = graph.NewHDTGraph()
 	graph.LoadFromFile("../parser/datas/test.nt", "nt")
-	triple := rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples/"),
+	triple := rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples"),
 		rdf.NewBlankNode("v2"),
 		rdf.NewBlankNode("v1"))
 	node := newBgpNode(triple, graph)
-	binding := rdf.NewBinding("v2", rdf.NewURI("http://purl.org/dc/terms/title"))
+	group := rdf.NewBindingsGroup()
+	group.Bindings["v2"] = rdf.NewURI("http://purl.org/dc/terms/title")
 
-	datas := []rdf.Binding{
-		rdf.NewBinding("v1", rdf.NewLangLiteral("N-Triples", "en")),
-		rdf.NewBinding("v1", rdf.NewTypedLiteral("My Typed Literal", "<http://www.w3.org/2001/XMLSchema#string>")),
+	datas := []rdf.BindingsGroup{
+		rdf.NewBindingsGroup(),
+		rdf.NewBindingsGroup(),
 	}
+	datas[0].Bindings["v1"] = rdf.NewLangLiteral("N-Triples", "en")
+	datas[0].Bindings["v2"] = rdf.NewURI("http://purl.org/dc/terms/title")
+	datas[1].Bindings["v1"] = rdf.NewTypedLiteral("My Typed Literal", "<http://www.w3.org/2001/XMLSchema#string>")
+	datas[1].Bindings["v3"] = rdf.NewURI("http://purl.org/dc/terms/title")
 	cpt := 0
 
-	for binding := range node.executeWith(binding) {
+	for binding := range node.executeWith(group) {
+		fmt.Println(binding)
 		testA, errA := binding.Equals(datas[0])
 		testB, errB := binding.Equals(datas[1])
-		if (!testA || errA != nil) || (!testB || errB != nil) {
+		if (!testA && (errA != nil)) && (!testB && (errB != nil)) {
 			t.Error(binding, "should be one of", datas)
 		}
 		cpt++

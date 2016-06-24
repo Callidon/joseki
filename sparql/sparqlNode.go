@@ -13,6 +13,6 @@ import "github.com/Callidon/joseki/rdf"
 // When all nodes of SPARQL query execution plan are executed in the correct order, a response to the corresponding request will be produced.
 // Package sparql provides several implementations for this interface.
 type sparqlNode interface {
-	execute() chan rdf.Binding
-	executeWith(binding rdf.Binding) chan rdf.Binding
+	execute() chan rdf.BindingsGroup
+	executeWith(group rdf.BindingsGroup) chan rdf.BindingsGroup
 }

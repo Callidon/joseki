@@ -12,6 +12,6 @@ type RequestParser struct {
 }
 
 // NewRequestParser creates a new RequestParser.
-func NewRequestParser() *SparqlParser {
+func NewRequestParser() *RequestParser {
 	return &RequestParser{newSparqlScanner()}
 }

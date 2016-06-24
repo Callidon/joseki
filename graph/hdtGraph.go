@@ -103,11 +103,16 @@ func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int,
 			id, inDict := g.dictionnary.locate(node)
 			if _, inSons := root.sons[id]; inDict && (inSons || root.sons[id] == nil) {
 				go g.queryNodes(root.sons[id], datas[1:], append(triple, id), out, wg)
-			}
-			// update the counter for the sons that will not be visited
-			for key, son := range root.sons {
-				if key != id {
-					son.updateCounter(wg)
+				// update the counter for the sons that will not be visited
+				for key, son := range root.sons {
+					if key != id {
+						son.updateCounter(wg)
+					}
+				}
+			} else {
+				// update the counter for the sons that will not be visited
+				for _, son := range root.sons {
+						son.updateCounter(wg)
 				}
 			}
 		}

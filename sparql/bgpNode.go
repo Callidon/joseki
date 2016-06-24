@@ -22,8 +22,8 @@ func newBgpNode(pattern rdf.Triple, graph graph.Graph) *bgpNode {
 }
 
 // execute retrieves bindings from a graph that match a triple pattern.
-func (n *bgpNode) execute() chan rdf.Binding {
-	out := make(chan rdf.Binding, bufferSize)
+func (n *bgpNode) execute() chan rdf.BindingsGroup {
+	out := make(chan rdf.BindingsGroup, bufferSize)
 	// find free vars in triple pattern
 	subject, freeSubject := n.pattern.Subject.(rdf.BlankNode)
 	predicate, freePredicate := n.pattern.Predicate.(rdf.BlankNode)
@@ -33,62 +33,68 @@ func (n *bgpNode) execute() chan rdf.Binding {
 	go func() {
 		defer close(out)
 		for triple := range n.graph.Filter(n.pattern.Subject, n.pattern.Predicate, n.pattern.Object) {
+			group := rdf.NewBindingsGroup()
 			if freeSubject {
-				out <- rdf.NewBinding(subject.Variable, triple.Subject)
+				group.Bindings[subject.Variable] = triple.Subject
 			}
 			if freePredicate {
-				out <- rdf.NewBinding(predicate.Variable, triple.Predicate)
+				group.Bindings[predicate.Variable] = triple.Predicate
 			}
 			if freeObject {
-				out <- rdf.NewBinding(object.Variable, triple.Object)
+				group.Bindings[object.Variable] = triple.Object
 			}
+			out <- group
 		}
 	}()
 	return out
 }
 
 // executeWith retrieves bindings from a graph that match a triple pattern, completed by a given binding.
-func (n *bgpNode) executeWith(binding rdf.Binding) chan rdf.Binding {
+func (n *bgpNode) executeWith(group rdf.BindingsGroup) chan rdf.BindingsGroup {
 	var querySubj, queryPred, queryObj rdf.Node
-	out := make(chan rdf.Binding, bufferSize)
+	out := make(chan rdf.BindingsGroup, bufferSize)
 	// find free vars in triple pattern
 	subject, freeSubject := n.pattern.Subject.(rdf.BlankNode)
 	predicate, freePredicate := n.pattern.Predicate.(rdf.BlankNode)
 	object, freeObject := n.pattern.Object.(rdf.BlankNode)
 
-	// complete triple pattern using the binding given in parameter
-	if freeSubject && subject.Variable == binding.Variable {
-		querySubj = binding.Value
-		freeSubject = false
-	} else {
-		querySubj = n.pattern.Subject
-	}
-	if freePredicate && predicate.Variable == binding.Variable {
-		queryPred = binding.Value
-		freePredicate = false
-	} else {
-		queryPred = n.pattern.Predicate
-	}
-	if freeObject && object.Variable == binding.Variable {
-		queryObj = binding.Value
-		freeObject = false
-	} else {
-		queryObj = n.pattern.Object
+	// complete triple pattern using the group of bindings given in parameter
+	for bindingKey, bindingValue := range group.Bindings {
+		if freeSubject && subject.Variable == bindingKey {
+			querySubj = bindingValue
+			freeSubject = false
+		} else {
+			querySubj = n.pattern.Subject
+		}
+		if freePredicate && predicate.Variable == bindingKey {
+			queryPred = bindingValue
+			freePredicate = false
+		} else {
+			queryPred = n.pattern.Predicate
+		}
+		if freeObject && object.Variable == bindingKey {
+			queryObj = bindingValue
+			freeObject = false
+		} else {
+			queryObj = n.pattern.Object
+		}
 	}
 
 	// retrieves triples & form bindings to send
 	go func() {
 		defer close(out)
 		for triple := range n.graph.Filter(querySubj, queryPred, queryObj) {
+			newGroup := group.Clone()
 			if freeSubject {
-				out <- rdf.NewBinding(subject.Variable, triple.Subject)
+				newGroup.Bindings[subject.Variable] = triple.Subject
 			}
 			if freePredicate {
-				out <- rdf.NewBinding(predicate.Variable, triple.Predicate)
+				newGroup.Bindings[predicate.Variable] = triple.Predicate
 			}
 			if freeObject {
-				out <- rdf.NewBinding(object.Variable, triple.Object)
+				newGroup.Bindings[object.Variable] = triple.Object
 			}
+			out <- newGroup
 		}
 	}()
 	return out
