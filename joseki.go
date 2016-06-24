@@ -17,7 +17,7 @@
 //
 // * A High level API to query data using the SPARQL 1.1 query language.
 //
-// * Query are processed using modern techniques such as join ordering or optimized query execution plans.
+// * Query processing using modern techniques such as join ordering or optimized query execution plans.
 //
 // * Load RDF data stored in files in various formats (N-Triples, Turtle, etc) into any graph.
 //
