@@ -1,4 +1,4 @@
-# joseki [![GoDoc](https://godoc.org/github.com/Callidon/joseki/rdf?status.svg)](https://godoc.org/github.com/Callidon/joseki/)
+# joseki [![GoDoc](https://godoc.org/github.com/Callidon/joseki/rdf?status.svg)](https://godoc.org/github.com/Callidon/joseki/) [![Build Status](https://travis-ci.org/Callidon/joseki.svg?branch=master)](https://travis-ci.org/Callidon/joseki)
 
 Joseki is a pure Go library for working with RDF, a powerful framework for representing informations as graphs.
 
