@@ -56,7 +56,7 @@ func TestComplexFilterListGraph(t *testing.T) {
 	}
 
 	if cpt != nbDatas {
-		t.Error("expected ", nbDatas, "results but got ", cpt, "results")
+		t.Error("expected", nbDatas, "results but inftsead got", cpt, "results")
 	}
 }
 

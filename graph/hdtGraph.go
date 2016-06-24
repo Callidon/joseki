@@ -112,7 +112,7 @@ func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int,
 			} else {
 				// update the counter for the sons that will not be visited
 				for _, son := range root.sons {
-						son.updateCounter(wg)
+					son.updateCounter(wg)
 				}
 			}
 		}

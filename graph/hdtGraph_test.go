@@ -103,11 +103,11 @@ func TestFilterNoResultHDTGraph(t *testing.T) {
 	// select a triple that doesn't exist in the graph
 	cpt := 0
 	for _ = range graph.Filter(rdf.NewURI("<htt://example.org>"), rdf.NewBlankNode("v1"), rdf.NewBlankNode("v2")) {
-		cpt++;
+		cpt++
 	}
 
 	if cpt > 0 {
-		t.Error("expected no result but found", cpt, "results")
+		t.Error("expected no result but instead found", cpt, "results")
 	}
 
 }
@@ -130,7 +130,7 @@ func TestComplexFilterHDTGraph(t *testing.T) {
 	}
 
 	if cpt != nbDatas {
-		t.Error("expected ", nbDatas, "results but got ", cpt, "results")
+		t.Error("expected ", nbDatas, "results but instead found ", cpt, "results")
 	}
 }
 
