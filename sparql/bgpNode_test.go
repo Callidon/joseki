@@ -5,7 +5,6 @@
 package sparql
 
 import (
-	"fmt"
 	"github.com/Callidon/joseki/graph"
 	"github.com/Callidon/joseki/rdf"
 	"testing"
@@ -30,7 +29,7 @@ func TestExecuteBGPNode(t *testing.T) {
 	for binding := range node.execute() {
 		testA, errA := binding.Equals(datas[0])
 		testB, errB := binding.Equals(datas[1])
-		if (!testA && errA != nil) && (!testB && errB != nil) {
+		if (!testA || (errA != nil)) && (!testB || (errB != nil)) {
 			t.Error(binding, "should be one of", datas)
 		}
 		cpt++
@@ -58,14 +57,13 @@ func TestExecuteWithBGPNode(t *testing.T) {
 	datas[0].Bindings["v1"] = rdf.NewLangLiteral("N-Triples", "en")
 	datas[0].Bindings["v2"] = rdf.NewURI("http://purl.org/dc/terms/title")
 	datas[1].Bindings["v1"] = rdf.NewTypedLiteral("My Typed Literal", "<http://www.w3.org/2001/XMLSchema#string>")
-	datas[1].Bindings["v3"] = rdf.NewURI("http://purl.org/dc/terms/title")
+	datas[1].Bindings["v2"] = rdf.NewURI("http://purl.org/dc/terms/title")
 	cpt := 0
 
 	for binding := range node.executeWith(group) {
-		fmt.Println(binding)
 		testA, errA := binding.Equals(datas[0])
 		testB, errB := binding.Equals(datas[1])
-		if (!testA && (errA != nil)) && (!testB && (errB != nil)) {
+		if (!testA || (errA != nil)) && (!testB || (errB != nil)) {
 			t.Error(binding, "should be one of", datas)
 		}
 		cpt++

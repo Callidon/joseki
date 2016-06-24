@@ -24,7 +24,7 @@ func (b BindingsGroup) Equals(other BindingsGroup) (bool, error) {
 		}
 		otherValue, _ := other.Bindings[key]
 		test, err := value.Equals(otherValue)
-		if !test && (err != nil) {
+		if !test || (err != nil) {
 			return false, err
 		}
 	}
