@@ -6,7 +6,6 @@ package sparql
 
 import (
 	"errors"
-	"fmt"
 	"github.com/Callidon/joseki/graph"
 	"github.com/Callidon/joseki/rdf"
 	"strconv"

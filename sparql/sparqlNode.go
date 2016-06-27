@@ -15,4 +15,5 @@ import "github.com/Callidon/joseki/rdf"
 type sparqlNode interface {
 	execute() chan rdf.BindingsGroup
 	executeWith(group rdf.BindingsGroup) chan rdf.BindingsGroup
+	bindingNames() []string
 }

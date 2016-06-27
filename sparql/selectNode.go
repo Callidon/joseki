@@ -8,8 +8,8 @@ import "github.com/Callidon/joseki/rdf"
 
 // selectNode represent a Select operation in a SPARQL query execution plan
 type selectNode struct {
-	node         sparqlNode
-	bindingNames []string
+	node  sparqlNode
+	names []string
 }
 
 // newSelectNode creates a new Select Node
@@ -26,7 +26,7 @@ func (n *selectNode) execute() chan rdf.BindingsGroup {
 		// request groups of bindings from the node below & filter them
 		for group := range n.node.execute() {
 			newGroup := rdf.NewBindingsGroup()
-			for _, bindingName := range n.bindingNames {
+			for _, bindingName := range n.names {
 				value, inGroup := group.Bindings[bindingName]
 				if inGroup {
 					newGroup.Bindings[bindingName] = value
@@ -41,4 +41,9 @@ func (n *selectNode) execute() chan rdf.BindingsGroup {
 // This operation has no particular meaning in the case of a selectNode, so it's equivalent to the execute method
 func (n *selectNode) executeWith(binding rdf.BindingsGroup) chan rdf.BindingsGroup {
 	return n.execute()
+}
+
+// bindingNames returns the names of the bindings produced by this operation
+func (n *selectNode) bindingNames() []string {
+	return n.node.bindingNames()
 }

@@ -99,3 +99,22 @@ func (n *tripleNode) executeWith(group rdf.BindingsGroup) chan rdf.BindingsGroup
 	}()
 	return out
 }
+
+// bindingNames returns the names of the bindings produced
+func (n *tripleNode) bindingNames() []string {
+	var bindings []string
+	// find free vars in triple pattern
+	subject, freeSubject := n.pattern.Subject.(rdf.BlankNode)
+	predicate, freePredicate := n.pattern.Predicate.(rdf.BlankNode)
+	object, freeObject := n.pattern.Object.(rdf.BlankNode)
+	if freeSubject {
+		bindings = append(bindings, subject.Variable)
+	}
+	if freePredicate {
+		bindings = append(bindings, predicate.Variable)
+	}
+	if freeObject {
+		bindings = append(bindings, object.Variable)
+	}
+	return bindings
+}

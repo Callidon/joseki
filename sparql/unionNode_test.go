@@ -10,21 +10,22 @@ import (
 	"testing"
 )
 
-func TestExecuteJoinNode(t *testing.T) {
+func TestExecuteUnionNode(t *testing.T) {
 	var graph = graph.NewHDTGraph()
 	graph.LoadFromFile("../parser/datas/test.nt", "nt")
 	tripleA := rdf.NewTriple(rdf.NewBlankNode("v1"),
 		rdf.NewURI("http://purl.org/dc/terms/title"),
 		rdf.NewBlankNode("v2"))
-	tripleB := rdf.NewTriple(rdf.NewBlankNode("v1"),
+	tripleB := rdf.NewTriple(rdf.NewBlankNode("v3"),
 		rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
 		rdf.NewURI("http://xmlns.com/foaf/0.1/Document"))
 	nodeA := newTripleNode(tripleA, graph)
 	nodeB := newTripleNode(tripleB, graph)
-	join := newJoinNode(nodeA, nodeB)
+	union := newUnionNode(nodeA, nodeB)
 	cpt := 0
 
 	datas := []rdf.BindingsGroup{
+		rdf.NewBindingsGroup(),
 		rdf.NewBindingsGroup(),
 		rdf.NewBindingsGroup(),
 	}
@@ -32,11 +33,13 @@ func TestExecuteJoinNode(t *testing.T) {
 	datas[0].Bindings["v2"] = rdf.NewLangLiteral("N-Triples", "en")
 	datas[1].Bindings["v1"] = rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples")
 	datas[1].Bindings["v2"] = rdf.NewTypedLiteral("My Typed Literal", "<http://www.w3.org/2001/XMLSchema#string>")
+	datas[2].Bindings["v3"] = rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples")
 
-	for bindings := range join.execute() {
+	for bindings := range union.execute() {
 		testA, errA := bindings.Equals(datas[0])
 		testB, errB := bindings.Equals(datas[1])
-		if (!testA || (errA != nil)) && (!testB || (errB != nil)) {
+		testC, errC := bindings.Equals(datas[2])
+		if (!testA || (errA != nil)) && (!testB || (errB != nil)) && (!testC || (errC != nil)) {
 			t.Error(bindings, "should be one of", datas)
 		}
 		cpt++
@@ -47,7 +50,7 @@ func TestExecuteJoinNode(t *testing.T) {
 	}
 }
 
-func TestExecuteNoResultJoinNode(t *testing.T) {
+func TestExecuteNoResultUnionNode(t *testing.T) {
 	var graph = graph.NewHDTGraph()
 	graph.LoadFromFile("../parser/datas/test.nt", "nt")
 	tripleA := rdf.NewTriple(rdf.NewBlankNode("v1"),
@@ -55,13 +58,13 @@ func TestExecuteNoResultJoinNode(t *testing.T) {
 		rdf.NewBlankNode("v2"))
 	tripleB := rdf.NewTriple(rdf.NewBlankNode("v1"),
 		rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
-		rdf.NewURI("http://xmlns.com/foaf/0.1/Document"))
+		rdf.NewURI("https://schema.org/Book"))
 	nodeA := newTripleNode(tripleA, graph)
 	nodeB := newTripleNode(tripleB, graph)
-	join := newJoinNode(nodeA, nodeB)
+	union := newUnionNode(nodeA, nodeB)
 	cpt := 0
 
-	for _ = range join.execute() {
+	for _ = range union.execute() {
 		cpt++
 	}
 
@@ -70,7 +73,7 @@ func TestExecuteNoResultJoinNode(t *testing.T) {
 	}
 }
 
-func TestBindingNamesJoinNode(t *testing.T) {
+func TestBindingNamesUnionNode(t *testing.T) {
 	var graph = graph.NewHDTGraph()
 	tripleA := rdf.NewTriple(rdf.NewBlankNode("v1"),
 		rdf.NewURI("http://purl.org/dc/terms/title"),
@@ -80,12 +83,12 @@ func TestBindingNamesJoinNode(t *testing.T) {
 		rdf.NewURI("http://xmlns.com/foaf/0.1/Document"))
 	nodeA := newTripleNode(tripleA, graph)
 	nodeB := newTripleNode(tripleB, graph)
-	join := newJoinNode(nodeA, nodeB)
+	union := newUnionNode(nodeA, nodeB)
 	cpt := 0
 
 	datas := []string{"v1", "v2"}
 
-	for _, bindingName := range join.bindingNames() {
+	for _, bindingName := range union.bindingNames() {
 		if datas[cpt] != bindingName {
 			t.Error("expected", datas[cpt], "but instead got", bindingName)
 		}
@@ -93,4 +96,4 @@ func TestBindingNamesJoinNode(t *testing.T) {
 	}
 }
 
-// No need to test joinNode.executeWith(), since it's equivalent to a call to joinNode.execute()
+// No need to test unionNode.executeWith(), since it's equivalent to a call to unionNode.execute()

@@ -4,7 +4,10 @@
 
 package sparql
 
-import "github.com/Callidon/joseki/rdf"
+import (
+	"github.com/Callidon/joseki/rdf"
+	"sort"
+)
 
 // joinNode represent a Join Operator in a SPARQL query execution plan
 type joinNode struct {
@@ -37,4 +40,15 @@ func (n *joinNode) execute() chan rdf.BindingsGroup {
 // This operation has no particular meaning in the case of a joinNode, so it's equivalent to the execute method
 func (n *joinNode) executeWith(binding rdf.BindingsGroup) chan rdf.BindingsGroup {
 	return n.execute()
+}
+
+// bindingNames returns the names of the bindings produced by this operation
+func (n *joinNode) bindingNames() []string {
+	bindingNames := n.innerNode.bindingNames()
+	for _, name := range n.outerNode.bindingNames() {
+		if sort.SearchStrings(bindingNames, name) == len(bindingNames) {
+			bindingNames = append(bindingNames, name)
+		}
+	}
+	return bindingNames
 }
