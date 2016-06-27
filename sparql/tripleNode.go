@@ -9,20 +9,20 @@ import (
 	"github.com/Callidon/joseki/rdf"
 )
 
-// bgpNode is the lowest level of SPARQL query execution plan.
+// tripleNode is the lowest level of SPARQL query execution plan.
 // Its role is to retrieve bindings according to a triple pattern from a graph.
-type bgpNode struct {
+type tripleNode struct {
 	pattern rdf.Triple
 	graph   graph.Graph
 }
 
-// newBgpNode creates a new bgpNode.
-func newBgpNode(pattern rdf.Triple, graph graph.Graph) *bgpNode {
-	return &bgpNode{pattern, graph}
+// newTripleNode creates a new tripleNode.
+func newTripleNode(pattern rdf.Triple, graph graph.Graph) *tripleNode {
+	return &tripleNode{pattern, graph}
 }
 
 // execute retrieves bindings from a graph that match a triple pattern.
-func (n *bgpNode) execute() chan rdf.BindingsGroup {
+func (n *tripleNode) execute() chan rdf.BindingsGroup {
 	out := make(chan rdf.BindingsGroup, bufferSize)
 	// find free vars in triple pattern
 	subject, freeSubject := n.pattern.Subject.(rdf.BlankNode)
@@ -50,7 +50,7 @@ func (n *bgpNode) execute() chan rdf.BindingsGroup {
 }
 
 // executeWith retrieves bindings from a graph that match a triple pattern, completed by a given binding.
-func (n *bgpNode) executeWith(group rdf.BindingsGroup) chan rdf.BindingsGroup {
+func (n *tripleNode) executeWith(group rdf.BindingsGroup) chan rdf.BindingsGroup {
 	var querySubj, queryPred, queryObj rdf.Node
 	out := make(chan rdf.BindingsGroup, bufferSize)
 	// find free vars in triple pattern

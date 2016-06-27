@@ -87,7 +87,7 @@ func (s *turtleScanner) scan(filename string) chan rdfToken {
 						out <- newRDFToken(tokenSep, elt)
 					} else if (string(elt[0]) == "<") && (string(elt[len(elt)-1]) == ">") {
 						out <- newRDFToken(tokenURI, elt[1:len(elt)-1])
-					} else if (string(elt[0]) == "\"") && (string(elt[len(elt)-1]) == "\"") {
+					} else if ((string(elt[0]) == "\"") && (string(elt[len(elt)-1]) == "\"")) || ((string(elt[0]) == "'") && (string(elt[len(elt)-1]) == "'")) {
 						out <- newRDFToken(tokenLiteral, elt[1:len(elt)-1])
 					} else if elt[0:2] == "^^" {
 						out <- newRDFToken(tokenTypedLiteral, elt[2:])

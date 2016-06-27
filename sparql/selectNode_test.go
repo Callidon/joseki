@@ -16,7 +16,7 @@ func TestExecuteSelectNode(t *testing.T) {
 	triple := rdf.NewTriple(rdf.NewBlankNode("v1"),
 		rdf.NewURI("http://purl.org/dc/terms/title"),
 		rdf.NewBlankNode("v2"))
-	node := newBgpNode(triple, graph)
+	node := newTripleNode(triple, graph)
 	selectNode := newSelectNode(node, []string{"v1"}...)
 	cpt := 0
 

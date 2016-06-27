@@ -56,7 +56,7 @@ func (s *ntScanner) scan(filename string) chan rdfToken {
 					out <- newRDFToken(tokenURI, elt[1:len(elt)-1])
 				} else if (string(elt[0]) == "_") && (string(elt[1]) == ":") {
 					out <- newRDFToken(tokenBlankNode, elt[2:])
-				} else if (string(elt[0]) == "\"") && (string(elt[len(elt)-1]) == "\"") {
+				} else if ((string(elt[0]) == "\"") && (string(elt[len(elt)-1]) == "\"")) || ((string(elt[0]) == "'") && (string(elt[len(elt)-1]) == "'")) {
 					out <- newRDFToken(tokenLiteral, elt[1:len(elt)-1])
 				} else if elt[0:2] == "^^" {
 					out <- newRDFToken(tokenTypedLiteral, elt[2:])
