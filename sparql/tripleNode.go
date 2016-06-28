@@ -7,6 +7,7 @@ package sparql
 import (
 	"github.com/Callidon/joseki/graph"
 	"github.com/Callidon/joseki/rdf"
+	"sort"
 )
 
 // tripleNode is the lowest level of SPARQL query execution plan.
@@ -22,8 +23,8 @@ func newTripleNode(pattern rdf.Triple, graph graph.Graph) *tripleNode {
 }
 
 // execute retrieves bindings from a graph that match a triple pattern.
-func (n *tripleNode) execute() chan rdf.BindingsGroup {
-	out := make(chan rdf.BindingsGroup, bufferSize)
+func (n *tripleNode) execute() (out chan rdf.BindingsGroup) {
+	out = make(chan rdf.BindingsGroup, bufferSize)
 	// find free vars in triple pattern
 	subject, freeSubject := n.pattern.Subject.(rdf.BlankNode)
 	predicate, freePredicate := n.pattern.Predicate.(rdf.BlankNode)
@@ -46,13 +47,13 @@ func (n *tripleNode) execute() chan rdf.BindingsGroup {
 			out <- group
 		}
 	}()
-	return out
+	return
 }
 
 // executeWith retrieves bindings from a graph that match a triple pattern, completed by a given binding.
-func (n *tripleNode) executeWith(group rdf.BindingsGroup) chan rdf.BindingsGroup {
+func (n *tripleNode) executeWith(group rdf.BindingsGroup) (out chan rdf.BindingsGroup) {
 	var querySubj, queryPred, queryObj rdf.Node
-	out := make(chan rdf.BindingsGroup, bufferSize)
+	out = make(chan rdf.BindingsGroup, bufferSize)
 	// find free vars in triple pattern
 	subject, freeSubject := n.pattern.Subject.(rdf.BlankNode)
 	predicate, freePredicate := n.pattern.Predicate.(rdf.BlankNode)
@@ -97,24 +98,24 @@ func (n *tripleNode) executeWith(group rdf.BindingsGroup) chan rdf.BindingsGroup
 			out <- newGroup
 		}
 	}()
-	return out
+	return
 }
 
 // bindingNames returns the names of the bindings produced
-func (n *tripleNode) bindingNames() []string {
-	var bindings []string
+func (n *tripleNode) bindingNames() (bindingNames []string) {
 	// find free vars in triple pattern
 	subject, freeSubject := n.pattern.Subject.(rdf.BlankNode)
 	predicate, freePredicate := n.pattern.Predicate.(rdf.BlankNode)
 	object, freeObject := n.pattern.Object.(rdf.BlankNode)
 	if freeSubject {
-		bindings = append(bindings, subject.Variable)
+		bindingNames = append(bindingNames, subject.Variable)
 	}
 	if freePredicate {
-		bindings = append(bindings, predicate.Variable)
+		bindingNames = append(bindingNames, predicate.Variable)
 	}
 	if freeObject {
-		bindings = append(bindings, object.Variable)
+		bindingNames = append(bindingNames, object.Variable)
 	}
-	return bindings
+	sort.Strings(bindingNames)
+	return
 }

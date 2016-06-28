@@ -21,8 +21,8 @@ func newJoinNode(inner, outer sparqlNode) *joinNode {
 }
 
 // execute perform the join between the two nodes of the Join Operator
-func (n *joinNode) execute() chan rdf.BindingsGroup {
-	out := make(chan rdf.BindingsGroup, bufferSize)
+func (n *joinNode) execute() (out chan rdf.BindingsGroup) {
+	out = make(chan rdf.BindingsGroup, bufferSize)
 
 	go func() {
 		defer close(out)
@@ -34,7 +34,7 @@ func (n *joinNode) execute() chan rdf.BindingsGroup {
 			}
 		}
 	}()
-	return out
+	return
 }
 
 // This operation has no particular meaning in the case of a joinNode, so it's equivalent to the execute method
@@ -43,12 +43,13 @@ func (n *joinNode) executeWith(binding rdf.BindingsGroup) chan rdf.BindingsGroup
 }
 
 // bindingNames returns the names of the bindings produced by this operation
-func (n *joinNode) bindingNames() []string {
-	bindingNames := n.innerNode.bindingNames()
+func (n *joinNode) bindingNames() (bindingNames []string) {
+	bindingNames = n.innerNode.bindingNames()
 	for _, name := range n.outerNode.bindingNames() {
 		if sort.SearchStrings(bindingNames, name) == len(bindingNames) {
 			bindingNames = append(bindingNames, name)
 		}
 	}
-	return bindingNames
+	sort.Strings(bindingNames)
+	return
 }

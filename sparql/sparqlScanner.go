@@ -100,8 +100,8 @@ func extractSegments(line string) []string {
 // Analyze a SPARQL query in string format and decompose it into tokens.
 //
 // Tokens are send through a channel, which is closed when the scan of the query is finished.
-func (s sparqlScanner) scan(query string) chan valuedToken {
-	out := make(chan valuedToken, bufferSize)
+func (s sparqlScanner) scan(query string) (out chan valuedToken) {
+	out = make(chan valuedToken, bufferSize)
 	// scan the query using a goroutine
 	go func() {
 		defer close(out)
@@ -177,5 +177,5 @@ func (s sparqlScanner) scan(query string) chan valuedToken {
 			lineNumber++
 		}
 	}()
-	return out
+	return
 }
