@@ -6,8 +6,8 @@ package parser
 
 import (
 	"bufio"
-	"github.com/Callidon/joseki/rdf"
 	"github.com/Callidon/joseki/parser/tokens"
+	"github.com/Callidon/joseki/rdf"
 	"os"
 )
 
@@ -44,11 +44,11 @@ func scanNtriples(filename string) chan tokens.RDFToken {
 				} else if elt == "." {
 					out <- tokens.NewTokenEnd(lineNumber, rowNumber)
 				} else if (string(elt[0]) == "<") && (string(elt[len(elt)-1]) == ">") {
-					out <- tokens.NewTokenURI(elt[1:len(elt)-1])
+					out <- tokens.NewTokenURI(elt[1 : len(elt)-1])
 				} else if (string(elt[0]) == "_") && (string(elt[1]) == ":") {
 					out <- tokens.NewTokenBlankNode(elt[2:])
 				} else if ((string(elt[0]) == "\"") && (string(elt[len(elt)-1]) == "\"")) || ((string(elt[0]) == "'") && (string(elt[len(elt)-1]) == "'")) {
-					out <- tokens.NewTokenLiteral(elt[1:len(elt)-1])
+					out <- tokens.NewTokenLiteral(elt[1 : len(elt)-1])
 				} else if elt[0:2] == "^^" {
 					out <- tokens.NewTokenType(elt[2:], lineNumber, rowNumber)
 				} else if string(elt[0]) == "@" {

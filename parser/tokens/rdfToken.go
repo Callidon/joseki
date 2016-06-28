@@ -6,33 +6,10 @@
 package tokens
 
 import (
-  "errors"
+	"errors"
 	"github.com/Callidon/joseki/rdf"
 	"strconv"
 )
-
-// TokenType is the type for a token in a language that represent RDF
-/*type TokenType float64
-
-const (
-	_ = iota
-	// TokenEnd ends a triple declaration
-	TokenEnd
-	// TokenSep is a RDF separator (for object/literal list, etc)
-	TokenSep
-	// TokenPrefixedURI is a RDF URI with a prefix
-	TokenPrefixedURI
-	// TokenTypedLiteral is a RDF typed Literal
-	TokenTypedLiteral
-	// TokenLangLiteral is a RDF Literal with lang informations
-	TokenLangLiteral
-	// TokenBlankNode is a RDF Blank Node
-	TokenBlankNode
-	// TokenPrefixName is the name of a prefix
-	TokenPrefixName
-	// TokenPrefixValue is the value of a prefix
-	TokenPrefixValue
-)*/
 
 // RDFToken represent a Token in a RDF based language
 //
@@ -62,7 +39,7 @@ func (t tokenPosition) position() string {
 // TokenIllegal is an illegal Token in the RDF syntax
 type TokenIllegal struct {
 	errMsg string
-  *tokenPosition
+	*tokenPosition
 }
 
 // NewTokenIllegal crates a new TokenIllegal

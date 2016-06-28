@@ -39,7 +39,7 @@ func TestReadTurtleParser(t *testing.T) {
 
 	// check for triples
 	for elt := range parser.Read("datas/test.ttl") {
-		if test, err := elt.Equals(datas[cpt]); !test || (err != nil) {
+		if test, err := elt.Equivalent(datas[cpt]); !test || (err != nil) {
 			t.Error(elt, "should be equal to", datas[cpt])
 		}
 		cpt++
