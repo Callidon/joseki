@@ -10,6 +10,7 @@ import (
 	"github.com/Callidon/joseki/rdf"
 	"os"
 	"strings"
+	"io"
 )
 
 // TurtleParser is a parser for reading & loading triples in Turtle format.
@@ -22,7 +23,7 @@ type TurtleParser struct {
 // scanTurtle read a file in Turtle format, identify and extract token with their values.
 //
 // The results are sent through a channel, which is closed when the scan of the file has been completed.
-func scanTurtle(filename string) chan tokens.RDFToken {
+func scanTurtle(reader io.Reader) chan tokens.RDFToken {
 	out := make(chan tokens.RDFToken, bufferSize)
 	// walk through the file using a goroutine
 	go func() {
@@ -30,11 +31,7 @@ func scanTurtle(filename string) chan tokens.RDFToken {
 		var prefixName, prefixValue string
 		var scanPrefixesDone bool
 
-		f, err := os.Open(filename)
-		check(err)
-		defer f.Close()
-
-		scanner := bufio.NewScanner(bufio.NewReader(f))
+		scanner := bufio.NewScanner(reader)
 		lineNumber, rowNumber := 1, 1
 		for scanner.Scan() {
 			line := extractSegments(scanner.Text())
@@ -84,6 +81,8 @@ func scanTurtle(filename string) chan tokens.RDFToken {
 						out <- tokens.NewTokenLang(elt[1:], lineNumber, rowNumber)
 					} else if (string(elt[0]) == "_") && (string(elt[1]) == ":") {
 						out <- tokens.NewTokenBlankNode(elt[2:])
+					} else if string(elt[0]) == "?" {
+						out <- tokens.NewTokenBlankNode(elt[1:])
 					} else if strings.Index(elt, ":") > -1 {
 						out <- tokens.NewTokenPrefixedURI(elt, lineNumber, rowNumber)
 					} else {
@@ -112,14 +111,17 @@ func (p TurtleParser) Prefixes() map[string]string {
 //
 // Triples generated are send throught a channel, which is closed when the parsing of the file has been completed.
 func (p *TurtleParser) Read(filename string) chan rdf.Triple {
-	var err error
 	out := make(chan rdf.Triple, bufferSize)
 	stack := tokens.NewStack()
 
 	// scan the file & analyse the tokens using a goroutine
 	go func() {
 		defer close(out)
-		for token := range scanTurtle(filename) {
+		f, err := os.Open(filename)
+		check(err)
+		defer f.Close()
+
+		for token := range scanTurtle(bufio.NewReader(f)) {
 			err = token.Interpret(stack, &p.prefixes, out)
 			check(err)
 		}

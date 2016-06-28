@@ -9,6 +9,7 @@ import (
 	"github.com/Callidon/joseki/parser/tokens"
 	"github.com/Callidon/joseki/rdf"
 	"os"
+	"io"
 )
 
 // NTParser is a parser for reading & loading triples in N-Triples format.
@@ -20,16 +21,13 @@ type NTParser struct {
 // scanNtriples read a file in N-Triples format, identify and extract token with their values.
 //
 // The results are sent through a channel, which is closed when the scan of the file has been completed.
-func scanNtriples(filename string) chan tokens.RDFToken {
+func scanNtriples(reader io.Reader) chan tokens.RDFToken {
 	out := make(chan tokens.RDFToken, bufferSize)
 	// walk through the file using a goroutine
 	go func() {
 		defer close(out)
-		f, err := os.Open(filename)
-		check(err)
-		defer f.Close()
 
-		scanner := bufio.NewScanner(bufio.NewReader(f))
+		scanner := bufio.NewScanner(reader)
 		lineNumber, rowNumber := 1, 1
 		for scanner.Scan() {
 			line := extractSegments(scanner.Text())
@@ -79,14 +77,17 @@ func (p NTParser) Prefixes() map[string]string {
 //
 // Triples generated are send through a channel, which is closed when the parsing of the file has been completed.
 func (p NTParser) Read(filename string) chan rdf.Triple {
-	var err error
 	out := make(chan rdf.Triple, bufferSize)
 	stack := tokens.NewStack()
 
 	// scan the file & analyse the tokens using a goroutine
 	go func() {
 		defer close(out)
-		for token := range scanNtriples(filename) {
+		f, err := os.Open(filename)
+		check(err)
+		defer f.Close()
+
+		for token := range scanNtriples(bufio.NewReader(f)) {
 			err = token.Interpret(stack, nil, out)
 			check(err)
 		}
