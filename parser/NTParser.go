@@ -6,8 +6,8 @@ package parser
 
 import (
 	"bufio"
-	"errors"
 	"github.com/Callidon/joseki/rdf"
+	"github.com/Callidon/joseki/parser/tokens"
 	"os"
 )
 
@@ -17,20 +17,11 @@ import (
 type NTParser struct {
 }
 
-// ntScanner is a scanner for reading triples in N-Triples format.
-type ntScanner struct {
-}
-
-// newNTScanner creates a new ntScanner
-func newNTScanner() *ntScanner {
-	return &ntScanner{}
-}
-
-// Scan read a file in N-Triples format, identify and extract token with their values.
+// scanNtriples read a file in N-Triples format, identify and extract token with their values.
 //
 // The results are sent through a channel, which is closed when the scan of the file has been completed.
-func (s *ntScanner) scan(filename string) chan rdfToken {
-	out := make(chan rdfToken, bufferSize)
+func scanNtriples(filename string) chan tokens.RDFToken {
+	out := make(chan tokens.RDFToken, bufferSize)
 	// walk through the file using a goroutine
 	go func() {
 		defer close(out)
@@ -39,7 +30,7 @@ func (s *ntScanner) scan(filename string) chan rdfToken {
 		defer f.Close()
 
 		scanner := bufio.NewScanner(bufio.NewReader(f))
-		lineNumber := 0
+		lineNumber, rowNumber := 1, 1
 		for scanner.Scan() {
 			line := extractSegments(scanner.Text())
 			// skip blank lines & comments
@@ -51,20 +42,21 @@ func (s *ntScanner) scan(filename string) chan rdfToken {
 				if string(elt[0]) == "#" {
 					break
 				} else if elt == "." {
-					out <- newRDFToken(tokenEnd, ".")
+					out <- tokens.NewTokenEnd(lineNumber, rowNumber)
 				} else if (string(elt[0]) == "<") && (string(elt[len(elt)-1]) == ">") {
-					out <- newRDFToken(tokenURI, elt[1:len(elt)-1])
+					out <- tokens.NewTokenURI(elt[1:len(elt)-1])
 				} else if (string(elt[0]) == "_") && (string(elt[1]) == ":") {
-					out <- newRDFToken(tokenBlankNode, elt[2:])
+					out <- tokens.NewTokenBlankNode(elt[2:])
 				} else if ((string(elt[0]) == "\"") && (string(elt[len(elt)-1]) == "\"")) || ((string(elt[0]) == "'") && (string(elt[len(elt)-1]) == "'")) {
-					out <- newRDFToken(tokenLiteral, elt[1:len(elt)-1])
+					out <- tokens.NewTokenLiteral(elt[1:len(elt)-1])
 				} else if elt[0:2] == "^^" {
-					out <- newRDFToken(tokenTypedLiteral, elt[2:])
+					out <- tokens.NewTokenType(elt[2:], lineNumber, rowNumber)
 				} else if string(elt[0]) == "@" {
-					out <- newRDFToken(tokenLangLiteral, elt[1:])
+					out <- tokens.NewTokenLang(elt[1:], lineNumber, rowNumber)
 				} else {
-					out <- newRDFToken(tokenIllegal, "Unexpected token when scanning "+elt)
+					out <- tokens.NewTokenIllegal("Unexpected token when scanning "+elt, lineNumber, rowNumber)
 				}
+				rowNumber += len(elt) + 1
 			}
 			lineNumber++
 		}
@@ -87,55 +79,16 @@ func (p NTParser) Prefixes() map[string]string {
 //
 // Triples generated are send through a channel, which is closed when the parsing of the file has been completed.
 func (p NTParser) Read(filename string) chan rdf.Triple {
-	var subject, predicate, object rdf.Node
-	var literalValue string
+	var err error
 	out := make(chan rdf.Triple, bufferSize)
-	// utility function for assigning a value to the first available node
-	assignNode := func(value rdf.Node) {
-		if subject == nil {
-			subject = value
-		} else if predicate == nil {
-			predicate = value
-		} else if object == nil {
-			object = value
-		}
-	}
+	stack := tokens.NewStack()
+
 	// scan the file & analyse the tokens using a goroutine
 	go func() {
 		defer close(out)
-		scanner := newNTScanner()
-		for token := range scanner.scan(filename) {
-			switch token.Type {
-			case tokenEnd:
-				sendTriple(subject, predicate, object, out)
-				// reset the values
-				subject, predicate, object = nil, nil, nil
-			case tokenURI:
-				assignNode(rdf.NewURI(token.Value))
-			case tokenBlankNode:
-				assignNode(rdf.NewBlankNode(token.Value))
-			case tokenLiteral:
-				assignNode(rdf.NewLiteral(token.Value))
-				literalValue = token.Value
-			case tokenTypedLiteral:
-				_, ok := object.(rdf.Literal)
-				if ok {
-					object = rdf.NewTypedLiteral(literalValue, token.Value)
-				} else {
-					panic(errors.New("Trying to assign a type to a non literal object"))
-				}
-			case tokenLangLiteral:
-				_, ok := object.(rdf.Literal)
-				if ok {
-					object = rdf.NewLangLiteral(literalValue, token.Value)
-				} else {
-					panic(errors.New("Trying to assign a language to a non literal object"))
-				}
-			case tokenIllegal:
-				panic(token.Value)
-			default:
-				panic(errors.New("Unexpected token " + token.Value))
-			}
+		for token := range scanNtriples(filename) {
+			err = token.Interpret(stack, nil, out)
+			check(err)
 		}
 	}()
 	return out
