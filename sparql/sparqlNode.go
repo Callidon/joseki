@@ -2,7 +2,6 @@
 // Use of this source code is governed by a MIT License
 // license that can be found in the LICENSE file.
 
-// Package sparql provides support for requesting RDF Graphs using SPARQL query language
 package sparql
 
 import "github.com/Callidon/joseki/rdf"
