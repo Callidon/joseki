@@ -23,7 +23,7 @@ func newTripleNode(pattern rdf.Triple, graph graph.Graph) *tripleNode {
 }
 
 // execute retrieves bindings from a graph that match a triple pattern.
-func (n *tripleNode) execute() (out chan rdf.BindingsGroup) {
+func (n tripleNode) execute() (out chan rdf.BindingsGroup) {
 	out = make(chan rdf.BindingsGroup, bufferSize)
 	// find free vars in triple pattern
 	subject, freeSubject := n.pattern.Subject.(rdf.BlankNode)
@@ -51,7 +51,7 @@ func (n *tripleNode) execute() (out chan rdf.BindingsGroup) {
 }
 
 // executeWith retrieves bindings from a graph that match a triple pattern, completed by a given binding.
-func (n *tripleNode) executeWith(group rdf.BindingsGroup) (out chan rdf.BindingsGroup) {
+func (n tripleNode) executeWith(group rdf.BindingsGroup) (out chan rdf.BindingsGroup) {
 	var querySubj, queryPred, queryObj rdf.Node
 	out = make(chan rdf.BindingsGroup, bufferSize)
 	// find free vars in triple pattern
@@ -101,8 +101,8 @@ func (n *tripleNode) executeWith(group rdf.BindingsGroup) (out chan rdf.Bindings
 	return
 }
 
-// bindingNames returns the names of the bindings produced
-func (n *tripleNode) bindingNames() (bindingNames []string) {
+// bindingNames returns the names of the bindings produced.
+func (n tripleNode) bindingNames() (bindingNames []string) {
 	// find free vars in triple pattern
 	subject, freeSubject := n.pattern.Subject.(rdf.BlankNode)
 	predicate, freePredicate := n.pattern.Predicate.(rdf.BlankNode)
@@ -118,4 +118,19 @@ func (n *tripleNode) bindingNames() (bindingNames []string) {
 	}
 	sort.Strings(bindingNames)
 	return
+}
+
+// Equals test if two Triple nodes are equals.
+func (n tripleNode) Equals(other sparqlNode) bool {
+	tripleN, isTriple := other.(*tripleNode)
+	if !isTriple {
+		return false
+	}
+	test, _ := n.pattern.Equals(tripleN.pattern)
+	return test
+}
+
+// String serialize the node in string format.
+func (n tripleNode) String() string {
+	return "Triple(" + n.pattern.Subject.String() + " " + n.pattern.Predicate.String() + " " + n.pattern.Object.String() + ")"
 }

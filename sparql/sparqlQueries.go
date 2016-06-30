@@ -20,13 +20,13 @@ import "github.com/Callidon/joseki/rdf"
 //  results := query.Execute()
 //
 type SelectQuery struct {
-  variables []string
-  *queryDescriptor
+	variables []string
+	*queryDescriptor
 }
 
 // NewSelectQuery creates a new SPARQL SELECT query.
 func NewSelectQuery(variables ...string) *SelectQuery {
-  return &SelectQuery{variables, newQueryDescriptor(nil, selectQuery)}
+	return &SelectQuery{variables, newQueryDescriptor(nil, selectQuery)}
 }
 
 // AskQuery is a SPARQL ASK query.
@@ -42,30 +42,30 @@ func NewSelectQuery(variables ...string) *SelectQuery {
 //  results := query.Execute()
 //
 type AskQuery struct {
-  *queryDescriptor
+	*queryDescriptor
 }
 
 // NewAskQuery creates a new SPARQL ASK query.
 func NewAskQuery() *AskQuery {
-  return &AskQuery{newQueryDescriptor(nil, askQuery)}
+	return &AskQuery{newQueryDescriptor(nil, askQuery)}
 }
 
 type DescribeQuery struct {
-  variables []string
-  *queryDescriptor
+	variables []string
+	*queryDescriptor
 }
 
 // NewDescribeQuery creates a new SPARQL DESCRIBE query.
 func NewDescribeQuery(variables ...string) *DescribeQuery {
-  return &DescribeQuery{variables, newQueryDescriptor(nil, describeQuery)}
+	return &DescribeQuery{variables, newQueryDescriptor(nil, describeQuery)}
 }
 
 type ConstructQuery struct {
-  triples []rdf.Triple
-  *queryDescriptor
+	triples []rdf.Triple
+	*queryDescriptor
 }
 
 // NewConstructQuery creates a new SPARQL CONSTRUCT query.
 func NewConstructQuery(triples ...rdf.Triple) *ConstructQuery {
-  return &ConstructQuery{triples, newQueryDescriptor(nil, constructQuery)}
+	return &ConstructQuery{triples, newQueryDescriptor(nil, constructQuery)}
 }

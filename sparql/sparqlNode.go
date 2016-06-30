@@ -15,4 +15,6 @@ type sparqlNode interface {
 	execute() chan rdf.BindingsGroup
 	executeWith(group rdf.BindingsGroup) chan rdf.BindingsGroup
 	bindingNames() []string
+	Equals(other sparqlNode) bool
+	String() string
 }

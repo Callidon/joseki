@@ -6,19 +6,19 @@ package sparql
 
 import "github.com/Callidon/joseki/rdf"
 
-// selectNode represent a Select operation in a SPARQL query execution plan
+// selectNode represent a Select operation in a SPARQL query execution plan.
 type selectNode struct {
 	node  sparqlNode
 	names []string
 }
 
-// newSelectNode creates a new Select Node
+// newSelectNode creates a new Select Node.
 func newSelectNode(node sparqlNode, bindings ...string) *selectNode {
 	return &selectNode{node, bindings}
 }
 
-// execute apply a Select operation to the bindings produced by another node
-func (n *selectNode) execute() (out chan rdf.BindingsGroup) {
+// execute apply a Select operation to the bindings produced by another node.
+func (n selectNode) execute() (out chan rdf.BindingsGroup) {
 	out = make(chan rdf.BindingsGroup, bufferSize)
 
 	go func() {
@@ -38,12 +38,26 @@ func (n *selectNode) execute() (out chan rdf.BindingsGroup) {
 	return
 }
 
-// This operation has no particular meaning in the case of a selectNode, so it's equivalent to the execute method
-func (n *selectNode) executeWith(binding rdf.BindingsGroup) chan rdf.BindingsGroup {
+// This operation has no particular meaning in the case of a selectNode, so it's equivalent to the execute method.
+func (n selectNode) executeWith(binding rdf.BindingsGroup) chan rdf.BindingsGroup {
 	return n.execute()
 }
 
-// bindingNames returns the names of the bindings produced by this operation
-func (n *selectNode) bindingNames() []string {
+// bindingNames returns the names of the bindings produced by this operation.
+func (n selectNode) bindingNames() []string {
 	return n.node.bindingNames()
+}
+
+// Equals test if two Select nodes are equals.
+func (n selectNode) Equals(other sparqlNode) bool {
+	selectN, isSelect := other.(*selectNode)
+	if !isSelect {
+		return false
+	}
+	return n.node.Equals(selectN.node)
+}
+
+// String serialize the node in string format.
+func (n selectNode) String() string {
+	return "SELECT (" + n.node.String() + ")"
 }

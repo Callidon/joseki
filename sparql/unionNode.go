@@ -10,19 +10,19 @@ import (
 	"sync"
 )
 
-// unionNode represent a Union Operator in a SPARQL query execution plan
+// unionNode represent a Union Operator in a SPARQL query execution plan.
 type unionNode struct {
 	innerNode sparqlNode
 	outerNode sparqlNode
 }
 
-// newUnionNode creates a new Union Node
+// newUnionNode creates a new Union Node.
 func newUnionNode(inner, outer sparqlNode) *unionNode {
 	return &unionNode{inner, outer}
 }
 
-// execute perform the Union between the two nodes of the Union Operator
-func (n *unionNode) execute() (out chan rdf.BindingsGroup) {
+// execute perform the Union between the two nodes of the Union Operator.
+func (n unionNode) execute() (out chan rdf.BindingsGroup) {
 	var wg sync.WaitGroup
 	out = make(chan rdf.BindingsGroup, bufferSize)
 
@@ -45,13 +45,13 @@ func (n *unionNode) execute() (out chan rdf.BindingsGroup) {
 	return
 }
 
-// This operation has no particular meaning in the case of a unionNode, so it's equivalent to the execute method
-func (n *unionNode) executeWith(binding rdf.BindingsGroup) chan rdf.BindingsGroup {
+// This operation has no particular meaning in the case of a unionNode, so it's equivalent to the execute method.
+func (n unionNode) executeWith(binding rdf.BindingsGroup) chan rdf.BindingsGroup {
 	return n.execute()
 }
 
 // bindingNames returns the names of the bindings produced by this operation
-func (n *unionNode) bindingNames() (bindingNames []string) {
+func (n unionNode) bindingNames() (bindingNames []string) {
 	bindingNames = n.innerNode.bindingNames()
 	for _, name := range n.outerNode.bindingNames() {
 		if sort.SearchStrings(bindingNames, name) == len(bindingNames) {
@@ -60,4 +60,18 @@ func (n *unionNode) bindingNames() (bindingNames []string) {
 	}
 	sort.Strings(bindingNames)
 	return
+}
+
+// Equals test if two Union nodes are equals.
+func (n unionNode) Equals(other sparqlNode) bool {
+	union, isUnion := other.(*unionNode)
+	if !isUnion {
+		return false
+	}
+	return n.innerNode.Equals(union.innerNode) && n.outerNode.Equals(union.outerNode)
+}
+
+// String serialize the node in string format.
+func (n unionNode) String() string {
+	return "Union (" + n.innerNode.String() + ", " + n.outerNode.String() + ")"
 }

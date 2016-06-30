@@ -9,19 +9,19 @@ import (
 	"sort"
 )
 
-// joinNode represent a Join Operator in a SPARQL query execution plan
+// joinNode represent a Join Operator in a SPARQL query execution plan.
 type joinNode struct {
 	innerNode sparqlNode
 	outerNode sparqlNode
 }
 
-// newJoinNode creates a new Join Node
+// newJoinNode creates a new Join Node.
 func newJoinNode(inner, outer sparqlNode) *joinNode {
 	return &joinNode{inner, outer}
 }
 
-// execute perform the join between the two nodes of the Join Operator
-func (n *joinNode) execute() (out chan rdf.BindingsGroup) {
+// execute perform the join between the two nodes of the Join Operator.
+func (n joinNode) execute() (out chan rdf.BindingsGroup) {
 	out = make(chan rdf.BindingsGroup, bufferSize)
 
 	go func() {
@@ -37,13 +37,13 @@ func (n *joinNode) execute() (out chan rdf.BindingsGroup) {
 	return
 }
 
-// This operation has no particular meaning in the case of a joinNode, so it's equivalent to the execute method
-func (n *joinNode) executeWith(binding rdf.BindingsGroup) chan rdf.BindingsGroup {
+// This operation has no particular meaning in the case of a joinNode, so it's equivalent to the execute method.
+func (n joinNode) executeWith(binding rdf.BindingsGroup) chan rdf.BindingsGroup {
 	return n.execute()
 }
 
-// bindingNames returns the names of the bindings produced by this operation
-func (n *joinNode) bindingNames() (bindingNames []string) {
+// bindingNames returns the names of the bindings produced by this operation.
+func (n joinNode) bindingNames() (bindingNames []string) {
 	bindingNames = n.innerNode.bindingNames()
 	for _, name := range n.outerNode.bindingNames() {
 		if sort.SearchStrings(bindingNames, name) == len(bindingNames) {
@@ -52,4 +52,18 @@ func (n *joinNode) bindingNames() (bindingNames []string) {
 	}
 	sort.Strings(bindingNames)
 	return
+}
+
+// Equals test if two Join nodes are equals.
+func (n joinNode) Equals(other sparqlNode) bool {
+	join, isJoin := other.(*joinNode)
+	if !isJoin {
+		return false
+	}
+	return n.innerNode.Equals(join.innerNode) && n.outerNode.Equals(join.outerNode)
+}
+
+// String serialize the node in string format.
+func (n joinNode) String() string {
+	return "JOIN (" + n.innerNode.String() + ", " + n.outerNode.String() + ")"
 }
