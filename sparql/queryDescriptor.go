@@ -7,7 +7,6 @@ package sparql
 import (
 	"github.com/Callidon/joseki/graph"
 	"github.com/Callidon/joseki/rdf"
-	"sort"
 )
 
 const (
@@ -70,17 +69,13 @@ func findJoin(leftNode sparqlNode, otherNodes ...sparqlNode) (sparqlNode, int) {
 		rightVariables := rightNode.bindingNames()
 		rightSelectivity := len(rightVariables)
 		for _, variable := range rightVariables {
-			// we find an possible join
-			if sort.SearchStrings(leftVariables, variable) != len(leftVariables) {
+			// a join is possible between the two nodes
+			if containsString(leftVariables, variable) {
 				// pre-optimization : put the most selective node at the left of the join
 				// apply only it if the two nodes are Triple Nodes
-				// based on "The SPARQL Query Graph Model for Query Optimization" (Olaf Hartig, Ralf Hees)
 				_, isLeftTriple := leftNode.(*tripleNode)
 				_, isRightTriple := rightNode.(*tripleNode)
-				if isLeftTriple && isRightTriple {
-					if leftSelectivity < rightSelectivity {
-						return newJoinNode(leftNode, rightNode), rightInd
-					}
+				if isLeftTriple && isRightTriple && (leftSelectivity >= rightSelectivity) {
 					return newJoinNode(rightNode, leftNode), rightInd
 				}
 				return newJoinNode(leftNode, rightNode), rightInd
@@ -94,44 +89,55 @@ func findJoin(leftNode sparqlNode, otherNodes ...sparqlNode) (sparqlNode, int) {
 // build analyse the query execution plan and return its first node
 func (q *queryDescriptor) build() sparqlNode {
 	var root, joinNode sparqlNode
-	//var bgpRoots []sparqlNode
+	var currentBGP, bgpRoots []sparqlNode
 	var rightInd int
-	// finds the possible join for each BGP
+	var processNodes []int
+	var joinFound bool
+
+	// find the possible joins for each BGP
 	for _, bgp := range q.bgps {
-		processNodes := 0
+		nextBGP := make([]sparqlNode, len(bgp))
+		copy(nextBGP, bgp)
 		// look for joins until all nodes have been processed
-		for processNodes < len(bgp) {
-			for leftInd, leftNode := range bgp {
-				if leftInd == 0 {
-					joinNode, rightInd = findJoin(leftNode, bgp[1:]...)
-				} else {
-					joinNode, rightInd = findJoin(leftNode, bgp[0:leftInd]...)
-					// look in the other part of the slice if first search fails
-					if (joinNode == nil) && (rightInd == -1) {
-						joinNode, rightInd = findJoin(leftNode, bgp[leftInd+1:]...)
+		for len(currentBGP) != len(nextBGP) {
+			currentBGP = make([]sparqlNode, len(nextBGP))
+			copy(currentBGP, nextBGP)
+			nextBGP = nil
+			processNodes = nil
+			joinFound = false
+
+			for leftInd, leftNode := range currentBGP {
+				// once we found one join, fill the set in order to skip to the next step
+				if joinFound {
+					if !containsInt(processNodes, leftInd) {
+						nextBGP = append(nextBGP, leftNode)
 					}
+					continue
 				}
-				// if a join has been found
-				if (joinNode != nil) && (rightInd >= 0) {
-					// TODO
-					// update counter
-					if processNodes == 0 {
-						processNodes = 2
-					} else {
-						processNodes++
-					}
+				// search for a possible join between the current nodes & the next nodes
+				joinNode, rightInd = findJoin(leftNode, currentBGP[leftInd+1:]...)
+				if (joinNode == nil) && (rightInd == -1) {
+					// save the node since no join is currently possible with it
+					nextBGP = append(nextBGP, leftNode)
 				} else {
-					// TODO
+					// save the new join we were able to find
+					nextBGP = append(nextBGP, joinNode)
+					joinFound = true
+					processNodes = append(processNodes, rightInd+leftInd+1)
 				}
 			}
 		}
 		// join the remaining nodes (joins & triples) between them using UNION operators
-		// ...
+		root = nextBGP[0]
+		for _, bgpNode := range nextBGP[1:] {
+			root = newUnionNode(root, bgpNode)
+		}
+		bgpRoots = append(bgpRoots, root)
 	}
 	// assemble the BGPs together with UNION operators
-	/*root = bgpRoots[0]
-	  for _, bgpNode := range bgpRoots[1:] {
-	    root = newUnionNode(root, bgpNode)
-	  }*/
+	root = bgpRoots[0]
+	for _, bgpNode := range bgpRoots[1:] {
+		root = newUnionNode(root, bgpNode)
+	}
 	return root
 }

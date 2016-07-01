@@ -62,3 +62,25 @@ func TestComplexFindJoin(t *testing.T) {
 		t.Error("expected", secondJoin, "but instead found", joinFound)
 	}
 }
+
+func TestBuildQueryDescriptor(t *testing.T) {
+	var expectedRoot sparqlNode
+	tripleA := rdf.NewTriple(rdf.NewURI("example.org"), rdf.NewURI("foaf:friendOf"), rdf.NewBlankNode("v1"))
+	tripleB := rdf.NewTriple(rdf.NewBlankNode("v2"), rdf.NewURI("rdf:type"), rdf.NewURI("schema.org#People"))
+	tripleC := rdf.NewTriple(rdf.NewBlankNode("v1"), rdf.NewURI("rdf:name"), rdf.NewBlankNode("v2"))
+	tripleD := rdf.NewTriple(rdf.NewURI("example.org"), rdf.NewURI("rdf:name"), rdf.NewBlankNode("v5"))
+
+	nodeA := newTripleNode(tripleA, nil)
+	nodeB := newTripleNode(tripleB, nil)
+	nodeC := newTripleNode(tripleC, nil)
+	nodeD := newTripleNode(tripleD, nil)
+	expectedRoot = newUnionNode(newJoinNode(newJoinNode(nodeA, nodeC), nodeB), nodeD)
+
+	qd := newQueryDescriptor(nil, selectQuery)
+	qd.Where(tripleA, tripleB, tripleC, tripleD)
+	root := qd.build()
+
+	if !expectedRoot.Equals(root) {
+		t.Error("expected", root, "to be equals to", expectedRoot)
+	}
+}

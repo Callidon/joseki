@@ -54,7 +54,7 @@ func (n unionNode) executeWith(binding rdf.BindingsGroup) chan rdf.BindingsGroup
 func (n unionNode) bindingNames() (bindingNames []string) {
 	bindingNames = n.innerNode.bindingNames()
 	for _, name := range n.outerNode.bindingNames() {
-		if sort.SearchStrings(bindingNames, name) == len(bindingNames) {
+		if !containsString(bindingNames, name) {
 			bindingNames = append(bindingNames, name)
 		}
 	}

@@ -9,7 +9,7 @@ import "github.com/Callidon/joseki/rdf"
 
 // SelectQuery is a SPARQL SELECT query.
 //
-// The following example shows how to build a simple SELECT query
+// The following example shows how to build a simple SELECT query :
 //  graph := graph.NewHDTGraph().LoadFromFile("datas.nt", "nt")
 //  triples := []rdf.Triple {
 //    // let's initialize some triples here ...
@@ -17,7 +17,9 @@ import "github.com/Callidon/joseki/rdf"
 //  query := NewSelectQuery("?s", "?p")
 //  query.From(graph)
 //  query.Where(triples...)
-//  results := query.Execute()
+//  for bindings := range query.Execute() {
+//		fmt.Println(bindings)
+//	}
 //
 type SelectQuery struct {
 	variables []string
@@ -29,9 +31,18 @@ func NewSelectQuery(variables ...string) *SelectQuery {
 	return &SelectQuery{variables, newQueryDescriptor(nil, selectQuery)}
 }
 
+// Execute run the Select query.
+// The group of bindings which answers the query are send through a channel.
+func (q SelectQuery) Execute() chan rdf.BindingsGroup {
+	// get the query execution plan & add the SELECT modifier
+	root := newSelectNode(q.build(), q.variables...)
+	// TODO : apply optimization heuristic to the plan
+	return root.execute()
+}
+
 // AskQuery is a SPARQL ASK query.
 //
-// The following example shows how to build a simple SELECT query
+// The following example shows how to build a simple ASK query :
 //  graph := graph.NewHDTGraph().LoadFromFile("datas.nt", "nt")
 //  triples := []rdf.Triple {
 //    // let's initialize some triples here ...
@@ -39,7 +50,7 @@ func NewSelectQuery(variables ...string) *SelectQuery {
 //  query := NewAskQuery()
 //  query.From(graph)
 //  query.Where(triples...)
-//  results := query.Execute()
+//  fmt.Println(query.Execute()) // will display "true" or "false"
 //
 type AskQuery struct {
 	*queryDescriptor
