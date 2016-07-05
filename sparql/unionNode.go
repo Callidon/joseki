@@ -12,13 +12,12 @@ import (
 
 // unionNode represent a Union Operator in a SPARQL query execution plan.
 type unionNode struct {
-	innerNode sparqlNode
-	outerNode sparqlNode
+	leftNode, rightNode sparqlNode
 }
 
 // newUnionNode creates a new Union Node.
-func newUnionNode(inner, outer sparqlNode) *unionNode {
-	return &unionNode{inner, outer}
+func newUnionNode(left, right sparqlNode) *unionNode {
+	return &unionNode{left, right}
 }
 
 // execute perform the Union between the two nodes of the Union Operator.
@@ -33,10 +32,10 @@ func (n unionNode) execute() <-chan rdf.BindingsGroup {
 		}
 	}
 
-	// fetch the bindings from the inner & the outer nodes in parallel
+	// fetch the bindings from the left & the right nodes in parallel
 	wg.Add(2)
-	go fetchBindings(n.innerNode, out, &wg)
-	go fetchBindings(n.outerNode, out, &wg)
+	go fetchBindings(n.leftNode, out, &wg)
+	go fetchBindings(n.rightNode, out, &wg)
 	// wait for the completion of the previous operations before closing the channel
 	go func() {
 		wg.Wait()
@@ -52,8 +51,8 @@ func (n unionNode) executeWith(binding rdf.BindingsGroup) <-chan rdf.BindingsGro
 
 // bindingNames returns the names of the bindings produced by this operation
 func (n unionNode) bindingNames() (bindingNames []string) {
-	bindingNames = n.innerNode.bindingNames()
-	for _, name := range n.outerNode.bindingNames() {
+	bindingNames = n.leftNode.bindingNames()
+	for _, name := range n.rightNode.bindingNames() {
 		if !containsString(bindingNames, name) {
 			bindingNames = append(bindingNames, name)
 		}
@@ -68,10 +67,10 @@ func (n unionNode) Equals(other sparqlNode) bool {
 	if !isUnion {
 		return false
 	}
-	return n.innerNode.Equals(union.innerNode) && n.outerNode.Equals(union.outerNode)
+	return n.leftNode.Equals(union.leftNode) && n.rightNode.Equals(union.rightNode)
 }
 
 // String serialize the node in string format.
 func (n unionNode) String() string {
-	return "Union (" + n.innerNode.String() + ", " + n.outerNode.String() + ")"
+	return "Union (" + n.leftNode.String() + ", " + n.rightNode.String() + ")"
 }

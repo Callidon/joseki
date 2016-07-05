@@ -12,13 +12,12 @@ import (
 
 // joinNode represent a Join Operator in a SPARQL query execution plan.
 type joinNode struct {
-	innerNode sparqlNode
-	outerNode sparqlNode
+	outerNode, innerNode sparqlNode
 }
 
 // newJoinNode creates a new Join Node.
-func newJoinNode(inner, outer sparqlNode) *joinNode {
-	return &joinNode{inner, outer}
+func newJoinNode(outer, inner sparqlNode) *joinNode {
+	return &joinNode{outer, inner}
 }
 
 // execute perform the join between the two nodes of the Join Operator.
@@ -29,11 +28,11 @@ func (n joinNode) execute() <-chan rdf.BindingsGroup {
 	var page []rdf.BindingsGroup
 	out := make(chan rdf.BindingsGroup, bufferSize)
 
-	// execute the outer loop with a page of bindings from the inner loop
-	executeOuterLoop := func(outerNode sparqlNode, page []rdf.BindingsGroup, out chan rdf.BindingsGroup, wg *sync.WaitGroup) {
+	// execute the inner loop with a page of bindings from the inner loop
+	executeInnerLoop := func(innerNode sparqlNode, page []rdf.BindingsGroup, out chan<- rdf.BindingsGroup, wg *sync.WaitGroup) {
 		for _, bindingGroup := range page {
-			for outerBindings := range outerNode.executeWith(bindingGroup) {
-				out <- outerBindings
+			for innerBindings := range innerNode.executeWith(bindingGroup) {
+				out <- innerBindings
 			}
 		}
 		wg.Done()
@@ -42,15 +41,15 @@ func (n joinNode) execute() <-chan rdf.BindingsGroup {
 	go func() {
 		defer close(out)
 		cpt := 0
-		// execute the inner loop, then the outer loop using each group of bindings previously retrieved
-		for innerBindings := range n.innerNode.execute() {
+		// execute the outer loop, then the inner loop using each group of bindings previously retrieved
+		for outerBindings := range n.outerNode.execute() {
 			// accumule group of bindings to form pages, send them when they are completed
 			if cpt < pageSize {
-				page = append(page, innerBindings)
+				page = append(page, outerBindings)
 			} else {
-				// execute the outer loop for the current page, then prepare the next one
+				// execute the inner loop for the current page, then prepare the next one
 				wg.Add(1)
-				go executeOuterLoop(n.outerNode, page, out, &wg)
+				go executeInnerLoop(n.innerNode, page, out, &wg)
 				cpt = 0
 				page = nil
 			}
@@ -58,7 +57,7 @@ func (n joinNode) execute() <-chan rdf.BindingsGroup {
 		// process the last page if it's not empty
 		if len(page) > 0 {
 			wg.Add(1)
-			go executeOuterLoop(n.outerNode, page, out, &wg)
+			go executeInnerLoop(n.innerNode, page, out, &wg)
 		}
 		// wait for all process to finish their jobs
 		wg.Wait()
@@ -73,8 +72,8 @@ func (n joinNode) executeWith(binding rdf.BindingsGroup) <-chan rdf.BindingsGrou
 
 // bindingNames returns the names of the bindings produced by this operation.
 func (n joinNode) bindingNames() (bindingNames []string) {
-	bindingNames = n.innerNode.bindingNames()
-	for _, name := range n.outerNode.bindingNames() {
+	bindingNames = n.outerNode.bindingNames()
+	for _, name := range n.innerNode.bindingNames() {
 		if !containsString(bindingNames, name) {
 			bindingNames = append(bindingNames, name)
 		}
@@ -94,5 +93,5 @@ func (n joinNode) Equals(other sparqlNode) bool {
 
 // String serialize the node in string format.
 func (n joinNode) String() string {
-	return "JOIN (" + n.innerNode.String() + ", " + n.outerNode.String() + ")"
+	return "JOIN (" + n.outerNode.String() + ", " + n.innerNode.String() + ")"
 }
