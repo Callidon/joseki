@@ -134,6 +134,48 @@ func TestComplexFilterHDTGraph(t *testing.T) {
 	}
 }
 
+func TestComplexFilterSubsetHDTGraph(t *testing.T) {
+	graph := NewHDTGraph()
+	nbDatas, limit, offset := 1000, 600, 800
+	cpt := 0
+	subj := rdf.NewURI("dblp:foo")
+
+	// insert random triples in the graph
+	for i := 0; i < nbDatas; i++ {
+		triple := rdf.NewTriple(subj, rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
+		graph.Add(triple)
+	}
+
+	// test a FilterSubset with a simple Limit
+	for _ = range graph.FilterSubset(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w"), limit, -1) {
+		cpt++
+	}
+
+	if cpt != limit {
+		t.Error("expected ", limit, "results but instead found ", cpt, "results")
+	}
+
+	// test a FilterSubset with a simple offset
+	cpt = 0
+	for _ = range graph.FilterSubset(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w"), -1, offset) {
+		cpt++
+	}
+
+	if cpt != nbDatas-offset {
+		t.Error("expected ", nbDatas-offset, "results but instead found ", cpt, "results")
+	}
+
+	// test with a offset than doesn't allow enough results to reach the limit
+	cpt = 0
+	for _ = range graph.FilterSubset(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w"), limit, offset) {
+		cpt++
+	}
+
+	if cpt != nbDatas-offset {
+		t.Error("expected ", nbDatas-offset, "results but instead found ", cpt, "results")
+	}
+}
+
 func TestDeleteHDTGraph(t *testing.T) {
 	graph := NewHDTGraph()
 	nbDatas := 1000
@@ -250,6 +292,26 @@ func BenchmarkSpecificFilterHDTGraph(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		// fetch the last inserted triple into the graph
 		for _ = range graph.Filter(subj, pred, obj) {
+			cpt++
+		}
+	}
+}
+
+func BenchmarkAllFilterSubsetHDTGraph(b *testing.B) {
+	graph := NewHDTGraph()
+	nbDatas, limit, offset := 1000, 600, 200
+	cpt := 0
+	subj := rdf.NewURI("dblp:foo")
+
+	// insert random triples in the graph
+	for i := 0; i < nbDatas; i++ {
+		triple := rdf.NewTriple(subj, rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
+		graph.Add(triple)
+	}
+
+	for i := 0; i < b.N; i++ {
+		// select all triple of the graph
+		for _ = range graph.FilterSubset(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w"), limit, offset) {
 			cpt++
 		}
 	}

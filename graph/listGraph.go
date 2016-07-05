@@ -52,10 +52,10 @@ func (g *ListGraph) Delete(subject, object, predicate rdf.Node) {
 func (g *ListGraph) Filter(subject, predicate, object rdf.Node) chan rdf.Triple {
 	results := make(chan rdf.Triple)
 	refTriple := rdf.NewTriple(subject, predicate, object)
-	g.Lock()
-	defer g.Unlock()
 	// search for matching triple pattern in graph
 	go func() {
+		g.Lock()
+		defer g.Unlock()
 		for _, triple := range g.triples {
 			test, err := refTriple.Equivalent(triple)
 			if (err == nil) && test {
@@ -64,6 +64,37 @@ func (g *ListGraph) Filter(subject, predicate, object rdf.Node) chan rdf.Triple 
 		}
 		close(results)
 	}()
+	return results
+}
+
+// FilterSubset fetch triples form the graph that match a BGP given in parameters.
+// It impose a Limit(the max number of results to be send in the output channel)
+// and an Offset (the number of results to skip before sending them in the output channel) to the nodes requested.
+func (g *ListGraph) FilterSubset(subject rdf.Node, predicate rdf.Node, object rdf.Node, limit int, offset int) chan rdf.Triple {
+	results := make(chan rdf.Triple)
+	refTriple := rdf.NewTriple(subject, predicate, object)
+	cpt := 0
+	// search for matching triple pattern in graph
+	go func() {
+		g.Lock()
+		defer g.Unlock()
+		for _, triple := range g.triples {
+			test, err := refTriple.Equivalent(triple)
+			if (err == nil) && test {
+				// send the result only if the offset has been reached
+				if (offset == -1) || (cpt >= offset) {
+					results <- triple
+				}
+				cpt++
+			}
+			// terminate the loop when the limit has been reached
+			if (limit != -1) && (cpt-offset > limit) {
+				break
+			}
+		}
+		close(results)
+	}()
+
 	return results
 }
 

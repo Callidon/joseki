@@ -9,6 +9,18 @@ import (
 	"sync"
 )
 
+// atomicCounter respresent a synchronized counter
+type atomicCounter struct {
+	cpt       int
+	threshold int
+	*sync.Mutex
+}
+
+// newAtomicCounter creates a new Atomic Counter
+func newAtomicCounter(cpt, limit int) *atomicCounter {
+	return &atomicCounter{cpt, limit, &sync.Mutex{}}
+}
+
 // HDTGraph is a implementation of a RDF Graph based on the HDT-MR model proposed by Giménez-García et al.
 //
 // For more details, see http://dataweb.infor.uva.es/projects/hdt-mr/
@@ -77,17 +89,36 @@ func (g *HDTGraph) removeNodes(root *bitmapNode, datas []*rdf.Node) {
 	}
 }
 
-// Recursively collect datas from the graph in order to form triple pattern matching criterias.
-func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int, out chan rdf.Triple, wg *sync.WaitGroup) {
+// Recursively collect data from the graph in order to form triple pattern matching criterias.
+// The graph can be query with a Limit (the max number of rsults to send in the output channel)
+// and an Offset (the number of results to skip before sending them in the output channel).
+// These two parameters can be set to -1 to be ignored.
+func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int, out chan rdf.Triple, wg *sync.WaitGroup, limit *atomicCounter, offset *atomicCounter) {
+	limit.Lock()
 	defer wg.Done()
-	// when possible, create a new triple pattern & send it into the output pipeline
-	if len(triple) == 3 {
-		bitmapTriple := newBitmapTriple(triple[0], triple[1], triple[2])
-		triple, err := bitmapTriple.Triple(&g.dictionnary)
-		if err != nil {
-			panic(err)
+	defer limit.Unlock()
+	// skip the node if the limit have a default value or has been reached
+	if (limit.threshold != -1) && (limit.cpt >= limit.threshold) {
+		// update the counter for the sons that will not be visited
+		for _, son := range root.sons {
+			son.updateCounter(wg)
 		}
-		out <- triple
+	} else if len(triple) == 3 {
+		// skip result and update offset if its threashold has'nt been reached
+		offset.Lock()
+		defer offset.Unlock()
+		if offset.cpt < offset.threshold {
+			offset.cpt++
+		} else {
+			// when possible, create a new triple pattern & send it into the output pipeline
+			bitmapTriple := newBitmapTriple(triple[0], triple[1], triple[2])
+			triple, err := bitmapTriple.Triple(&g.dictionnary)
+			if err != nil {
+				panic(err)
+			}
+			out <- triple
+			limit.cpt++
+		}
 	} else {
 		node := (*datas[0])
 		// if the current node to search is a blank node, search in every sons
@@ -95,14 +126,14 @@ func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int,
 		if isBnode {
 			go func() {
 				for _, son := range root.sons {
-					g.queryNodes(son, datas[1:], append(triple, son.id), out, wg)
+					g.queryNodes(son, datas[1:], append(triple, son.id), out, wg, limit, offset)
 				}
 			}()
 		} else {
 			// search for a specific node
 			id, inDict := g.dictionnary.locate(node)
 			if _, inSons := root.sons[id]; inDict && (inSons || root.sons[id] == nil) {
-				go g.queryNodes(root.sons[id], datas[1:], append(triple, id), out, wg)
+				go g.queryNodes(root.sons[id], datas[1:], append(triple, id), out, wg, limit, offset)
 				// update the counter for the sons that will not be visited
 				for key, son := range root.sons {
 					if key != id {
@@ -139,10 +170,30 @@ func (g *HDTGraph) Delete(subject, object, predicate rdf.Node) {
 func (g *HDTGraph) Filter(subject, predicate, object rdf.Node) chan rdf.Triple {
 	var wg sync.WaitGroup
 	results := make(chan rdf.Triple)
+	limit, offset := newAtomicCounter(0, -1), newAtomicCounter(0, 0)
 	// fetch data in the tree & wait for the operation to be complete before closing the pipeline
 	g.Lock()
 	wg.Add(g.root.depth() + 1)
-	go g.queryNodes(&g.root, []*rdf.Node{&subject, &predicate, &object}, make([]int, 0), results, &wg)
+	go g.queryNodes(&g.root, []*rdf.Node{&subject, &predicate, &object}, make([]int, 0), results, &wg, limit, offset)
+	go func() {
+		defer close(results)
+		defer g.Unlock()
+		wg.Wait()
+	}()
+	return results
+}
+
+// FilterSubset fetch triples form the graph that match a BGP given in parameters.
+// It impose a Limit(the max number of results to be send in the output channel)
+// and an Offset (the number of results to skip before sending them in the output channel) to the nodes requested.
+func (g *HDTGraph) FilterSubset(subject rdf.Node, predicate rdf.Node, object rdf.Node, limit int, offset int) chan rdf.Triple {
+	var wg sync.WaitGroup
+	results := make(chan rdf.Triple)
+	limitCpt, offsetCpt := newAtomicCounter(0, limit), newAtomicCounter(0, offset)
+	// fetch data in the tree & wait for the operation to be complete before closing the pipeline
+	g.Lock()
+	wg.Add(g.root.depth() + 1)
+	go g.queryNodes(&g.root, []*rdf.Node{&subject, &predicate, &object}, make([]int, 0), results, &wg, limitCpt, offsetCpt)
 	go func() {
 		defer close(results)
 		defer g.Unlock()

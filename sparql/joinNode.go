@@ -7,6 +7,7 @@ package sparql
 import (
 	"github.com/Callidon/joseki/rdf"
 	"sort"
+	"sync"
 )
 
 // joinNode represent a Join Operator in a SPARQL query execution plan.
@@ -21,20 +22,48 @@ func newJoinNode(inner, outer sparqlNode) *joinNode {
 }
 
 // execute perform the join between the two nodes of the Join Operator.
-func (n joinNode) execute() (out chan rdf.BindingsGroup) {
-	out = make(chan rdf.BindingsGroup, bufferSize)
+// It use a parallelized Nested Loop Join algorithm, as described by
+// ÖZSU, M. Tamer et VALDURIEZ, Patrick. In Principles of distributed database systems. Springer Science & Business Media, 2011
+func (n joinNode) execute() chan rdf.BindingsGroup {
+	var wg sync.WaitGroup
+	var page []rdf.BindingsGroup
+	out := make(chan rdf.BindingsGroup, bufferSize)
 
-	go func() {
-		defer close(out)
-		// execute the inner join, then the outer join using each group of bindings retrieved from the inner join
-		for innerBindings := range n.innerNode.execute() {
-			// TODO : use parallelization for the outer join ?
-			for outerBindings := range n.outerNode.executeWith(innerBindings) {
+	// execute the outer loop with a page of bindings from the inner loop
+	executeOuterLoop := func(outerNode sparqlNode, page []rdf.BindingsGroup, out chan rdf.BindingsGroup, wg *sync.WaitGroup) {
+		for _, bindingGroup := range page {
+			for outerBindings := range outerNode.executeWith(bindingGroup) {
 				out <- outerBindings
 			}
 		}
+		wg.Done()
+	}
+
+	go func() {
+		defer close(out)
+		cpt := 0
+		// execute the inner loop, then the outer loop using each group of bindings previously retrieved
+		for innerBindings := range n.innerNode.execute() {
+			// accumule group of bindings to form pages, send them when they are completed
+			if cpt < pageSize {
+				page = append(page, innerBindings)
+			} else {
+				// execute the outer loop for the current page, then prepare the next one
+				wg.Add(1)
+				go executeOuterLoop(n.outerNode, page, out, &wg)
+				cpt = 0
+				page = nil
+			}
+		}
+		// process the last page if it's not empty
+		if len(page) > 0 {
+			wg.Add(1)
+			go executeOuterLoop(n.outerNode, page, out, &wg)
+		}
+		// wait for all process to finish their jobs
+		wg.Wait()
 	}()
-	return
+	return out
 }
 
 // This operation has no particular meaning in the case of a joinNode, so it's equivalent to the execute method.

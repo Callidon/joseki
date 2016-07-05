@@ -23,6 +23,8 @@ type Graph interface {
 	Delete(subject, object, predicate rdf.Node)
 	// Fetch triples form the graph that match a BGP given in parameters.
 	Filter(subject, predicate, object rdf.Node) chan rdf.Triple
+	// Same as Filter, but with a Limit and an Offset
+	FilterSubset(subject rdf.Node, predicate rdf.Node, object rdf.Node, limit int, offset int) chan rdf.Triple
 	// Serialize the graph into a given format and return it as a string.
 	Serialize(format string) string
 }

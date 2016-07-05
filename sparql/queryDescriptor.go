@@ -12,6 +12,8 @@ import (
 const (
 	// Max size for the buffer of this package
 	bufferSize = 100
+	// Max size for the pages of group of bindings
+	pageSize = 15
 )
 
 // queryType is the type of a SPARQL query
