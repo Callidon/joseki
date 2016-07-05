@@ -5,10 +5,10 @@
 package joseki
 
 import (
-  "testing"
-  "fmt"
+	"fmt"
+	"testing"
 )
 
 func TestStuff(t *testing.T) {
-    fmt.Println("Not implemented yet")
+	fmt.Println("Not implemented yet")
 }

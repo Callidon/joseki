@@ -49,7 +49,7 @@ func (g *ListGraph) Delete(subject, object, predicate rdf.Node) {
 }
 
 // Filter fetch triples form the graph that match a BGP given in parameters.
-func (g *ListGraph) Filter(subject, predicate, object rdf.Node) chan rdf.Triple {
+func (g *ListGraph) Filter(subject, predicate, object rdf.Node) <-chan rdf.Triple {
 	results := make(chan rdf.Triple)
 	refTriple := rdf.NewTriple(subject, predicate, object)
 	// search for matching triple pattern in graph
@@ -70,7 +70,7 @@ func (g *ListGraph) Filter(subject, predicate, object rdf.Node) chan rdf.Triple 
 // FilterSubset fetch triples form the graph that match a BGP given in parameters.
 // It impose a Limit(the max number of results to be send in the output channel)
 // and an Offset (the number of results to skip before sending them in the output channel) to the nodes requested.
-func (g *ListGraph) FilterSubset(subject rdf.Node, predicate rdf.Node, object rdf.Node, limit int, offset int) chan rdf.Triple {
+func (g *ListGraph) FilterSubset(subject rdf.Node, predicate rdf.Node, object rdf.Node, limit int, offset int) <-chan rdf.Triple {
 	results := make(chan rdf.Triple)
 	refTriple := rdf.NewTriple(subject, predicate, object)
 	cpt := 0

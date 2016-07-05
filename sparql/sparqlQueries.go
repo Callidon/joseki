@@ -33,7 +33,7 @@ func NewSelectQuery(variables ...string) *SelectQuery {
 
 // Execute run the Select query.
 // The group of bindings which answers the query are send through a channel.
-func (q SelectQuery) Execute() chan rdf.BindingsGroup {
+func (q SelectQuery) Execute() <-chan rdf.BindingsGroup {
 	// get the query execution plan & add the SELECT modifier
 	root := newSelectNode(q.build(), q.variables...)
 	// TODO : apply optimization heuristic to the plan

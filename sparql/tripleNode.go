@@ -23,8 +23,8 @@ func newTripleNode(pattern rdf.Triple, graph graph.Graph) *tripleNode {
 }
 
 // execute retrieves bindings from a graph that match a triple pattern.
-func (n tripleNode) execute() (out chan rdf.BindingsGroup) {
-	out = make(chan rdf.BindingsGroup, bufferSize)
+func (n tripleNode) execute() <-chan rdf.BindingsGroup {
+	out := make(chan rdf.BindingsGroup, bufferSize)
 	// find free vars in triple pattern
 	subject, freeSubject := n.pattern.Subject.(rdf.BlankNode)
 	predicate, freePredicate := n.pattern.Predicate.(rdf.BlankNode)
@@ -47,13 +47,13 @@ func (n tripleNode) execute() (out chan rdf.BindingsGroup) {
 			out <- group
 		}
 	}()
-	return
+	return out
 }
 
 // executeWith retrieves bindings from a graph that match a triple pattern, completed by a given binding.
-func (n tripleNode) executeWith(group rdf.BindingsGroup) (out chan rdf.BindingsGroup) {
+func (n tripleNode) executeWith(group rdf.BindingsGroup) <-chan rdf.BindingsGroup {
 	var querySubj, queryPred, queryObj rdf.Node
-	out = make(chan rdf.BindingsGroup, bufferSize)
+	out := make(chan rdf.BindingsGroup, bufferSize)
 	// find free vars in triple pattern
 	subject, freeSubject := n.pattern.Subject.(rdf.BlankNode)
 	predicate, freePredicate := n.pattern.Predicate.(rdf.BlankNode)
@@ -98,7 +98,7 @@ func (n tripleNode) executeWith(group rdf.BindingsGroup) (out chan rdf.BindingsG
 			out <- newGroup
 		}
 	}()
-	return
+	return out
 }
 
 // bindingNames returns the names of the bindings produced.

@@ -24,7 +24,7 @@ func newJoinNode(inner, outer sparqlNode) *joinNode {
 // execute perform the join between the two nodes of the Join Operator.
 // It use a parallelized Nested Loop Join algorithm, as described by
 // ÖZSU, M. Tamer et VALDURIEZ, Patrick. In Principles of distributed database systems. Springer Science & Business Media, 2011
-func (n joinNode) execute() chan rdf.BindingsGroup {
+func (n joinNode) execute() <-chan rdf.BindingsGroup {
 	var wg sync.WaitGroup
 	var page []rdf.BindingsGroup
 	out := make(chan rdf.BindingsGroup, bufferSize)
@@ -67,7 +67,7 @@ func (n joinNode) execute() chan rdf.BindingsGroup {
 }
 
 // This operation has no particular meaning in the case of a joinNode, so it's equivalent to the execute method.
-func (n joinNode) executeWith(binding rdf.BindingsGroup) chan rdf.BindingsGroup {
+func (n joinNode) executeWith(binding rdf.BindingsGroup) <-chan rdf.BindingsGroup {
 	return n.execute()
 }
 

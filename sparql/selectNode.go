@@ -18,8 +18,8 @@ func newSelectNode(node sparqlNode, bindings ...string) *selectNode {
 }
 
 // execute apply a Select operation to the bindings produced by another node.
-func (n selectNode) execute() (out chan rdf.BindingsGroup) {
-	out = make(chan rdf.BindingsGroup, bufferSize)
+func (n selectNode) execute() <-chan rdf.BindingsGroup {
+	out := make(chan rdf.BindingsGroup, bufferSize)
 
 	go func() {
 		defer close(out)
@@ -35,11 +35,11 @@ func (n selectNode) execute() (out chan rdf.BindingsGroup) {
 			out <- newGroup
 		}
 	}()
-	return
+	return out
 }
 
 // This operation has no particular meaning in the case of a selectNode, so it's equivalent to the execute method.
-func (n selectNode) executeWith(binding rdf.BindingsGroup) chan rdf.BindingsGroup {
+func (n selectNode) executeWith(binding rdf.BindingsGroup) <-chan rdf.BindingsGroup {
 	return n.execute()
 }
 

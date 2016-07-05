@@ -93,7 +93,7 @@ func (g *HDTGraph) removeNodes(root *bitmapNode, datas []*rdf.Node) {
 // The graph can be query with a Limit (the max number of rsults to send in the output channel)
 // and an Offset (the number of results to skip before sending them in the output channel).
 // These two parameters can be set to -1 to be ignored.
-func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int, out chan rdf.Triple, wg *sync.WaitGroup, limit *atomicCounter, offset *atomicCounter) {
+func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int, out chan<- rdf.Triple, wg *sync.WaitGroup, limit *atomicCounter, offset *atomicCounter) {
 	limit.Lock()
 	defer wg.Done()
 	defer limit.Unlock()
@@ -104,9 +104,9 @@ func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int,
 			son.updateCounter(wg)
 		}
 	} else if len(triple) == 3 {
-		// skip result and update offset if its threashold has'nt been reached
 		offset.Lock()
 		defer offset.Unlock()
+		// skip result and update offset if its threashold hasn't been reached
 		if offset.cpt < offset.threshold {
 			offset.cpt++
 		} else {
@@ -167,7 +167,7 @@ func (g *HDTGraph) Delete(subject, object, predicate rdf.Node) {
 }
 
 // Filter fetch triples form the graph that match a BGP given in parameters.
-func (g *HDTGraph) Filter(subject, predicate, object rdf.Node) chan rdf.Triple {
+func (g *HDTGraph) Filter(subject, predicate, object rdf.Node) <-chan rdf.Triple {
 	var wg sync.WaitGroup
 	results := make(chan rdf.Triple)
 	limit, offset := newAtomicCounter(0, -1), newAtomicCounter(0, 0)
@@ -186,7 +186,7 @@ func (g *HDTGraph) Filter(subject, predicate, object rdf.Node) chan rdf.Triple {
 // FilterSubset fetch triples form the graph that match a BGP given in parameters.
 // It impose a Limit(the max number of results to be send in the output channel)
 // and an Offset (the number of results to skip before sending them in the output channel) to the nodes requested.
-func (g *HDTGraph) FilterSubset(subject rdf.Node, predicate rdf.Node, object rdf.Node, limit int, offset int) chan rdf.Triple {
+func (g *HDTGraph) FilterSubset(subject rdf.Node, predicate rdf.Node, object rdf.Node, limit int, offset int) <-chan rdf.Triple {
 	var wg sync.WaitGroup
 	results := make(chan rdf.Triple)
 	limitCpt, offsetCpt := newAtomicCounter(0, limit), newAtomicCounter(0, offset)
