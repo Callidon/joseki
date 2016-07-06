@@ -22,3 +22,6 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+watDiv*.nt
+watdiv*.nt

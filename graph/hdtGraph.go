@@ -26,7 +26,7 @@ func newAtomicCounter(cpt, limit int) *atomicCounter {
 // For more details, see http://dataweb.infor.uva.es/projects/hdt-mr/
 type HDTGraph struct {
 	dictionnary bimap
-	root        bitmapNode
+	root        *bitmapNode
 	nextID      int
 	triples     map[string][]rdf.Triple
 	*sync.Mutex
@@ -51,23 +51,6 @@ func (g *HDTGraph) registerNode(node rdf.Node) int {
 		return g.nextID - 1
 	}
 	return key
-}
-
-// Recursively update the nodes of the graph with new datas.
-func (g *HDTGraph) updateNodes(root *bitmapNode, datas []int) {
-	// if they are data to insert in the graph
-	if len(datas) > 0 {
-		id := datas[0]
-		// if the node's id in already in the root sons, continue the operation with it
-		node, inSons := root.sons[id]
-		if inSons {
-			g.updateNodes(node, datas[1:])
-		} else {
-			// add the new node, then continue the operation with its sons
-			root.addSon(id)
-			g.updateNodes(root.sons[id], datas[1:])
-		}
-	}
 }
 
 // Recursively remove nodes that match criteria
@@ -103,7 +86,7 @@ func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int,
 		for _, son := range root.sons {
 			son.updateCounter(wg)
 		}
-	} else if len(triple) == 3 {
+	} else if len(triple) >= 3 {
 		offset.Lock()
 		defer offset.Unlock()
 		// skip result and update offset if its threashold hasn't been reached
@@ -122,8 +105,7 @@ func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int,
 	} else {
 		node := (*datas[0])
 		// if the current node to search is a blank node, search in every sons
-		_, isBnode := node.(rdf.BlankNode)
-		if isBnode {
+		if _, isBnode := node.(rdf.BlankNode); isBnode {
 			go func() {
 				for _, son := range root.sons {
 					g.queryNodes(son, datas[1:], append(triple, son.id), out, wg, limit, offset)
@@ -152,18 +134,31 @@ func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int,
 
 // Add a new Triple pattern to the graph.
 func (g *HDTGraph) Add(triple rdf.Triple) {
+	defer g.Unlock()
 	// add each node of the triple to the dictionnary & then update the graph
 	subjID, predID, objID := g.registerNode(triple.Subject), g.registerNode(triple.Predicate), g.registerNode(triple.Object)
+	datas := []int{subjID, predID, objID}
+	currentNode := g.root
 	g.Lock()
-	defer g.Unlock()
-	g.updateNodes(&g.root, []int{subjID, predID, objID})
+	// insert each data in the graph
+	for _, nodeID := range datas {
+		node, inSons := currentNode.sons[nodeID]
+		if inSons {
+			// skip to next node if the current data is the same as the current node
+			currentNode = node
+		} else {
+			// add the new node, then use it for the next data ton insert
+			currentNode.sons[nodeID] = newBitmapNode(nodeID)
+			currentNode = currentNode.sons[nodeID]
+		}
+	}
 }
 
 // Delete triples from the graph that match a BGP given in parameters.
 func (g *HDTGraph) Delete(subject, object, predicate rdf.Node) {
 	g.Lock()
 	defer g.Unlock()
-	g.removeNodes(&g.root, []*rdf.Node{&subject, &predicate, &object})
+	g.removeNodes(g.root, []*rdf.Node{&subject, &predicate, &object})
 }
 
 // Filter fetch triples form the graph that match a BGP given in parameters.
@@ -174,7 +169,8 @@ func (g *HDTGraph) Filter(subject, predicate, object rdf.Node) <-chan rdf.Triple
 	// fetch data in the tree & wait for the operation to be complete before closing the pipeline
 	g.Lock()
 	wg.Add(g.root.depth() + 1)
-	go g.queryNodes(&g.root, []*rdf.Node{&subject, &predicate, &object}, make([]int, 0), results, &wg, limit, offset)
+	go g.queryNodes(g.root, []*rdf.Node{&subject, &predicate, &object}, make([]int, 0), results, &wg, limit, offset)
+	// use a daemon to wait for the end of all related goroutines before closing the channel
 	go func() {
 		defer close(results)
 		defer g.Unlock()
@@ -193,7 +189,8 @@ func (g *HDTGraph) FilterSubset(subject rdf.Node, predicate rdf.Node, object rdf
 	// fetch data in the tree & wait for the operation to be complete before closing the pipeline
 	g.Lock()
 	wg.Add(g.root.depth() + 1)
-	go g.queryNodes(&g.root, []*rdf.Node{&subject, &predicate, &object}, make([]int, 0), results, &wg, limitCpt, offsetCpt)
+	go g.queryNodes(g.root, []*rdf.Node{&subject, &predicate, &object}, make([]int, 0), results, &wg, limitCpt, offsetCpt)
+	// use a daemon to wait for the end of all related goroutines before closing the channel
 	go func() {
 		defer close(results)
 		defer g.Unlock()

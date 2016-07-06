@@ -24,13 +24,13 @@ type bitmapTriple struct {
 }
 
 // newBitmapNode creates a new Bitmap Node without any son.
-func newBitmapNode(id int) bitmapNode {
-	return bitmapNode{id, make(map[int]*bitmapNode)}
+func newBitmapNode(id int) *bitmapNode {
+	return &bitmapNode{id, make(map[int]*bitmapNode)}
 }
 
 // addSon add a son to a Bitmap Node.
 func (n *bitmapNode) addSon(id int) {
-	n.sons[id] = &bitmapNode{id, make(map[int]*bitmapNode)}
+	n.sons[id] = newBitmapNode(id)
 }
 
 // depth calculates the depth of the tree starting from this node.

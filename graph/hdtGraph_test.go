@@ -202,7 +202,7 @@ func TestDeleteHDTGraph(t *testing.T) {
 }
 
 func TestLoadFromFileHDTGraph(t *testing.T) {
-	graph := NewListGraph()
+	graph := NewHDTGraph()
 	cpt := 0
 	graph.LoadFromFile("../parser/datas/test.nt", "nt")
 
@@ -211,7 +211,7 @@ func TestLoadFromFileHDTGraph(t *testing.T) {
 		cpt++
 	}
 
-	if cpt != 5 {
+	if cpt != 4 {
 		t.Error("the graph should contains 4 triples, but it contains", cpt, "triples")
 	}
 }
@@ -220,53 +220,30 @@ func TestLoadFromFileHDTGraph(t *testing.T) {
 
 func BenchmarkAddHDTGraph(b *testing.B) {
 	graph := NewHDTGraph()
-	nbDatas := 1000
-	var datas []rdf.Triple
-
-	// create triples to be inserted
-	for i := 0; i < nbDatas; i++ {
-		triple := rdf.NewTriple(rdf.NewURI(string(rand.Int())), rdf.NewURI(string(rand.Int())), rdf.NewLiteral(string(rand.Int())))
-		datas = append(datas, triple)
-	}
 
 	for i := 0; i < b.N; i++ {
-		for _, triple := range datas {
-			graph.Add(triple)
-		}
+		graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
 	}
 }
 
 func BenchmarkDeleteAllHDTGraph(b *testing.B) {
 	graph := NewHDTGraph()
-	nbDatas := 1000
-	subj := rdf.NewURI("dblp:foo")
-
-	// insert random triples in the graph
-	for i := 0; i < nbDatas; i++ {
-		triple := rdf.NewTriple(subj, rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
-		graph.Add(triple)
-	}
+	graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
+	pred := rdf.NewURI("http://purl.org/goodrelations/price")
 
 	for i := 0; i < b.N; i++ {
-		graph.Delete(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w"))
+		graph.Delete(rdf.NewBlankNode("v"), pred, rdf.NewBlankNode("w"))
 	}
 }
 
 func BenchmarkAllFilterHDTGraph(b *testing.B) {
 	graph := NewHDTGraph()
-	nbDatas := 1000
+	graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
 	cpt := 0
-	subj := rdf.NewURI("dblp:foo")
-
-	// insert random triples in the graph
-	for i := 0; i < nbDatas; i++ {
-		triple := rdf.NewTriple(subj, rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
-		graph.Add(triple)
-	}
 
 	for i := 0; i < b.N; i++ {
 		// select all triple of the graph
-		for _ = range graph.Filter(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w")) {
+		for _ = range graph.Filter(rdf.NewBlankNode("v"), rdf.NewBlankNode("w"), rdf.NewBlankNode("z")) {
 			cpt++
 		}
 	}
@@ -274,17 +251,12 @@ func BenchmarkAllFilterHDTGraph(b *testing.B) {
 
 func BenchmarkSpecificFilterHDTGraph(b *testing.B) {
 	graph := NewHDTGraph()
-	nbDatas := 1000
+	graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
+	subj := rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/Product43")
+	pred := rdf.NewURI("http://purl.org/stuff/rev#hasReview")
+	obj := rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/Review864")
 	cpt := 0
-	subj := rdf.NewURI("dblp:foo")
-	pred := rdf.NewURI("foaf:age")
-	obj := rdf.NewURI("22")
 
-	// insert random triples in the graph
-	for i := 0; i < nbDatas; i++ {
-		triple := rdf.NewTriple(subj, rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
-		graph.Add(triple)
-	}
 	// insert a specific triple at the end
 	triple := rdf.NewTriple(subj, pred, obj)
 	graph.Add(triple)
@@ -299,19 +271,13 @@ func BenchmarkSpecificFilterHDTGraph(b *testing.B) {
 
 func BenchmarkAllFilterSubsetHDTGraph(b *testing.B) {
 	graph := NewHDTGraph()
-	nbDatas, limit, offset := 1000, 600, 200
+	graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
+	limit, offset := 600, 200
 	cpt := 0
-	subj := rdf.NewURI("dblp:foo")
-
-	// insert random triples in the graph
-	for i := 0; i < nbDatas; i++ {
-		triple := rdf.NewTriple(subj, rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
-		graph.Add(triple)
-	}
 
 	for i := 0; i < b.N; i++ {
 		// select all triple of the graph
-		for _ = range graph.FilterSubset(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w"), limit, offset) {
+		for _ = range graph.FilterSubset(rdf.NewBlankNode("v"), rdf.NewBlankNode("w"), rdf.NewBlankNode("z"), limit, offset) {
 			cpt++
 		}
 	}

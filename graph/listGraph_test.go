@@ -142,57 +142,34 @@ func TestLoadFromFileListGraph(t *testing.T) {
 	}
 }
 
-// Benchmarking
+// Benchmarking with WatDiv 1K
 
 func BenchmarkAddListGraph(b *testing.B) {
 	graph := NewListGraph()
-	nbDatas := 1000
-	var datas []rdf.Triple
-
-	// create triples to be inserted
-	for i := 0; i < nbDatas; i++ {
-		triple := rdf.NewTriple(rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
-		datas = append(datas, triple)
-	}
 
 	for i := 0; i < b.N; i++ {
-		for _, triple := range datas {
-			graph.Add(triple)
-		}
+		graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
 	}
 }
 
 func BenchmarkDeleteAllListGraph(b *testing.B) {
 	graph := NewListGraph()
-	nbDatas := 1000
-	subj := rdf.NewURI("dblp:foo")
-
-	// insert random triples in the graph
-	for i := 0; i < nbDatas; i++ {
-		triple := rdf.NewTriple(subj, rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
-		graph.Add(triple)
-	}
+	graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
+	pred := rdf.NewURI("http://purl.org/goodrelations/price")
 
 	for i := 0; i < b.N; i++ {
-		graph.Delete(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w"))
+		graph.Delete(rdf.NewBlankNode("v"), pred, rdf.NewBlankNode("w"))
 	}
 }
 
 func BenchmarkAllFilterListGraph(b *testing.B) {
 	graph := NewListGraph()
-	nbDatas := 1000
+	graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
 	cpt := 0
-	subj := rdf.NewURI("dblp:foo")
-
-	// insert random triples in the graph
-	for i := 0; i < nbDatas; i++ {
-		triple := rdf.NewTriple(subj, rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
-		graph.Add(triple)
-	}
 
 	for i := 0; i < b.N; i++ {
 		// select all triple of the graph
-		for _ = range graph.Filter(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w")) {
+		for _ = range graph.Filter(rdf.NewBlankNode("v"), rdf.NewBlankNode("w"), rdf.NewBlankNode("z")) {
 			cpt++
 		}
 	}
@@ -200,17 +177,12 @@ func BenchmarkAllFilterListGraph(b *testing.B) {
 
 func BenchmarkSpecificFilterListGraph(b *testing.B) {
 	graph := NewListGraph()
-	nbDatas := 1000
+	graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
+	subj := rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/Product43")
+	pred := rdf.NewURI("http://purl.org/stuff/rev#hasReview")
+	obj := rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/Review864")
 	cpt := 0
-	subj := rdf.NewURI("dblp:foo")
-	pred := rdf.NewURI("foaf:age")
-	obj := rdf.NewURI("22")
 
-	// insert random triples in the graph
-	for i := 0; i < nbDatas; i++ {
-		triple := rdf.NewTriple(subj, rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
-		graph.Add(triple)
-	}
 	// insert a specific triple at the end
 	triple := rdf.NewTriple(subj, pred, obj)
 	graph.Add(triple)
@@ -225,19 +197,13 @@ func BenchmarkSpecificFilterListGraph(b *testing.B) {
 
 func BenchmarkAllFilterSubsetListGraph(b *testing.B) {
 	graph := NewListGraph()
-	nbDatas, limit, offset := 1000, 600, 200
+	graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
+	limit, offset := 600, 200
 	cpt := 0
-	subj := rdf.NewURI("dblp:foo")
-
-	// insert random triples in the graph
-	for i := 0; i < nbDatas; i++ {
-		triple := rdf.NewTriple(subj, rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
-		graph.Add(triple)
-	}
 
 	for i := 0; i < b.N; i++ {
 		// select all triple of the graph
-		for _ = range graph.FilterSubset(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w"), limit, offset) {
+		for _ = range graph.FilterSubset(rdf.NewBlankNode("v"), rdf.NewBlankNode("w"), rdf.NewBlankNode("z"), limit, offset) {
 			cpt++
 		}
 	}
