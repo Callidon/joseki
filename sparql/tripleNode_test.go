@@ -16,7 +16,7 @@ func TestExecuteBGPNode(t *testing.T) {
 	triple := rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples"),
 		rdf.NewURI("http://purl.org/dc/terms/title"),
 		rdf.NewBlankNode("v1"))
-	node := newTripleNode(triple, graph)
+	node := newTripleNode(triple, graph, -1, -1)
 	cpt := 0
 
 	datas := []rdf.BindingsGroup{
@@ -46,7 +46,7 @@ func TestExecuteNoResultBGPNode(t *testing.T) {
 	triple := rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples"),
 		rdf.NewURI("http://example.org/funny-predicate"),
 		rdf.NewBlankNode("v1"))
-	node := newTripleNode(triple, graph)
+	node := newTripleNode(triple, graph, -1, -1)
 	cpt := 0
 
 	for _ = range node.execute() {
@@ -64,7 +64,7 @@ func TestExecuteWithBGPNode(t *testing.T) {
 	triple := rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples"),
 		rdf.NewBlankNode("v2"),
 		rdf.NewBlankNode("v1"))
-	node := newTripleNode(triple, graph)
+	node := newTripleNode(triple, graph, -1, -1)
 	group := rdf.NewBindingsGroup()
 	group.Bindings["v2"] = rdf.NewURI("http://purl.org/dc/terms/title")
 	cpt := 0

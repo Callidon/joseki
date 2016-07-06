@@ -19,8 +19,8 @@ func TestExecuteUnionNode(t *testing.T) {
 	tripleB := rdf.NewTriple(rdf.NewBlankNode("v3"),
 		rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
 		rdf.NewURI("http://xmlns.com/foaf/0.1/Document"))
-	nodeA := newTripleNode(tripleA, graph)
-	nodeB := newTripleNode(tripleB, graph)
+	nodeA := newTripleNode(tripleA, graph, -1, -1)
+	nodeB := newTripleNode(tripleB, graph, -1, -1)
 	union := newUnionNode(nodeA, nodeB)
 	cpt := 0
 
@@ -59,8 +59,8 @@ func TestExecuteNoResultUnionNode(t *testing.T) {
 	tripleB := rdf.NewTriple(rdf.NewBlankNode("v1"),
 		rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
 		rdf.NewURI("https://schema.org/Book"))
-	nodeA := newTripleNode(tripleA, graph)
-	nodeB := newTripleNode(tripleB, graph)
+	nodeA := newTripleNode(tripleA, graph, -1, -1)
+	nodeB := newTripleNode(tripleB, graph, -1, -1)
 	union := newUnionNode(nodeA, nodeB)
 	cpt := 0
 
@@ -81,8 +81,8 @@ func TestBindingNamesUnionNode(t *testing.T) {
 	tripleB := rdf.NewTriple(rdf.NewBlankNode("v1"),
 		rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
 		rdf.NewURI("http://xmlns.com/foaf/0.1/Document"))
-	nodeA := newTripleNode(tripleA, graph)
-	nodeB := newTripleNode(tripleB, graph)
+	nodeA := newTripleNode(tripleA, graph, -1, -1)
+	nodeB := newTripleNode(tripleB, graph, -1, -1)
 	union := newUnionNode(nodeA, nodeB)
 	cpt := 0
 

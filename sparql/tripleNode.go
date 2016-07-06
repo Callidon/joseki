@@ -13,13 +13,14 @@ import (
 // tripleNode is the lowest level of SPARQL query execution plan.
 // Its role is to retrieve bindings according to a triple pattern from a graph.
 type tripleNode struct {
-	pattern rdf.Triple
-	graph   graph.Graph
+	pattern       rdf.Triple
+	graph         graph.Graph
+	limit, offset int
 }
 
 // newTripleNode creates a new tripleNode.
-func newTripleNode(pattern rdf.Triple, graph graph.Graph) *tripleNode {
-	return &tripleNode{pattern, graph}
+func newTripleNode(pattern rdf.Triple, graph graph.Graph, limit int, offset int) *tripleNode {
+	return &tripleNode{pattern, graph, limit, offset}
 }
 
 // execute retrieves bindings from a graph that match a triple pattern.
@@ -33,7 +34,7 @@ func (n tripleNode) execute() <-chan rdf.BindingsGroup {
 	// retrieves triples & form bindings to send
 	go func() {
 		defer close(out)
-		for triple := range n.graph.Filter(n.pattern.Subject, n.pattern.Predicate, n.pattern.Object) {
+		for triple := range n.graph.FilterSubset(n.pattern.Subject, n.pattern.Predicate, n.pattern.Object, n.limit, n.offset) {
 			group := rdf.NewBindingsGroup()
 			if freeSubject {
 				group.Bindings[subject.Variable] = triple.Subject
@@ -84,7 +85,7 @@ func (n tripleNode) executeWith(group rdf.BindingsGroup) <-chan rdf.BindingsGrou
 	// retrieves triples & form bindings to send
 	go func() {
 		defer close(out)
-		for triple := range n.graph.Filter(querySubj, queryPred, queryObj) {
+		for triple := range n.graph.FilterSubset(querySubj, queryPred, queryObj, n.limit, n.offset) {
 			newGroup := group.Clone()
 			if freeSubject {
 				newGroup.Bindings[subject.Variable] = triple.Subject

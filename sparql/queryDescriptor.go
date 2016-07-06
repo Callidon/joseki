@@ -35,20 +35,24 @@ const (
 // It holds informations about the query during its construction process
 // and can be converted into a real query.
 type queryDescriptor struct {
-	graph graph.Graph
-	qType queryType
-	bgps  [][]sparqlNode
+	graph         graph.Graph
+	qType         queryType
+	bgps          [][]sparqlNode
+	lastPlan      sparqlNode
+	needRebuild   bool
+	limit, offset int
 }
 
 // newQueryDescriptor creates a new queryDescriptor.
 func newQueryDescriptor(graph graph.Graph, qType queryType) *queryDescriptor {
-	return &queryDescriptor{graph, qType, make([][]sparqlNode, 0)}
+	return &queryDescriptor{graph, qType, make([][]sparqlNode, 0), nil, false, -1, -1}
 }
 
 // From set the source's graph for the query.
 // Multiple calls of this method will override the previous source each time.
 func (q *queryDescriptor) From(graph graph.Graph) {
 	q.graph = graph
+	q.needRebuild = true
 }
 
 // Where add multiples triples pattern as a new BGP evualuted by the query
@@ -56,9 +60,25 @@ func (q *queryDescriptor) From(graph graph.Graph) {
 func (q *queryDescriptor) Where(triples ...rdf.Triple) {
 	var nodes []sparqlNode
 	for _, triple := range triples {
-		nodes = append(nodes, newTripleNode(triple, q.graph))
+		nodes = append(nodes, newTripleNode(triple, q.graph, -1, -1))
 	}
 	q.bgps = append(q.bgps, nodes)
+	q.needRebuild = true
+}
+
+// Limit set the LIMIT modifier on the SPARQL query.
+// It represents the max number of results returned by the query.
+func (q *queryDescriptor) Limit(limit int) {
+	q.limit = limit
+	q.needRebuild = true
+}
+
+// Offset set the OFFSET modifier on the SPARQL query.
+// A query with a OFFSET of N will skip the first N results found by the query before
+// starting returning any result.
+func (q *queryDescriptor) Offset(offset int) {
+	q.offset = offset
+	q.needRebuild = true
 }
 
 // joinNode try to find the first join possible between a node and a list of other nodes/
@@ -95,6 +115,11 @@ func (q *queryDescriptor) build() sparqlNode {
 	var rightInd int
 	var processNodes []int
 	var joinFound bool
+
+	// if the plan in cache can be used
+	if !q.needRebuild {
+		return q.lastPlan
+	}
 
 	// find the possible joins for each BGP
 	for _, bgp := range q.bgps {
@@ -134,6 +159,12 @@ func (q *queryDescriptor) build() sparqlNode {
 		for _, bgpNode := range nextBGP[1:] {
 			root = newUnionNode(root, bgpNode)
 		}
+		// set the limit & the offset for the last Triple node evaluated
+		tnode, isTriple := root.(*tripleNode)
+		if isTriple {
+			tnode.limit = q.limit
+			tnode.offset = q.offset
+		}
 		bgpRoots = append(bgpRoots, root)
 	}
 	// assemble the BGPs together with UNION operators
@@ -141,5 +172,6 @@ func (q *queryDescriptor) build() sparqlNode {
 	for _, bgpNode := range bgpRoots[1:] {
 		root = newUnionNode(root, bgpNode)
 	}
+	q.needRebuild = false
 	return root
 }

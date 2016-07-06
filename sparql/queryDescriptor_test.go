@@ -14,8 +14,8 @@ func TestSimpleFindJoin(t *testing.T) {
 	var ind int
 	tripleA := rdf.NewTriple(rdf.NewURI("example.org"), rdf.NewURI("foaf:friendOf"), rdf.NewBlankNode("v1"))
 	tripleB := rdf.NewTriple(rdf.NewBlankNode("v1"), rdf.NewURI("rdf:name"), rdf.NewBlankNode("v2"))
-	nodeA := newTripleNode(tripleA, nil)
-	nodeB := newTripleNode(tripleB, nil)
+	nodeA := newTripleNode(tripleA, nil, -1, -1)
+	nodeB := newTripleNode(tripleB, nil, -1, -1)
 
 	join := newJoinNode(nodeA, nodeB)
 	joinFound, ind = findJoin(nodeA, nodeB)
@@ -35,9 +35,9 @@ func TestComplexFindJoin(t *testing.T) {
 	tripleA := rdf.NewTriple(rdf.NewURI("example.org"), rdf.NewURI("foaf:friendOf"), rdf.NewBlankNode("v1"))
 	tripleB := rdf.NewTriple(rdf.NewBlankNode("v2"), rdf.NewURI("rdf:type"), rdf.NewURI("schema.org#People"))
 	tripleC := rdf.NewTriple(rdf.NewBlankNode("v1"), rdf.NewURI("rdf:name"), rdf.NewBlankNode("v2"))
-	nodeA := newTripleNode(tripleA, nil)
-	nodeB := newTripleNode(tripleB, nil)
-	nodeC := newTripleNode(tripleC, nil)
+	nodeA := newTripleNode(tripleA, nil, -1, -1)
+	nodeB := newTripleNode(tripleB, nil, -1, -1)
+	nodeC := newTripleNode(tripleC, nil, -1, -1)
 
 	firstJoin := newJoinNode(nodeA, nodeC)
 	secondJoin := newJoinNode(firstJoin, nodeB)
@@ -70,10 +70,10 @@ func TestBuildQueryDescriptor(t *testing.T) {
 	tripleC := rdf.NewTriple(rdf.NewBlankNode("v1"), rdf.NewURI("rdf:name"), rdf.NewBlankNode("v2"))
 	tripleD := rdf.NewTriple(rdf.NewURI("example.org"), rdf.NewURI("rdf:name"), rdf.NewBlankNode("v5"))
 
-	nodeA := newTripleNode(tripleA, nil)
-	nodeB := newTripleNode(tripleB, nil)
-	nodeC := newTripleNode(tripleC, nil)
-	nodeD := newTripleNode(tripleD, nil)
+	nodeA := newTripleNode(tripleA, nil, -1, -1)
+	nodeB := newTripleNode(tripleB, nil, -1, -1)
+	nodeC := newTripleNode(tripleC, nil, -1, -1)
+	nodeD := newTripleNode(tripleD, nil, -1, -1)
 	expectedRoot = newUnionNode(newJoinNode(newJoinNode(nodeA, nodeC), nodeB), nodeD)
 
 	qd := newQueryDescriptor(nil, selectQuery)

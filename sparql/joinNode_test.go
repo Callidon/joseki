@@ -19,8 +19,8 @@ func TestExecuteJoinNode(t *testing.T) {
 	tripleB := rdf.NewTriple(rdf.NewBlankNode("v1"),
 		rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
 		rdf.NewURI("http://xmlns.com/foaf/0.1/Document"))
-	nodeA := newTripleNode(tripleA, graph)
-	nodeB := newTripleNode(tripleB, graph)
+	nodeA := newTripleNode(tripleA, graph, -1, -1)
+	nodeB := newTripleNode(tripleB, graph, -1, -1)
 	join := newJoinNode(nodeA, nodeB)
 	cpt := 0
 
@@ -56,8 +56,8 @@ func TestExecuteNoResultJoinNode(t *testing.T) {
 	tripleB := rdf.NewTriple(rdf.NewBlankNode("v1"),
 		rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
 		rdf.NewURI("http://xmlns.com/foaf/0.1/Document"))
-	nodeA := newTripleNode(tripleA, graph)
-	nodeB := newTripleNode(tripleB, graph)
+	nodeA := newTripleNode(tripleA, graph, -1, -1)
+	nodeB := newTripleNode(tripleB, graph, -1, -1)
 	join := newJoinNode(nodeA, nodeB)
 	cpt := 0
 
@@ -78,8 +78,8 @@ func TestBindingNamesJoinNode(t *testing.T) {
 	tripleB := rdf.NewTriple(rdf.NewBlankNode("v1"),
 		rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
 		rdf.NewURI("http://xmlns.com/foaf/0.1/Document"))
-	nodeA := newTripleNode(tripleA, graph)
-	nodeB := newTripleNode(tripleB, graph)
+	nodeA := newTripleNode(tripleA, graph, -1, -1)
+	nodeB := newTripleNode(tripleB, graph, -1, -1)
 	join := newJoinNode(nodeA, nodeB)
 	cpt := 0
 
