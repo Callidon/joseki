@@ -34,3 +34,36 @@ func (t Triple) Equals(other Triple) (bool, error) {
 	}
 	return testSubj && testPred && testObj, nil
 }
+
+// Complete use a group of bindings to complete the variable in the triple pattern
+// and then return a new completed Triple pattern
+func (t Triple) Complete(group BindingsGroup) Triple {
+	var newSubj, newPred, newObj Node
+	// find the nodes of the triple wich can be completed
+	subject, freeSubject := t.Subject.(Variable)
+	predicate, freePredicate := t.Predicate.(Variable)
+	object, freeObject := t.Object.(Variable)
+	if !freeSubject {
+		newSubj = t.Subject
+	}
+	if !freePredicate {
+		newPred = t.Predicate
+	}
+	if !freeObject {
+		newObj = t.Object
+	}
+
+	for key, binding := range group.Bindings {
+		// try to complete any node of the triple using the current binding
+		if freeSubject && subject.Value == key {
+			newSubj = binding
+		}
+		if freePredicate && predicate.Value == key {
+			newPred = binding
+		}
+		if freeObject && object.Value == key {
+			newObj = binding
+		}
+	}
+	return NewTriple(newSubj, newPred, newObj)
+}

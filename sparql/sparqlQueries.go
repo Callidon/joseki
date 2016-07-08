@@ -9,6 +9,8 @@ import "github.com/Callidon/joseki/rdf"
 
 // SelectQuery is a SPARQL SELECT query.
 //
+// SPARQL SELECT query reference : https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#select
+//
 // The following example shows how to build a simple SELECT query :
 //  graph := graph.NewHDTGraph().LoadFromFile("datas.nt", "nt")
 //  triples := []rdf.Triple {
@@ -41,6 +43,8 @@ func (q SelectQuery) Execute() <-chan rdf.BindingsGroup {
 }
 
 // AskQuery is a SPARQL ASK query.
+//
+// SPARQL ASK query reference : https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#ask
 //
 // The following example shows how to build a simple ASK query :
 //  graph := graph.NewHDTGraph().LoadFromFile("datas.nt", "nt")
@@ -75,16 +79,23 @@ func (q AskQuery) Execute() bool {
 	return cpt == 1
 }
 
-type DescribeQuery struct {
-	variables []string
-	*queryDescriptor
-}
-
-// NewDescribeQuery creates a new SPARQL DESCRIBE query.
-func NewDescribeQuery(variables ...string) *DescribeQuery {
-	return &DescribeQuery{variables, newQueryDescriptor(nil, describeQuery)}
-}
-
+// ConstructQuery is a SPARQL CONSTRUCT query.
+//
+// SPARQL CONSTRUCT query reference : https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#construct
+//
+// The following example shows how to build a simple ASK query :
+//  graph := graph.NewHDTGraph().LoadFromFile("datas.nt", "nt")
+//	triple := rdf.NewTriple(rdf.NEWURI("http://example.org/person#Alice"), rdf.NewVariable("x"), rdf.NewLiteral("22"))
+//  bgp := []rdf.Triple {
+//    // let's initialize some triples here ...
+//  }
+//  query := ConstructQuery(triple)
+//  query.From(graph)
+//  query.Where(triples...)
+//  for result := range query.Execute() {
+//		fmt.Println(result)
+//	}
+//
 type ConstructQuery struct {
 	triples []rdf.Triple
 	*queryDescriptor
@@ -93,4 +104,33 @@ type ConstructQuery struct {
 // NewConstructQuery creates a new SPARQL CONSTRUCT query.
 func NewConstructQuery(triples ...rdf.Triple) *ConstructQuery {
 	return &ConstructQuery{triples, newQueryDescriptor(nil, constructQuery)}
+}
+
+// Execute run the Construct query.
+// The group of bindings which answers the query are send through a channel.
+func (q ConstructQuery) Execute() <-chan rdf.Triple {
+	out := make(chan rdf.Triple, bufferSize)
+	// get the query execution plan & collect bindings from it
+	root := q.build()
+	// TODO : apply optimization heuristic to the plan
+	// use a goroutine to fetch bindings and use them to produce new triple patterns
+	go func() {
+		for group := range root.execute() {
+			for _, triple := range q.triples {
+				out <- triple.Complete(group)
+			}
+		}
+		close(out)
+	}()
+	return out
+}
+
+type DescribeQuery struct {
+	variables []string
+	*queryDescriptor
+}
+
+// NewDescribeQuery creates a new SPARQL DESCRIBE query.
+func NewDescribeQuery(variables ...string) *DescribeQuery {
+	return &DescribeQuery{variables, newQueryDescriptor(nil, describeQuery)}
 }

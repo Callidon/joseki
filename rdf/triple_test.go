@@ -22,3 +22,27 @@ func TestTripleEquals(t *testing.T) {
 		t.Error("cannot compare two triples with blank nodes in one of them")
 	}
 }
+
+// Test the Equals operator for Triple struct
+func TestTripleComplete(t *testing.T) {
+	var completeData Triple
+	datas := []Triple{
+		NewTriple(NewVariable("x"), NewURI("example.org#pred"), NewLiteral("22")),
+		NewTriple(NewVariable("x"), NewVariable("y"), NewLiteral("22")),
+		NewTriple(NewVariable("x"), NewVariable("y"), NewVariable("z")),
+		NewTriple(NewURI("example.org#subj"), NewVariable("y"), NewLiteral("22")),
+		NewTriple(NewURI("example.org#subj"), NewVariable("y"), NewVariable("z")),
+	}
+	expected := NewTriple(NewURI("example.org#subj"), NewURI("example.org#pred"), NewLiteral("22"))
+	group := NewBindingsGroup()
+	group.Bindings["x"] = NewURI("example.org#subj")
+	group.Bindings["y"] = NewURI("example.org#pred")
+	group.Bindings["z"] = NewLiteral("22")
+
+	for _, data := range datas {
+		completeData = data.Complete(group)
+		if test, err := expected.Equals(completeData); !test || err != nil {
+			t.Error(completeData, "should be equal to", expected)
+		}
+	}
+}
