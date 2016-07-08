@@ -12,7 +12,6 @@ import "errors"
 // RDF Graph reference : https://www.w3.org/TR/rdf11-concepts/#section-rdf-graph
 type Node interface {
 	Equals(n Node) (bool, error)
-	Equivalent(n Node) (bool, error)
 	String() string
 }
 
@@ -36,31 +35,23 @@ type Literal struct {
 //
 // RDF Blank Node reference : https://www.w3.org/TR/rdf11-concepts/#section-blank-nodes
 type BlankNode struct {
-	Variable string
+	Value string
 }
 
-// Equals is a function that compare two URIs and return True if they are equals, False otherwise.
+// Variable represents a SPARQL variable used when querying data in a RDF graph
+type Variable struct {
+	Value string
+}
+
+// Equals is a function that compare a URI with another RDF Node and return True if they are equals, False otherwise.
 func (u URI) Equals(n Node) (bool, error) {
 	other, ok := n.(URI)
 	if ok {
 		return u.Value == other.Value, nil
+	} else if _, isVar := n.(Variable); isVar {
+		return true, nil
 	}
 	return false, errors.New("Error : mismatch type, can only compare two URIs")
-}
-
-// Equivalent is a function that determine if a URI is equivalent to another RDF Node.
-// Two URIs are equivalents if they are equals, and a URI is always equivalent to a Blank Node.
-// Otherwise, the result is always False.
-func (u URI) Equivalent(n Node) (bool, error) {
-	equality, err := u.Equals(n)
-	if err != nil {
-		_, ok := n.(BlankNode)
-		if ok {
-			return true, nil
-		}
-		return false, errors.New("Error : can only compare a URI with another URI or a Blank Node")
-	}
-	return equality, nil
 }
 
 // Serialize a URI to string and return it.
@@ -73,28 +64,15 @@ func NewURI(value string) URI {
 	return URI{value}
 }
 
-// Equals is a function that compare two Literals and return True if they are equals, False otherwise.
+// Equals is a function that compare a Literal with another RDF Node and return True if they are equals, False otherwise.
 func (l Literal) Equals(n Node) (bool, error) {
 	other, ok := n.(Literal)
 	if ok {
 		return (l.Value == other.Value) && (l.Type == other.Type) && (l.Lang == other.Lang), nil
+	} else if _, isVar := n.(Variable); isVar {
+		return true, nil
 	}
 	return false, errors.New("Error : mismatch type, can only compare two Literals")
-}
-
-// Equivalent is a function that determine if a Literals is equivalent to another RDF Node.
-// Two Literals are equivalents if they are equals, and a Literal is always equivalent to a Blank Node.
-// Otherwise, the result is always False.
-func (l Literal) Equivalent(n Node) (bool, error) {
-	equality, err := l.Equals(n)
-	if err != nil {
-		_, ok := n.(BlankNode)
-		if ok {
-			return true, nil
-		}
-		return false, errors.New("Error : can only compare a Literal with another Literal or a Blank Node")
-	}
-	return equality, nil
 }
 
 // Serialize a Literal to string and return it.
@@ -122,27 +100,43 @@ func NewLangLiteral(value, lang string) Literal {
 	return Literal{value, "", lang}
 }
 
-// Equals is a function that compare two Blank Nodes and return True if they are equals, False otherwise.
+// Equals is a function that compare a Blank Node with another RDF Node and return True if they are equals, False otherwise.
 func (b BlankNode) Equals(n Node) (bool, error) {
 	other, ok := n.(BlankNode)
 	if ok {
-		return b.Variable == other.Variable, nil
+		return b.Value == other.Value, nil
+	} else if _, isVar := n.(Variable); isVar {
+		return true, nil
 	}
 	return false, errors.New("Error : mismatch type, can only compare two Blank Nodes")
 }
 
-// Equivalent is a function that determine if a Blank Node is equivalent to another RDF Node.
-// Since a Blank Node is always equivalent to any RDF Node, this function always return True.
-func (b BlankNode) Equivalent(n Node) (bool, error) {
+// Serialize a Blank Node to string and return it.
+func (b BlankNode) String() string {
+	return "_:" + b.Value
+}
+
+// NewBlankNode creates a new Blank Node.
+func NewBlankNode(variable string) BlankNode {
+	return BlankNode{variable}
+}
+
+// Equals is a function that compare a Variable with another RDF Node and return True if they are equals, False otherwise.
+// Two variables are equals if they have the same value, and a variable is always equals to any other RDF node.
+func (v Variable) Equals(n Node) (bool, error) {
+	other, ok := n.(Variable)
+	if ok {
+		return v.Value == other.Value, nil
+	}
 	return true, nil
 }
 
-// Serialize a Blank Node to string and return it.
-func (b BlankNode) String() string {
-	return "_:" + b.Variable
+// Serialize a Variable to string and return it.
+func (v Variable) String() string {
+	return "?" + v.Value
 }
 
-// NewBlankNode creates a new Literal.
-func NewBlankNode(variable string) BlankNode {
-	return BlankNode{variable}
+// NewVariable creates a new Variable.
+func NewVariable(value string) Variable {
+	return Variable{value}
 }

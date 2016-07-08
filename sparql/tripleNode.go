@@ -27,9 +27,9 @@ func newTripleNode(pattern rdf.Triple, graph graph.Graph, limit int, offset int)
 func (n tripleNode) execute() <-chan rdf.BindingsGroup {
 	out := make(chan rdf.BindingsGroup, bufferSize)
 	// find free vars in triple pattern
-	subject, freeSubject := n.pattern.Subject.(rdf.BlankNode)
-	predicate, freePredicate := n.pattern.Predicate.(rdf.BlankNode)
-	object, freeObject := n.pattern.Object.(rdf.BlankNode)
+	subject, freeSubject := n.pattern.Subject.(rdf.Variable)
+	predicate, freePredicate := n.pattern.Predicate.(rdf.Variable)
+	object, freeObject := n.pattern.Object.(rdf.Variable)
 
 	// retrieves triples & form bindings to send
 	go func() {
@@ -37,13 +37,13 @@ func (n tripleNode) execute() <-chan rdf.BindingsGroup {
 		for triple := range n.graph.FilterSubset(n.pattern.Subject, n.pattern.Predicate, n.pattern.Object, n.limit, n.offset) {
 			group := rdf.NewBindingsGroup()
 			if freeSubject {
-				group.Bindings[subject.Variable] = triple.Subject
+				group.Bindings[subject.Value] = triple.Subject
 			}
 			if freePredicate {
-				group.Bindings[predicate.Variable] = triple.Predicate
+				group.Bindings[predicate.Value] = triple.Predicate
 			}
 			if freeObject {
-				group.Bindings[object.Variable] = triple.Object
+				group.Bindings[object.Value] = triple.Object
 			}
 			out <- group
 		}
@@ -56,25 +56,25 @@ func (n tripleNode) executeWith(group rdf.BindingsGroup) <-chan rdf.BindingsGrou
 	var querySubj, queryPred, queryObj rdf.Node
 	out := make(chan rdf.BindingsGroup, bufferSize)
 	// find free vars in triple pattern
-	subject, freeSubject := n.pattern.Subject.(rdf.BlankNode)
-	predicate, freePredicate := n.pattern.Predicate.(rdf.BlankNode)
-	object, freeObject := n.pattern.Object.(rdf.BlankNode)
+	subject, freeSubject := n.pattern.Subject.(rdf.Variable)
+	predicate, freePredicate := n.pattern.Predicate.(rdf.Variable)
+	object, freeObject := n.pattern.Object.(rdf.Variable)
 
 	// complete triple pattern using the group of bindings given in parameter
 	for bindingKey, bindingValue := range group.Bindings {
-		if freeSubject && subject.Variable == bindingKey {
+		if freeSubject && subject.Value == bindingKey {
 			querySubj = bindingValue
 			freeSubject = false
 		} else {
 			querySubj = n.pattern.Subject
 		}
-		if freePredicate && predicate.Variable == bindingKey {
+		if freePredicate && predicate.Value == bindingKey {
 			queryPred = bindingValue
 			freePredicate = false
 		} else {
 			queryPred = n.pattern.Predicate
 		}
-		if freeObject && object.Variable == bindingKey {
+		if freeObject && object.Value == bindingKey {
 			queryObj = bindingValue
 			freeObject = false
 		} else {
@@ -88,13 +88,13 @@ func (n tripleNode) executeWith(group rdf.BindingsGroup) <-chan rdf.BindingsGrou
 		for triple := range n.graph.FilterSubset(querySubj, queryPred, queryObj, n.limit, n.offset) {
 			newGroup := group.Clone()
 			if freeSubject {
-				newGroup.Bindings[subject.Variable] = triple.Subject
+				newGroup.Bindings[subject.Value] = triple.Subject
 			}
 			if freePredicate {
-				newGroup.Bindings[predicate.Variable] = triple.Predicate
+				newGroup.Bindings[predicate.Value] = triple.Predicate
 			}
 			if freeObject {
-				newGroup.Bindings[object.Variable] = triple.Object
+				newGroup.Bindings[object.Value] = triple.Object
 			}
 			out <- newGroup
 		}
@@ -105,17 +105,17 @@ func (n tripleNode) executeWith(group rdf.BindingsGroup) <-chan rdf.BindingsGrou
 // bindingNames returns the names of the bindings produced.
 func (n tripleNode) bindingNames() (bindingNames []string) {
 	// find free vars in triple pattern
-	subject, freeSubject := n.pattern.Subject.(rdf.BlankNode)
-	predicate, freePredicate := n.pattern.Predicate.(rdf.BlankNode)
-	object, freeObject := n.pattern.Object.(rdf.BlankNode)
+	subject, freeSubject := n.pattern.Subject.(rdf.Variable)
+	predicate, freePredicate := n.pattern.Predicate.(rdf.Variable)
+	object, freeObject := n.pattern.Object.(rdf.Variable)
 	if freeSubject {
-		bindingNames = append(bindingNames, subject.Variable)
+		bindingNames = append(bindingNames, subject.Value)
 	}
 	if freePredicate {
-		bindingNames = append(bindingNames, predicate.Variable)
+		bindingNames = append(bindingNames, predicate.Value)
 	}
 	if freeObject {
-		bindingNames = append(bindingNames, object.Variable)
+		bindingNames = append(bindingNames, object.Value)
 	}
 	sort.Strings(bindingNames)
 	return

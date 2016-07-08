@@ -5,6 +5,7 @@
 package sparql
 
 import (
+	"github.com/Callidon/joseki/graph"
 	"github.com/Callidon/joseki/rdf"
 	"testing"
 )
@@ -12,8 +13,8 @@ import (
 func TestSimpleFindJoin(t *testing.T) {
 	var joinFound sparqlNode
 	var ind int
-	tripleA := rdf.NewTriple(rdf.NewURI("example.org"), rdf.NewURI("foaf:friendOf"), rdf.NewBlankNode("v1"))
-	tripleB := rdf.NewTriple(rdf.NewBlankNode("v1"), rdf.NewURI("rdf:name"), rdf.NewBlankNode("v2"))
+	tripleA := rdf.NewTriple(rdf.NewURI("example.org"), rdf.NewURI("foaf:friendOf"), rdf.NewVariable("v1"))
+	tripleB := rdf.NewTriple(rdf.NewVariable("v1"), rdf.NewURI("rdf:name"), rdf.NewVariable("v2"))
 	nodeA := newTripleNode(tripleA, nil, -1, -1)
 	nodeB := newTripleNode(tripleB, nil, -1, -1)
 
@@ -32,9 +33,9 @@ func TestSimpleFindJoin(t *testing.T) {
 func TestComplexFindJoin(t *testing.T) {
 	var joinFound sparqlNode
 	var ind int
-	tripleA := rdf.NewTriple(rdf.NewURI("example.org"), rdf.NewURI("foaf:friendOf"), rdf.NewBlankNode("v1"))
-	tripleB := rdf.NewTriple(rdf.NewBlankNode("v2"), rdf.NewURI("rdf:type"), rdf.NewURI("schema.org#People"))
-	tripleC := rdf.NewTriple(rdf.NewBlankNode("v1"), rdf.NewURI("rdf:name"), rdf.NewBlankNode("v2"))
+	tripleA := rdf.NewTriple(rdf.NewURI("example.org"), rdf.NewURI("foaf:friendOf"), rdf.NewVariable("v1"))
+	tripleB := rdf.NewTriple(rdf.NewVariable("v2"), rdf.NewURI("rdf:type"), rdf.NewURI("schema.org#People"))
+	tripleC := rdf.NewTriple(rdf.NewVariable("v1"), rdf.NewURI("rdf:name"), rdf.NewVariable("v2"))
 	nodeA := newTripleNode(tripleA, nil, -1, -1)
 	nodeB := newTripleNode(tripleB, nil, -1, -1)
 	nodeC := newTripleNode(tripleC, nil, -1, -1)
@@ -65,10 +66,10 @@ func TestComplexFindJoin(t *testing.T) {
 
 func TestBuildQueryDescriptor(t *testing.T) {
 	var expectedRoot sparqlNode
-	tripleA := rdf.NewTriple(rdf.NewURI("example.org"), rdf.NewURI("foaf:friendOf"), rdf.NewBlankNode("v1"))
-	tripleB := rdf.NewTriple(rdf.NewBlankNode("v2"), rdf.NewURI("rdf:type"), rdf.NewURI("schema.org#People"))
-	tripleC := rdf.NewTriple(rdf.NewBlankNode("v1"), rdf.NewURI("rdf:name"), rdf.NewBlankNode("v2"))
-	tripleD := rdf.NewTriple(rdf.NewURI("example.org"), rdf.NewURI("rdf:name"), rdf.NewBlankNode("v5"))
+	tripleA := rdf.NewTriple(rdf.NewURI("example.org"), rdf.NewURI("foaf:friendOf"), rdf.NewVariable("v1"))
+	tripleB := rdf.NewTriple(rdf.NewVariable("v2"), rdf.NewURI("rdf:type"), rdf.NewURI("schema.org#People"))
+	tripleC := rdf.NewTriple(rdf.NewVariable("v1"), rdf.NewURI("rdf:name"), rdf.NewVariable("v2"))
+	tripleD := rdf.NewTriple(rdf.NewURI("example.org"), rdf.NewURI("rdf:name"), rdf.NewVariable("v5"))
 
 	nodeA := newTripleNode(tripleA, nil, -1, -1)
 	nodeB := newTripleNode(tripleB, nil, -1, -1)
@@ -83,4 +84,25 @@ func TestBuildQueryDescriptor(t *testing.T) {
 	if !expectedRoot.Equals(root) {
 		t.Error("expected", root, "to be equals to", expectedRoot)
 	}
+}
+
+func TestLimitQueryDescriptor(t *testing.T) {
+	graph := graph.NewHDTGraph()
+	graph.LoadFromFile("../parser/datas/test.nt", "nt")
+	triple := rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples"), rdf.NewVariable("v"), rdf.NewVariable("w"))
+	cpt := 0
+
+	qd := newQueryDescriptor(graph, selectQuery)
+	qd.Where(triple)
+	qd.Limit(2)
+	root := qd.build()
+
+	for _ = range root.execute() {
+		cpt++
+	}
+
+	if cpt != 2 {
+		t.Error("expected two results but instead found", cpt)
+	}
+
 }

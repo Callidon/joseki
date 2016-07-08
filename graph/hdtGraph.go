@@ -57,7 +57,7 @@ func (g *HDTGraph) registerNode(node rdf.Node) int {
 func (g *HDTGraph) removeNodes(root *bitmapNode, datas []*rdf.Node) {
 	// it's a blank node, delete all his sons
 	node := (*datas[0])
-	if _, isBnode := node.(rdf.BlankNode); isBnode {
+	if _, isVar := node.(rdf.Variable); isVar {
 		root.removeSons()
 	} else {
 		// search for the specific node in the root's sons
@@ -105,7 +105,7 @@ func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int,
 	} else {
 		node := (*datas[0])
 		// if the current node to search is a blank node, search in every sons
-		if _, isBnode := node.(rdf.BlankNode); isBnode {
+		if _, isVar := node.(rdf.Variable); isVar {
 			go func() {
 				for _, son := range root.sons {
 					g.queryNodes(son, datas[1:], append(triple, son.id), out, wg, limit, offset)

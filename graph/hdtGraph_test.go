@@ -82,7 +82,7 @@ func TestSimpleFilterHDTGraph(t *testing.T) {
 
 	// select multiple triples using Blank Nodes
 	cpt := 0
-	for _ = range graph.Filter(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w")) {
+	for _ = range graph.Filter(subj, rdf.NewVariable("v"), rdf.NewVariable("w")) {
 		cpt++
 	}
 
@@ -102,7 +102,7 @@ func TestFilterNoResultHDTGraph(t *testing.T) {
 
 	// select a triple that doesn't exist in the graph
 	cpt := 0
-	for _ = range graph.Filter(rdf.NewURI("<htt://example.org>"), rdf.NewBlankNode("v1"), rdf.NewBlankNode("v2")) {
+	for _ = range graph.Filter(rdf.NewURI("<htt://example.org>"), rdf.NewVariable("v1"), rdf.NewVariable("v2")) {
 		cpt++
 	}
 
@@ -125,7 +125,7 @@ func TestComplexFilterHDTGraph(t *testing.T) {
 	}
 
 	// select all triple of the graph
-	for _ = range graph.Filter(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w")) {
+	for _ = range graph.Filter(subj, rdf.NewVariable("v"), rdf.NewVariable("w")) {
 		cpt++
 	}
 
@@ -147,7 +147,7 @@ func TestComplexFilterSubsetHDTGraph(t *testing.T) {
 	}
 
 	// test a FilterSubset with a simple Limit
-	for _ = range graph.FilterSubset(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w"), limit, -1) {
+	for _ = range graph.FilterSubset(subj, rdf.NewVariable("v"), rdf.NewVariable("w"), limit, -1) {
 		cpt++
 	}
 
@@ -157,7 +157,7 @@ func TestComplexFilterSubsetHDTGraph(t *testing.T) {
 
 	// test a FilterSubset with a simple offset
 	cpt = 0
-	for _ = range graph.FilterSubset(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w"), -1, offset) {
+	for _ = range graph.FilterSubset(subj, rdf.NewVariable("v"), rdf.NewVariable("w"), -1, offset) {
 		cpt++
 	}
 
@@ -167,7 +167,7 @@ func TestComplexFilterSubsetHDTGraph(t *testing.T) {
 
 	// test with a offset than doesn't allow enough results to reach the limit
 	cpt = 0
-	for _ = range graph.FilterSubset(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w"), limit, offset) {
+	for _ = range graph.FilterSubset(subj, rdf.NewVariable("v"), rdf.NewVariable("w"), limit, offset) {
 		cpt++
 	}
 
@@ -189,10 +189,10 @@ func TestDeleteHDTGraph(t *testing.T) {
 	}
 
 	// remove all triple with a given subject
-	graph.Delete(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w"))
+	graph.Delete(subj, rdf.NewVariable("v"), rdf.NewVariable("w"))
 
 	// select all triple of the graph
-	for _ = range graph.Filter(subj, rdf.NewBlankNode("v"), rdf.NewBlankNode("w")) {
+	for _ = range graph.Filter(subj, rdf.NewVariable("v"), rdf.NewVariable("w")) {
 		cpt++
 	}
 
@@ -207,7 +207,7 @@ func TestLoadFromFileHDTGraph(t *testing.T) {
 	graph.LoadFromFile("../parser/datas/test.nt", "nt")
 
 	// select all triple of the graph
-	for _ = range graph.Filter(rdf.NewBlankNode("y"), rdf.NewBlankNode("v"), rdf.NewBlankNode("w")) {
+	for _ = range graph.Filter(rdf.NewVariable("y"), rdf.NewVariable("v"), rdf.NewVariable("w")) {
 		cpt++
 	}
 
@@ -232,7 +232,7 @@ func BenchmarkDeleteAllHDTGraph(b *testing.B) {
 	pred := rdf.NewURI("http://purl.org/goodrelations/price")
 
 	for i := 0; i < b.N; i++ {
-		graph.Delete(rdf.NewBlankNode("v"), pred, rdf.NewBlankNode("w"))
+		graph.Delete(rdf.NewVariable("v"), pred, rdf.NewVariable("w"))
 	}
 }
 
@@ -243,7 +243,7 @@ func BenchmarkAllFilterHDTGraph(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		// select all triple of the graph
-		for _ = range graph.Filter(rdf.NewBlankNode("v"), rdf.NewBlankNode("w"), rdf.NewBlankNode("z")) {
+		for _ = range graph.Filter(rdf.NewVariable("v"), rdf.NewVariable("w"), rdf.NewVariable("z")) {
 			cpt++
 		}
 	}
@@ -277,7 +277,7 @@ func BenchmarkAllFilterSubsetHDTGraph(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		// select all triple of the graph
-		for _ = range graph.FilterSubset(rdf.NewBlankNode("v"), rdf.NewBlankNode("w"), rdf.NewBlankNode("z"), limit, offset) {
+		for _ = range graph.FilterSubset(rdf.NewVariable("v"), rdf.NewVariable("w"), rdf.NewVariable("z"), limit, offset) {
 			cpt++
 		}
 	}

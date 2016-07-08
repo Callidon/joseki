@@ -61,6 +61,20 @@ func NewAskQuery() *AskQuery {
 	return &AskQuery{newQueryDescriptor(nil, askQuery)}
 }
 
+// Execute run the Ask query.
+// It returns True or False depending on the result of the query.
+func (q AskQuery) Execute() bool {
+	// add limit & get the query execution plan
+	q.Limit(1)
+	root := q.build()
+	// TODO : apply optimization heuristic to the plan
+	cpt := 0
+	for _ = range root.execute() {
+		cpt++
+	}
+	return cpt == 1
+}
+
 type DescribeQuery struct {
 	variables []string
 	*queryDescriptor

@@ -41,7 +41,7 @@ func (g *ListGraph) Delete(subject, object, predicate rdf.Node) {
 	defer g.Unlock()
 	// resinsert into the graph the elements we doesn't want to delete
 	for _, triple := range g.triples {
-		if test, _ := triple.Equivalent(refTriple); !test {
+		if test, _ := triple.Equals(refTriple); !test {
 			newTriples = append(newTriples, triple)
 		}
 	}
@@ -57,7 +57,7 @@ func (g *ListGraph) Filter(subject, predicate, object rdf.Node) <-chan rdf.Tripl
 		g.Lock()
 		defer g.Unlock()
 		for _, triple := range g.triples {
-			test, err := refTriple.Equivalent(triple)
+			test, err := refTriple.Equals(triple)
 			if (err == nil) && test {
 				results <- triple
 			}
@@ -79,7 +79,7 @@ func (g *ListGraph) FilterSubset(subject rdf.Node, predicate rdf.Node, object rd
 		g.Lock()
 		defer g.Unlock()
 		for _, triple := range g.triples {
-			test, err := refTriple.Equivalent(triple)
+			test, err := refTriple.Equals(triple)
 			if (err == nil) && test {
 				// send the result only if the offset has been reached
 				if (offset == -1) || (cpt >= offset) {

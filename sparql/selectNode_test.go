@@ -13,9 +13,9 @@ import (
 func TestExecuteSelectNode(t *testing.T) {
 	var graph = graph.NewHDTGraph()
 	graph.LoadFromFile("../parser/datas/test.nt", "nt")
-	triple := rdf.NewTriple(rdf.NewBlankNode("v1"),
+	triple := rdf.NewTriple(rdf.NewVariable("v1"),
 		rdf.NewURI("http://purl.org/dc/terms/title"),
-		rdf.NewBlankNode("v2"))
+		rdf.NewVariable("v2"))
 	node := newTripleNode(triple, graph, -1, -1)
 	selectNode := newSelectNode(node, []string{"v1"}...)
 	cpt := 0

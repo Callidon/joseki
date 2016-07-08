@@ -8,9 +8,9 @@ import (
 	"bufio"
 	"github.com/Callidon/joseki/parser/tokens"
 	"github.com/Callidon/joseki/rdf"
+	"io"
 	"os"
 	"strings"
-	"io"
 )
 
 // TurtleParser is a parser for reading & loading triples in Turtle format.

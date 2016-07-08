@@ -34,22 +34,3 @@ func (t Triple) Equals(other Triple) (bool, error) {
 	}
 	return testSubj && testPred && testObj, nil
 }
-
-// Equivalent is a function that determine if two Triple are equivalent.
-// Two triples are equivalents if their nodes are equivalents between them.
-// Otherwise, the result is always False.
-func (t Triple) Equivalent(other Triple) (bool, error) {
-	testSubj, err := t.Subject.Equivalent(other.Subject)
-	if err != nil {
-		return false, err
-	}
-	testPred, err := t.Predicate.Equivalent(other.Predicate)
-	if err != nil {
-		return false, err
-	}
-	testObj, err := t.Object.Equivalent(other.Object)
-	if err != nil {
-		return false, err
-	}
-	return testSubj && testPred && testObj, nil
-}

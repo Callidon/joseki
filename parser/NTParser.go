@@ -8,8 +8,8 @@ import (
 	"bufio"
 	"github.com/Callidon/joseki/parser/tokens"
 	"github.com/Callidon/joseki/rdf"
-	"os"
 	"io"
+	"os"
 )
 
 // NTParser is a parser for reading & loading triples in N-Triples format.

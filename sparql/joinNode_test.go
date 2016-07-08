@@ -13,10 +13,10 @@ import (
 func TestExecuteJoinNode(t *testing.T) {
 	var graph = graph.NewHDTGraph()
 	graph.LoadFromFile("../parser/datas/test.nt", "nt")
-	tripleA := rdf.NewTriple(rdf.NewBlankNode("v1"),
+	tripleA := rdf.NewTriple(rdf.NewVariable("v1"),
 		rdf.NewURI("http://purl.org/dc/terms/title"),
-		rdf.NewBlankNode("v2"))
-	tripleB := rdf.NewTriple(rdf.NewBlankNode("v1"),
+		rdf.NewVariable("v2"))
+	tripleB := rdf.NewTriple(rdf.NewVariable("v1"),
 		rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
 		rdf.NewURI("http://xmlns.com/foaf/0.1/Document"))
 	nodeA := newTripleNode(tripleA, graph, -1, -1)
@@ -50,10 +50,10 @@ func TestExecuteJoinNode(t *testing.T) {
 func TestExecuteNoResultJoinNode(t *testing.T) {
 	var graph = graph.NewHDTGraph()
 	graph.LoadFromFile("../parser/datas/test.nt", "nt")
-	tripleA := rdf.NewTriple(rdf.NewBlankNode("v1"),
+	tripleA := rdf.NewTriple(rdf.NewVariable("v1"),
 		rdf.NewURI("http://example.org/funny-predicate"),
-		rdf.NewBlankNode("v2"))
-	tripleB := rdf.NewTriple(rdf.NewBlankNode("v1"),
+		rdf.NewVariable("v2"))
+	tripleB := rdf.NewTriple(rdf.NewVariable("v1"),
 		rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
 		rdf.NewURI("http://xmlns.com/foaf/0.1/Document"))
 	nodeA := newTripleNode(tripleA, graph, -1, -1)
@@ -72,10 +72,10 @@ func TestExecuteNoResultJoinNode(t *testing.T) {
 
 func TestBindingNamesJoinNode(t *testing.T) {
 	var graph = graph.NewHDTGraph()
-	tripleA := rdf.NewTriple(rdf.NewBlankNode("v1"),
+	tripleA := rdf.NewTriple(rdf.NewVariable("v1"),
 		rdf.NewURI("http://purl.org/dc/terms/title"),
-		rdf.NewBlankNode("v2"))
-	tripleB := rdf.NewTriple(rdf.NewBlankNode("v1"),
+		rdf.NewVariable("v2"))
+	tripleB := rdf.NewTriple(rdf.NewVariable("v1"),
 		rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
 		rdf.NewURI("http://xmlns.com/foaf/0.1/Document"))
 	nodeA := newTripleNode(tripleA, graph, -1, -1)
