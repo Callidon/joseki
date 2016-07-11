@@ -18,8 +18,8 @@ type stackElement struct {
 	next  *stackElement
 }
 
-// NewStack creates a new stack
-func NewStack() *stack {
+// newStack creates a new stack
+func newStack() *stack {
 	return &stack{nil, 0, &sync.Mutex{}}
 }
 

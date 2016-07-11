@@ -16,8 +16,8 @@ type tokenPrefixedURI struct {
 	*tokenPosition
 }
 
-// NewTokenPrefixedURI creates a new tokenPrefixedURI
-func NewTokenPrefixedURI(value string, line int, row int) *tokenPrefixedURI {
+// newTokenPrefixedURI creates a new tokenPrefixedURI
+func newTokenPrefixedURI(value string, line int, row int) *tokenPrefixedURI {
 	return &tokenPrefixedURI{value, newTokenPosition(line, row)}
 }
 
@@ -40,8 +40,8 @@ type tokenPrefix struct {
 	value string
 }
 
-// NewTokenPrefix creates a new tokenPrefix
-func NewTokenPrefix(name, value string) *tokenPrefix {
+// newTokenPrefix creates a new tokenPrefix
+func newTokenPrefix(name, value string) *tokenPrefix {
 	return &tokenPrefix{name, value}
 }
 

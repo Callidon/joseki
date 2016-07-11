@@ -44,19 +44,19 @@ func scanNtriples(reader io.Reader) chan rdfToken {
 				}
 				switch {
 				case elt == ".":
-					out <- NewTokenEnd(lineNumber, rowNumber)
+					out <- newTokenEnd(lineNumber, rowNumber)
 				case string(elt[0]) == "<" && string(elt[len(elt)-1]) == ">":
-					out <- NewTokenURI(elt[1 : len(elt)-1])
+					out <- newTokenURI(elt[1 : len(elt)-1])
 				case string(elt[0]) == "_" && string(elt[1]) == ":":
-					out <- NewTokenBlankNode(elt[2:])
+					out <- newTokenBlankNode(elt[2:])
 				case string(elt[0]) == "\"" && string(elt[len(elt)-1]) == "\"", string(elt[0]) == "'" && string(elt[len(elt)-1]) == "'":
-					out <- NewTokenLiteral(elt[1 : len(elt)-1])
+					out <- newTokenLiteral(elt[1 : len(elt)-1])
 				case len(elt) >= 2 && elt[0:2] == "^^":
-					out <- NewTokenType(elt[2:], lineNumber, rowNumber)
+					out <- newTokenType(elt[2:], lineNumber, rowNumber)
 				case string(elt[0]) == "@":
-					out <- NewTokenLang(elt[1:], lineNumber, rowNumber)
+					out <- newTokenLang(elt[1:], lineNumber, rowNumber)
 				default:
-					out <- NewTokenIllegal("Unexpected token when scanning '"+elt+"'", lineNumber, rowNumber)
+					out <- newTokenIllegal("Unexpected token when scanning '"+elt+"'", lineNumber, rowNumber)
 				}
 				rowNumber += len(elt) + 1
 			}
@@ -82,7 +82,7 @@ func (p NTParser) Prefixes() map[string]string {
 // Triples generated are send through a channel, which is closed when the parsing of the file has been completed.
 func (p NTParser) Read(filename string) chan rdf.Triple {
 	out := make(chan rdf.Triple, bufferSize)
-	stack := NewStack()
+	stack := newStack()
 
 	// scan the file & analyse the tokens using a goroutine
 	go func() {

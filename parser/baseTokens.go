@@ -14,8 +14,8 @@ type tokenURI struct {
 	value string
 }
 
-// NewTokenURI creates a new tokenURI
-func NewTokenURI(value string) *tokenURI {
+// newTokenURI creates a new tokenURI
+func newTokenURI(value string) *tokenURI {
 	return &tokenURI{value}
 }
 
@@ -31,8 +31,8 @@ type tokenLiteral struct {
 	value string
 }
 
-// NewTokenLiteral creates a new tokenLiteral
-func NewTokenLiteral(value string) *tokenLiteral {
+// newTokenLiteral creates a new tokenLiteral
+func newTokenLiteral(value string) *tokenLiteral {
 	return &tokenLiteral{value}
 }
 
@@ -49,9 +49,9 @@ type tokenType struct {
 	*tokenPosition
 }
 
-// NewTokenType creates a new tokenType.
+// newTokenType creates a new tokenType.
 // Since this token can produce an error, its position is needed for a better error handling
-func NewTokenType(value string, line int, row int) *tokenType {
+func newTokenType(value string, line int, row int) *tokenType {
 	return &tokenType{value, newTokenPosition(line, row)}
 }
 
@@ -72,9 +72,9 @@ type tokenLang struct {
 	*tokenPosition
 }
 
-// NewTokenLang creates a new tokenLang.
+// newTokenLang creates a new tokenLang.
 // Since this token can produce an error, its position is needed for a better error handling
-func NewTokenLang(value string, line int, row int) *tokenLang {
+func newTokenLang(value string, line int, row int) *tokenLang {
 	return &tokenLang{value, newTokenPosition(line, row)}
 }
 
@@ -94,8 +94,8 @@ type tokenBlankNode struct {
 	value string
 }
 
-// NewTokenBlankNode creates a new tokenBlankNode
-func NewTokenBlankNode(value string) *tokenBlankNode {
+// newTokenBlankNode creates a new tokenBlankNode
+func newTokenBlankNode(value string) *tokenBlankNode {
 	return &tokenBlankNode{value}
 }
 

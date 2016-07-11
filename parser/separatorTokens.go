@@ -16,8 +16,8 @@ type tokenEnd struct {
 	*tokenPosition
 }
 
-// NewTokenEnd creates a new tokenEnd
-func NewTokenEnd(line, row int) *tokenEnd {
+// newTokenEnd creates a new tokenEnd
+func newTokenEnd(line, row int) *tokenEnd {
 	return &tokenEnd{newTokenPosition(line, row)}
 }
 
@@ -43,8 +43,8 @@ type tokenSep struct {
 	*tokenPosition
 }
 
-// NewTokenSep creates a new tokenSep
-func NewTokenSep(value string, line int, row int) *tokenSep {
+// newTokenSep creates a new tokenSep
+func newTokenSep(value string, line int, row int) *tokenSep {
 	return &tokenSep{value, newTokenPosition(line, row)}
 }
 

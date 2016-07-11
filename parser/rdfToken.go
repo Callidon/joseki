@@ -42,8 +42,8 @@ type tokenIllegal struct {
 	*tokenPosition
 }
 
-// NewTokenIllegal crates a new tokenIllegal
-func NewTokenIllegal(err string, line int, row int) *tokenIllegal {
+// newTokenIllegal crates a new tokenIllegal
+func newTokenIllegal(err string, line int, row int) *tokenIllegal {
 	return &tokenIllegal{err, newTokenPosition(line, row)}
 }
 

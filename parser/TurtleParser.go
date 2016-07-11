@@ -52,45 +52,45 @@ func scanTurtle(reader io.Reader) chan rdfToken {
 					case elt == "@prefix" || elt == ":":
 						continue
 					case elt == ".":
-						out <- NewTokenPrefix(prefixName, prefixValue)
+						out <- newTokenPrefix(prefixName, prefixValue)
 						prefixName, prefixValue = "", ""
 					case prefixName == "":
 						if string(elt[len(elt)-1]) != ":" {
-							out <- NewTokenIllegal("Unexpected token "+elt, lineNumber, rowNumber)
+							out <- newTokenIllegal("Unexpected token "+elt, lineNumber, rowNumber)
 							return
 						}
 						prefixName = elt[0 : len(elt)-1]
 					case prefixValue == "":
 						if string(elt[0]) != "<" && string(elt[len(elt)-1]) != ">" {
-							out <- NewTokenIllegal("Unexpected token "+elt, lineNumber, rowNumber)
+							out <- newTokenIllegal("Unexpected token "+elt, lineNumber, rowNumber)
 							return
 						}
 						prefixValue = elt[1 : len(elt)-1]
 					default:
-						out <- NewTokenIllegal("Unexpected token when scanning '"+elt+"', expected a prefix definition", lineNumber, rowNumber)
+						out <- newTokenIllegal("Unexpected token when scanning '"+elt+"', expected a prefix definition", lineNumber, rowNumber)
 					}
 				} else {
 					switch {
 					case elt == ".", elt == "]":
-						out <- NewTokenEnd(lineNumber, rowNumber)
+						out <- newTokenEnd(lineNumber, rowNumber)
 					case elt == ";", elt == ",", elt == "[":
-						out <- NewTokenSep(elt, lineNumber, rowNumber)
+						out <- newTokenSep(elt, lineNumber, rowNumber)
 					case string(elt[0]) == "<" && string(elt[len(elt)-1]) == ">":
-						out <- NewTokenURI(elt[1 : len(elt)-1])
+						out <- newTokenURI(elt[1 : len(elt)-1])
 					case string(elt[0]) == "\"" && string(elt[len(elt)-1]) == "\"", string(elt[0]) == "'" && string(elt[len(elt)-1]) == "'":
-						out <- NewTokenLiteral(elt[1 : len(elt)-1])
+						out <- newTokenLiteral(elt[1 : len(elt)-1])
 					case len(elt) >= 2 && elt[0:2] == "^^":
-						out <- NewTokenType(elt[2:], lineNumber, rowNumber)
+						out <- newTokenType(elt[2:], lineNumber, rowNumber)
 					case string(elt[0]) == "@":
-						out <- NewTokenLang(elt[1:], lineNumber, rowNumber)
+						out <- newTokenLang(elt[1:], lineNumber, rowNumber)
 					case string(elt[0]) == "_" && string(elt[1]) == ":":
-						out <- NewTokenBlankNode(elt[2:])
+						out <- newTokenBlankNode(elt[2:])
 					case string(elt[0]) == "?":
-						out <- NewTokenBlankNode(elt[1:])
+						out <- newTokenBlankNode(elt[1:])
 					case strings.Index(elt, ":") > -1:
-						out <- NewTokenPrefixedURI(elt, lineNumber, rowNumber)
+						out <- newTokenPrefixedURI(elt, lineNumber, rowNumber)
 					default:
-						out <- NewTokenIllegal("Unexpected token when scanning '"+elt+"'", lineNumber, rowNumber)
+						out <- newTokenIllegal("Unexpected token when scanning '"+elt+"'", lineNumber, rowNumber)
 					}
 				}
 				rowNumber += len(elt) + 1
@@ -116,7 +116,7 @@ func (p TurtleParser) Prefixes() map[string]string {
 // Triples generated are send throught a channel, which is closed when the parsing of the file has been completed.
 func (p *TurtleParser) Read(filename string) chan rdf.Triple {
 	out := make(chan rdf.Triple, bufferSize)
-	stack := NewStack()
+	stack := newStack()
 
 	// scan the file & analyse the tokens using a goroutine
 	go func() {
