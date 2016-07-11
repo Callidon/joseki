@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT License
 // license that can be found in the LICENSE file.
 
-package tokens
+package parser
 
 import (
 	"errors"
@@ -11,19 +11,19 @@ import (
 	"strconv"
 )
 
-// TokenEnd represent a RDF URI
-type TokenEnd struct {
+// tokenEnd represent a RDF URI
+type tokenEnd struct {
 	*tokenPosition
 }
 
-// NewTokenEnd creates a new TokenEnd
-func NewTokenEnd(line, row int) *TokenEnd {
-	return &TokenEnd{newTokenPosition(line, row)}
+// NewTokenEnd creates a new tokenEnd
+func NewTokenEnd(line, row int) *tokenEnd {
+	return &tokenEnd{newTokenPosition(line, row)}
 }
 
 // Interpret evaluate the token & produce an action.
-// In the case of a TokenEnd, it form a new triple using the nodes in the stack
-func (t TokenEnd) Interpret(nodeStack *Stack, prefixes *map[string]string, out chan rdf.Triple) error {
+// In the case of a tokenEnd, it form a new triple using the nodes in the stack
+func (t tokenEnd) Interpret(nodeStack *stack, prefixes *map[string]string, out chan rdf.Triple) error {
 	if nodeStack.Len() > 3 {
 		return errors.New("encountered a malformed triple pattern at " + t.position())
 	}
@@ -37,20 +37,20 @@ func (t TokenEnd) Interpret(nodeStack *Stack, prefixes *map[string]string, out c
 	return nil
 }
 
-// TokenSep represent a Turtle separator
-type TokenSep struct {
+// tokenSep represent a Turtle separator
+type tokenSep struct {
 	value string
 	*tokenPosition
 }
 
-// NewTokenSep creates a new TokenSep
-func NewTokenSep(value string, line int, row int) *TokenSep {
-	return &TokenSep{value, newTokenPosition(line, row)}
+// NewTokenSep creates a new tokenSep
+func NewTokenSep(value string, line int, row int) *tokenSep {
+	return &tokenSep{value, newTokenPosition(line, row)}
 }
 
 // Interpret evaluate the token & produce an action.
-// In the case of a TokenSep, it form a new triple based on the separator, using the nodes in the stack
-func (t TokenSep) Interpret(nodeStack *Stack, prefixes *map[string]string, out chan rdf.Triple) error {
+// In the case of a tokenSep, it form a new triple based on the separator, using the nodes in the stack
+func (t tokenSep) Interpret(nodeStack *stack, prefixes *map[string]string, out chan rdf.Triple) error {
 	// case of a object separator
 	if t.value == "[" {
 		if nodeStack.Len() > 2 {

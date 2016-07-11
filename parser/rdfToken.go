@@ -2,8 +2,8 @@
 // Use of this source code is governed by a MIT License
 // license that can be found in the LICENSE file.
 
-// Package tokens provides utilities to work with RDF based languages
-package tokens
+// Package parser provides utilities to work with RDF based languages
+package parser
 
 import (
 	"errors"
@@ -11,16 +11,16 @@ import (
 	"strconv"
 )
 
-// RDFToken represent a Token in a RDF based language
+// rdfToken represent a token in a RDF based language
 //
 // It follows the Interpretor pattern (https://en.wikipedia.org/wiki/Interpreter_pattern)
 // and can be used to extract triple pattersn& prefiex when reading a file
-type RDFToken interface {
+type rdfToken interface {
 	// Interpret evaluate the token & produce an action
-	Interpret(nodeStack *Stack, prefixes *map[string]string, out chan rdf.Triple) error
+	Interpret(nodeStack *stack, prefixes *map[string]string, out chan rdf.Triple) error
 }
 
-// tokenPosition represent the position of a Token
+// tokenPosition represent the position of a token
 type tokenPosition struct {
 	lineNumber int
 	rowNumber  int
@@ -36,18 +36,18 @@ func (t tokenPosition) position() string {
 	return "line : " + strconv.Itoa(t.lineNumber) + " row : " + strconv.Itoa(t.rowNumber)
 }
 
-// TokenIllegal is an illegal Token in the RDF syntax
-type TokenIllegal struct {
+// tokenIllegal is an illegal token in the RDF syntax
+type tokenIllegal struct {
 	errMsg string
 	*tokenPosition
 }
 
-// NewTokenIllegal crates a new TokenIllegal
-func NewTokenIllegal(err string, line int, row int) *TokenIllegal {
-	return &TokenIllegal{err, newTokenPosition(line, row)}
+// NewTokenIllegal crates a new tokenIllegal
+func NewTokenIllegal(err string, line int, row int) *tokenIllegal {
+	return &tokenIllegal{err, newTokenPosition(line, row)}
 }
 
-// Interpret evaluate the token & produce an action. In the case of a TokenIllegal, it causes a panic.
-func (t TokenIllegal) Interpret(nodeStack *Stack, prefixes *map[string]string, out chan rdf.Triple) error {
-	return errors.New(t.errMsg + " - at " + t.position())
+// Interpret evaluate the token & produce an action. In the case of a tokenIllegal, it causes a panic.
+func (t tokenIllegal) Interpret(nodeStack *stack, prefixes *map[string]string, out chan rdf.Triple) error {
+	return errors.New(t.errMsg + " at " + t.position())
 }

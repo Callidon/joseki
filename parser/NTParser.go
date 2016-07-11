@@ -6,7 +6,6 @@ package parser
 
 import (
 	"bufio"
-	"github.com/Callidon/joseki/parser/tokens"
 	"github.com/Callidon/joseki/rdf"
 	"io"
 	"os"
@@ -21,38 +20,43 @@ type NTParser struct {
 // scanNtriples read a file in N-Triples format, identify and extract token with their values.
 //
 // The results are sent through a channel, which is closed when the scan of the file has been completed.
-func scanNtriples(reader io.Reader) chan tokens.RDFToken {
-	out := make(chan tokens.RDFToken, bufferSize)
+func scanNtriples(reader io.Reader) chan rdfToken {
+	out := make(chan rdfToken, bufferSize)
 	// walk through the file using a goroutine
 	go func() {
 		defer close(out)
 
 		scanner := bufio.NewScanner(reader)
-		lineNumber, rowNumber := 1, 1
+		lineNumber := 1
 		for scanner.Scan() {
 			line := extractSegments(scanner.Text())
+			rowNumber := 1
 			// skip blank lines & comments
-			if (len(line) == 0) || (line[0] == "#") {
+			if len(line) == 0 || line[0] == "#" {
+				lineNumber++
 				continue
 			}
 			// scan elements of the line
 			for _, elt := range line {
+				// skip to next line when a comment is detect
 				if string(elt[0]) == "#" {
 					break
-				} else if elt == "." {
-					out <- tokens.NewTokenEnd(lineNumber, rowNumber)
-				} else if (string(elt[0]) == "<") && (string(elt[len(elt)-1]) == ">") {
-					out <- tokens.NewTokenURI(elt[1 : len(elt)-1])
-				} else if (string(elt[0]) == "_") && (string(elt[1]) == ":") {
-					out <- tokens.NewTokenBlankNode(elt[2:])
-				} else if ((string(elt[0]) == "\"") && (string(elt[len(elt)-1]) == "\"")) || ((string(elt[0]) == "'") && (string(elt[len(elt)-1]) == "'")) {
-					out <- tokens.NewTokenLiteral(elt[1 : len(elt)-1])
-				} else if elt[0:2] == "^^" {
-					out <- tokens.NewTokenType(elt[2:], lineNumber, rowNumber)
-				} else if string(elt[0]) == "@" {
-					out <- tokens.NewTokenLang(elt[1:], lineNumber, rowNumber)
-				} else {
-					out <- tokens.NewTokenIllegal("Unexpected token when scanning "+elt, lineNumber, rowNumber)
+				}
+				switch {
+				case elt == ".":
+					out <- NewTokenEnd(lineNumber, rowNumber)
+				case string(elt[0]) == "<" && string(elt[len(elt)-1]) == ">":
+					out <- NewTokenURI(elt[1 : len(elt)-1])
+				case string(elt[0]) == "_" && string(elt[1]) == ":":
+					out <- NewTokenBlankNode(elt[2:])
+				case string(elt[0]) == "\"" && string(elt[len(elt)-1]) == "\"", string(elt[0]) == "'" && string(elt[len(elt)-1]) == "'":
+					out <- NewTokenLiteral(elt[1 : len(elt)-1])
+				case len(elt) >= 2 && elt[0:2] == "^^":
+					out <- NewTokenType(elt[2:], lineNumber, rowNumber)
+				case string(elt[0]) == "@":
+					out <- NewTokenLang(elt[1:], lineNumber, rowNumber)
+				default:
+					out <- NewTokenIllegal("Unexpected token when scanning '"+elt+"'", lineNumber, rowNumber)
 				}
 				rowNumber += len(elt) + 1
 			}
@@ -78,7 +82,7 @@ func (p NTParser) Prefixes() map[string]string {
 // Triples generated are send through a channel, which is closed when the parsing of the file has been completed.
 func (p NTParser) Read(filename string) chan rdf.Triple {
 	out := make(chan rdf.Triple, bufferSize)
-	stack := tokens.NewStack()
+	stack := NewStack()
 
 	// scan the file & analyse the tokens using a goroutine
 	go func() {

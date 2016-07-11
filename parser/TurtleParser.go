@@ -6,7 +6,6 @@ package parser
 
 import (
 	"bufio"
-	"github.com/Callidon/joseki/parser/tokens"
 	"github.com/Callidon/joseki/rdf"
 	"io"
 	"os"
@@ -23,8 +22,8 @@ type TurtleParser struct {
 // scanTurtle read a file in Turtle format, identify and extract token with their values.
 //
 // The results are sent through a channel, which is closed when the scan of the file has been completed.
-func scanTurtle(reader io.Reader) chan tokens.RDFToken {
-	out := make(chan tokens.RDFToken, bufferSize)
+func scanTurtle(reader io.Reader) chan rdfToken {
+	out := make(chan rdfToken, bufferSize)
 	// walk through the file using a goroutine
 	go func() {
 		defer close(out)
@@ -32,11 +31,13 @@ func scanTurtle(reader io.Reader) chan tokens.RDFToken {
 		var scanPrefixesDone bool
 
 		scanner := bufio.NewScanner(reader)
-		lineNumber, rowNumber := 1, 1
+		lineNumber := 1
 		for scanner.Scan() {
 			line := extractSegments(scanner.Text())
+			rowNumber := 1
 			// skip blank lines & comments
 			if (len(line) == 0) || (line[0] == "#") {
+				lineNumber++
 				continue
 			}
 			scanPrefixesDone = (line[0] != "@prefix")
@@ -47,46 +48,49 @@ func scanTurtle(reader io.Reader) chan tokens.RDFToken {
 					break
 				}
 				if !scanPrefixesDone {
-					if (elt == "@prefix") || (elt == ":") {
+					switch {
+					case elt == "@prefix" || elt == ":":
 						continue
-					} else if elt == "." {
-						out <- tokens.NewTokenPrefix(prefixName, prefixValue)
+					case elt == ".":
+						out <- NewTokenPrefix(prefixName, prefixValue)
 						prefixName, prefixValue = "", ""
-					} else if prefixName == "" {
+					case prefixName == "":
 						if string(elt[len(elt)-1]) != ":" {
-							out <- tokens.NewTokenIllegal("Unexpected token "+elt, lineNumber, rowNumber)
+							out <- NewTokenIllegal("Unexpected token "+elt, lineNumber, rowNumber)
 							return
 						}
 						prefixName = elt[0 : len(elt)-1]
-					} else if prefixValue == "" {
-						if (string(elt[0]) != "<") && (string(elt[len(elt)-1]) != ">") {
-							out <- tokens.NewTokenIllegal("Unexpected token "+elt, lineNumber, rowNumber)
+					case prefixValue == "":
+						if string(elt[0]) != "<" && string(elt[len(elt)-1]) != ">" {
+							out <- NewTokenIllegal("Unexpected token "+elt, lineNumber, rowNumber)
 							return
 						}
 						prefixValue = elt[1 : len(elt)-1]
+					default:
+						out <- NewTokenIllegal("Unexpected token when scanning '"+elt+"', expected a prefix definition", lineNumber, rowNumber)
 					}
 				} else {
-					// when hitting the separator, send triple into channel
-					if (elt == ".") || (elt == "]") {
-						out <- tokens.NewTokenEnd(lineNumber, rowNumber)
-					} else if (elt == ";") || (elt == ",") || (elt == "[") {
-						out <- tokens.NewTokenSep(elt, lineNumber, rowNumber)
-					} else if (string(elt[0]) == "<") && (string(elt[len(elt)-1]) == ">") {
-						out <- tokens.NewTokenURI(elt[1 : len(elt)-1])
-					} else if ((string(elt[0]) == "\"") && (string(elt[len(elt)-1]) == "\"")) || ((string(elt[0]) == "'") && (string(elt[len(elt)-1]) == "'")) {
-						out <- tokens.NewTokenLiteral(elt[1 : len(elt)-1])
-					} else if elt[0:2] == "^^" {
-						out <- tokens.NewTokenType(elt[2:], lineNumber, rowNumber)
-					} else if string(elt[0]) == "@" {
-						out <- tokens.NewTokenLang(elt[1:], lineNumber, rowNumber)
-					} else if (string(elt[0]) == "_") && (string(elt[1]) == ":") {
-						out <- tokens.NewTokenBlankNode(elt[2:])
-					} else if string(elt[0]) == "?" {
-						out <- tokens.NewTokenBlankNode(elt[1:])
-					} else if strings.Index(elt, ":") > -1 {
-						out <- tokens.NewTokenPrefixedURI(elt, lineNumber, rowNumber)
-					} else {
-						out <- tokens.NewTokenIllegal("Unexpected token when scanning "+elt, lineNumber, rowNumber)
+					switch {
+					case elt == ".", elt == "]":
+						out <- NewTokenEnd(lineNumber, rowNumber)
+					case elt == ";", elt == ",", elt == "[":
+						out <- NewTokenSep(elt, lineNumber, rowNumber)
+					case string(elt[0]) == "<" && string(elt[len(elt)-1]) == ">":
+						out <- NewTokenURI(elt[1 : len(elt)-1])
+					case string(elt[0]) == "\"" && string(elt[len(elt)-1]) == "\"", string(elt[0]) == "'" && string(elt[len(elt)-1]) == "'":
+						out <- NewTokenLiteral(elt[1 : len(elt)-1])
+					case len(elt) >= 2 && elt[0:2] == "^^":
+						out <- NewTokenType(elt[2:], lineNumber, rowNumber)
+					case string(elt[0]) == "@":
+						out <- NewTokenLang(elt[1:], lineNumber, rowNumber)
+					case string(elt[0]) == "_" && string(elt[1]) == ":":
+						out <- NewTokenBlankNode(elt[2:])
+					case string(elt[0]) == "?":
+						out <- NewTokenBlankNode(elt[1:])
+					case strings.Index(elt, ":") > -1:
+						out <- NewTokenPrefixedURI(elt, lineNumber, rowNumber)
+					default:
+						out <- NewTokenIllegal("Unexpected token when scanning '"+elt+"'", lineNumber, rowNumber)
 					}
 				}
 				rowNumber += len(elt) + 1
@@ -112,7 +116,7 @@ func (p TurtleParser) Prefixes() map[string]string {
 // Triples generated are send throught a channel, which is closed when the parsing of the file has been completed.
 func (p *TurtleParser) Read(filename string) chan rdf.Triple {
 	out := make(chan rdf.Triple, bufferSize)
-	stack := tokens.NewStack()
+	stack := NewStack()
 
 	// scan the file & analyse the tokens using a goroutine
 	go func() {
