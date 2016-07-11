@@ -97,9 +97,3 @@ func (g *ListGraph) FilterSubset(subject rdf.Node, predicate rdf.Node, object rd
 
 	return results
 }
-
-// Serialize the graph into a given format and return it as a string.
-func (g *ListGraph) Serialize(format string) string {
-	// TODO
-	return ""
-}

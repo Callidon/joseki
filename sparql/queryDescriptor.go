@@ -97,7 +97,7 @@ func findJoin(leftNode sparqlNode, otherNodes ...sparqlNode) (sparqlNode, int) {
 				// apply only it if the two nodes are Triple Nodes
 				_, isLeftTriple := leftNode.(*tripleNode)
 				_, isRightTriple := rightNode.(*tripleNode)
-				if isLeftTriple && isRightTriple && (leftSelectivity >= rightSelectivity) {
+				if isLeftTriple && isRightTriple && leftSelectivity >= rightSelectivity {
 					return newJoinNode(rightNode, leftNode), rightInd
 				}
 				return newJoinNode(leftNode, rightNode), rightInd
@@ -143,7 +143,7 @@ func (q *queryDescriptor) build() sparqlNode {
 				}
 				// search for a possible join between the current nodes & the next nodes
 				joinNode, rightInd = findJoin(leftNode, currentBGP[leftInd+1:]...)
-				if (joinNode == nil) && (rightInd == -1) {
+				if joinNode == nil && rightInd == -1 {
 					// save the node since no join is currently possible with it
 					nextBGP = append(nextBGP, leftNode)
 				} else {

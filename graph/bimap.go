@@ -14,8 +14,8 @@ type bimap struct {
 }
 
 // Return a new empty Bimap.
-func newBimap() bimap {
-	return bimap{make(map[int]rdf.Node), make(map[rdf.Node]int)}
+func newBimap() *bimap {
+	return &bimap{make(map[int]rdf.Node), make(map[rdf.Node]int)}
 }
 
 // Add a (key, value) to the Bimap.
@@ -42,13 +42,13 @@ func (b *bimap) push(key int, value rdf.Node) {
 }
 
 // Return the key associated to a value in the Bimap.
-func (b *bimap) locate(value rdf.Node) (int, bool) {
-	key, test := b.valueToKey[value]
-	return key, test
+func (b *bimap) locate(value rdf.Node) (key int, inMap bool) {
+	key, inMap = b.valueToKey[value]
+	return
 }
 
 // Return the value associated to a key in the Bimap.
-func (b *bimap) extract(key int) (rdf.Node, bool) {
-	value, test := b.keyToValue[key]
-	return value, test
+func (b *bimap) extract(key int) (value rdf.Node, inMap bool) {
+	value, inMap = b.keyToValue[key]
+	return
 }

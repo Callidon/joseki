@@ -25,8 +25,6 @@ type Graph interface {
 	Filter(subject, predicate, object rdf.Node) <-chan rdf.Triple
 	// Same as Filter, but with a Limit and an Offset
 	FilterSubset(subject rdf.Node, predicate rdf.Node, object rdf.Node, limit int, offset int) <-chan rdf.Triple
-	// Serialize the graph into a given format and return it as a string.
-	Serialize(format string) string
 }
 
 // rdfReader represents a reader capable of reading RDF data encoded in various format.
@@ -43,8 +41,10 @@ func newRDFReader() *rdfReader {
 	return &rdfReader{nil, nil}
 }
 
-// Generic function for loading triples from a file into a graph, with a given format
-func (r *rdfReader) LoadFromFile(filename string, format string) {
+// LoadFromFile loads triples from a file into a graph, with a given format
+// In the desired format isn't supported or doesn't exist, no new triples will
+// be inserted into the graph and an error will be returned.
+func (r *rdfReader) LoadFromFile(filename string, format string) error {
 	var p parser.Parser
 	hasPrefixes := false
 	// determine which parser to use depending on the format
@@ -55,8 +55,8 @@ func (r *rdfReader) LoadFromFile(filename string, format string) {
 		p = parser.NewTurtleParser()
 		hasPrefixes = true
 	default:
-		panic(errors.New("Error : " + format + " is not a supported format." +
-			"Please see the documentation at https://godoc.org/github.com/Callidon/joseki/parser to see the available parsers."))
+		return errors.New("Error : " + format + " is not a supported format." +
+			"Please see the documentation at https://godoc.org/github.com/Callidon/joseki/parser to see the available parsers.")
 	}
 	// read triples from file, then load prefixes if necessary
 	for triple := range p.Read(filename) {
@@ -65,4 +65,5 @@ func (r *rdfReader) LoadFromFile(filename string, format string) {
 	if hasPrefixes {
 		r.prefixes = p.Prefixes()
 	}
+	return nil
 }

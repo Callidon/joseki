@@ -25,7 +25,7 @@ func newAtomicCounter(cpt, limit int) *atomicCounter {
 //
 // For more details, see http://dataweb.infor.uva.es/projects/hdt-mr/
 type HDTGraph struct {
-	dictionnary bimap
+	dictionnary *bimap
 	root        *bitmapNode
 	nextID      int
 	triples     map[string][]rdf.Triple
@@ -95,7 +95,7 @@ func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int,
 		} else {
 			// when possible, create a new triple pattern & send it into the output pipeline
 			bitmapTriple := newBitmapTriple(triple[0], triple[1], triple[2])
-			triple, err := bitmapTriple.Triple(&g.dictionnary)
+			triple, err := bitmapTriple.Triple(g.dictionnary)
 			if err != nil {
 				panic(err)
 			}
@@ -197,10 +197,4 @@ func (g *HDTGraph) FilterSubset(subject rdf.Node, predicate rdf.Node, object rdf
 		wg.Wait()
 	}()
 	return results
-}
-
-// Serialize the graph into a given format and return it as a string.
-func (g *HDTGraph) Serialize(format string) string {
-	// TODO
-	return ""
 }
