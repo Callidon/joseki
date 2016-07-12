@@ -219,20 +219,21 @@ func TestLoadFromFileHDTGraph(t *testing.T) {
 // Benchmarking
 
 func BenchmarkAddHDTGraph(b *testing.B) {
+	b.Skip("skipped because it's currently not accurate")
 	graph := NewHDTGraph()
-
+	graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
+	triple := rdf.NewTriple(rdf.NewURI("http://example.org/subject"), rdf.NewURI("http://example.org/predicate"), rdf.NewURI("http://example.org/object"))
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
+		graph.Add(triple)
 	}
 }
 
-func BenchmarkDeleteAllHDTGraph(b *testing.B) {
-	graph := NewHDTGraph()
-	graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
-	pred := rdf.NewURI("http://purl.org/goodrelations/price")
+func BenchmarkLoadFromFileHDTGraph(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
-		graph.Delete(rdf.NewVariable("v"), pred, rdf.NewVariable("w"))
+		graph := NewHDTGraph()
+		graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
 	}
 }
 
@@ -240,6 +241,7 @@ func BenchmarkAllFilterHDTGraph(b *testing.B) {
 	graph := NewHDTGraph()
 	graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
 	cpt := 0
+	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		// select all triple of the graph
@@ -252,14 +254,11 @@ func BenchmarkAllFilterHDTGraph(b *testing.B) {
 func BenchmarkSpecificFilterHDTGraph(b *testing.B) {
 	graph := NewHDTGraph()
 	graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
-	subj := rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/Product43")
-	pred := rdf.NewURI("http://purl.org/stuff/rev#hasReview")
-	obj := rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/Review864")
+	subj := rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/User999")
+	pred := rdf.NewURI("http://xmlns.com/foaf/age")
+	obj := rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/AgeGroup2")
 	cpt := 0
-
-	// insert a specific triple at the end
-	triple := rdf.NewTriple(subj, pred, obj)
-	graph.Add(triple)
+	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		// fetch the last inserted triple into the graph
@@ -274,6 +273,7 @@ func BenchmarkAllFilterSubsetHDTGraph(b *testing.B) {
 	graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
 	limit, offset := 600, 200
 	cpt := 0
+	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		// select all triple of the graph
