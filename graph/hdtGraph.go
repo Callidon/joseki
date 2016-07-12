@@ -80,12 +80,18 @@ func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int,
 	limit.Lock()
 	defer wg.Done()
 	defer limit.Unlock()
+	// utilitary function to update WaitGroup when skipping sons
+	updateSons := func(skipKey int, wg *sync.WaitGroup) {
+		for key, son := range root.sons {
+			if key != skipKey {
+				son.updateCounter(wg)
+			}
+		}
+	}
+
 	// skip the node if the limit have a default value or has been reached
 	if (limit.threshold != -1) && (limit.cpt >= limit.threshold) {
-		// update the counter for the sons that will not be visited
-		for _, son := range root.sons {
-			son.updateCounter(wg)
-		}
+		updateSons(-1, wg)
 	} else if len(triple) >= 3 {
 		offset.Lock()
 		defer offset.Unlock()
@@ -104,29 +110,20 @@ func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int,
 		}
 	} else {
 		node := (*datas[0])
-		// if the current node to search is a blank node, search in every sons
-		if _, isVar := node.(rdf.Variable); isVar {
-			go func() {
-				for _, son := range root.sons {
-					g.queryNodes(son, datas[1:], append(triple, son.id), out, wg, limit, offset)
-				}
-			}()
-		} else {
+		// search in every sons if the current node is a viarable
+		switch node.(type) {
+		case rdf.Variable:
+			for _, son := range root.sons {
+				go g.queryNodes(son, datas[1:], append(triple, son.id), out, wg, limit, offset)
+			}
+		default:
 			// search for a specific node
 			id, inDict := g.dictionnary.locate(node)
 			if _, inSons := root.sons[id]; inDict && (inSons || root.sons[id] == nil) {
 				go g.queryNodes(root.sons[id], datas[1:], append(triple, id), out, wg, limit, offset)
-				// update the counter for the sons that will not be visited
-				for key, son := range root.sons {
-					if key != id {
-						son.updateCounter(wg)
-					}
-				}
+				updateSons(id, wg)
 			} else {
-				// update the counter for the sons that will not be visited
-				for _, son := range root.sons {
-					son.updateCounter(wg)
-				}
+				updateSons(-1, wg)
 			}
 		}
 	}
@@ -161,24 +158,6 @@ func (g *HDTGraph) Delete(subject, object, predicate rdf.Node) {
 	g.removeNodes(g.root, []*rdf.Node{&subject, &predicate, &object})
 }
 
-// Filter fetch triples form the graph that match a BGP given in parameters.
-func (g *HDTGraph) Filter(subject, predicate, object rdf.Node) <-chan rdf.Triple {
-	var wg sync.WaitGroup
-	results := make(chan rdf.Triple)
-	limit, offset := newAtomicCounter(0, -1), newAtomicCounter(0, 0)
-	// fetch data in the tree & wait for the operation to be complete before closing the pipeline
-	g.Lock()
-	wg.Add(g.root.depth() + 1)
-	go g.queryNodes(g.root, []*rdf.Node{&subject, &predicate, &object}, make([]int, 0), results, &wg, limit, offset)
-	// use a daemon to wait for the end of all related goroutines before closing the channel
-	go func() {
-		defer close(results)
-		defer g.Unlock()
-		wg.Wait()
-	}()
-	return results
-}
-
 // FilterSubset fetch triples form the graph that match a BGP given in parameters.
 // It impose a Limit(the max number of results to be send in the output channel)
 // and an Offset (the number of results to skip before sending them in the output channel) to the nodes requested.
@@ -197,4 +176,9 @@ func (g *HDTGraph) FilterSubset(subject rdf.Node, predicate rdf.Node, object rdf
 		wg.Wait()
 	}()
 	return results
+}
+
+// Filter fetch triples form the graph that match a BGP given in parameters.
+func (g *HDTGraph) Filter(subject, predicate, object rdf.Node) <-chan rdf.Triple {
+	return g.FilterSubset(subject, predicate, object, -1, 0)
 }

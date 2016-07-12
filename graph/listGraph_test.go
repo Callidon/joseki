@@ -56,7 +56,7 @@ func TestComplexFilterListGraph(t *testing.T) {
 	}
 
 	if cpt != nbDatas {
-		t.Error("expected", nbDatas, "results but inftsead got", cpt, "results")
+		t.Error("expected", nbDatas, "results but instead got", cpt, "results")
 	}
 }
 
@@ -78,6 +78,7 @@ func TestComplexFilterSubsetListGraph(t *testing.T) {
 	}
 
 	if cpt != limit {
+		t.Log("simple limit")
 		t.Error("expected ", limit, "results but instead found ", cpt, "results")
 	}
 
@@ -86,8 +87,8 @@ func TestComplexFilterSubsetListGraph(t *testing.T) {
 	for _ = range graph.FilterSubset(subj, rdf.NewVariable("v"), rdf.NewVariable("w"), -1, offset) {
 		cpt++
 	}
-
 	if cpt != nbDatas-offset {
+		t.Log("simple offset")
 		t.Error("expected ", nbDatas-offset, "results but instead found ", cpt, "results")
 	}
 
@@ -96,8 +97,8 @@ func TestComplexFilterSubsetListGraph(t *testing.T) {
 	for _ = range graph.FilterSubset(subj, rdf.NewVariable("v"), rdf.NewVariable("w"), limit, offset) {
 		cpt++
 	}
-
 	if cpt != nbDatas-offset {
+		t.Log("offset > limit")
 		t.Error("expected ", nbDatas-offset, "results but instead found ", cpt, "results")
 	}
 }

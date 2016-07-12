@@ -9,9 +9,7 @@ import (
 	"sync"
 )
 
-// ListGraph is dummy implementation of a RDF Graph, using a simple slice to store RDF Triples.
-//
-// Very poorly optimized, should only be used for demonstration or benchmarking purposes.
+// ListGraph is implementation of a RDF Graph, using a slice to store RDF Triples.
 type ListGraph struct {
 	triples []rdf.Triple
 	*sync.Mutex
@@ -48,25 +46,6 @@ func (g *ListGraph) Delete(subject, object, predicate rdf.Node) {
 	g.triples = newTriples
 }
 
-// Filter fetch triples form the graph that match a BGP given in parameters.
-func (g *ListGraph) Filter(subject, predicate, object rdf.Node) <-chan rdf.Triple {
-	results := make(chan rdf.Triple)
-	refTriple := rdf.NewTriple(subject, predicate, object)
-	// search for matching triple pattern in graph
-	go func() {
-		g.Lock()
-		defer g.Unlock()
-		for _, triple := range g.triples {
-			test, err := refTriple.Equals(triple)
-			if (err == nil) && test {
-				results <- triple
-			}
-		}
-		close(results)
-	}()
-	return results
-}
-
 // FilterSubset fetch triples form the graph that match a BGP given in parameters.
 // It impose a Limit(the max number of results to be send in the output channel)
 // and an Offset (the number of results to skip before sending them in the output channel) to the nodes requested.
@@ -94,6 +73,10 @@ func (g *ListGraph) FilterSubset(subject rdf.Node, predicate rdf.Node, object rd
 		}
 		close(results)
 	}()
-
 	return results
+}
+
+// Filter fetch triples form the graph that match a BGP given in parameters.
+func (g *ListGraph) Filter(subject, predicate, object rdf.Node) <-chan rdf.Triple {
+	return g.FilterSubset(subject, predicate, object, -1, 0)
 }
