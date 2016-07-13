@@ -33,14 +33,12 @@ func (n *bitmapNode) addSon(id int) {
 	n.sons[id] = newBitmapNode(id)
 }
 
-// depth calculates the depth of the tree starting from this node.
-func (n *bitmapNode) depth() int {
+// depth calculates the number of nodes in the tree, starting from this node.
+func (n *bitmapNode) length() int {
 	res := 0
-	if len(n.sons) > 0 {
-		res += len(n.sons)
-		for _, son := range n.sons {
-			res += son.depth()
-		}
+	res += len(n.sons)
+	for _, son := range n.sons {
+		res += son.length()
 	}
 	return res
 }

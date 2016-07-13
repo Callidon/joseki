@@ -23,44 +23,76 @@ func TestAddListGraph(t *testing.T) {
 	}
 }
 
-func TestSimpleFilterListGraph(t *testing.T) {
+func TestFilterListGraph(t *testing.T) {
+	skipTest("../parser/datas/watdiv1k.nt", t)
 	graph := NewListGraph()
-	subj := rdf.NewURI("dblp:Thomas")
-	pred := rdf.NewURI("foaf:age")
-	obj := rdf.NewLiteral("22")
+	graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
+	subj := rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/City195")
+	pred := rdf.NewURI("http://www.geonames.org/ontology#parentCountry")
+	obj := rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/Country0")
 	triple := rdf.NewTriple(subj, pred, obj)
-	graph.Add(triple)
-
-	for result := range graph.Filter(subj, pred, obj) {
-		if test, _ := result.Equals(triple); !test {
-			t.Error(triple, "not in results :", result)
-		}
-	}
-}
-
-func TestComplexFilterListGraph(t *testing.T) {
-	graph := NewListGraph()
-	nbDatas := 1000
 	cpt := 0
-	subj := rdf.NewURI("dblp:foo")
 
-	// insert random triples in the graph
-	for i := 0; i < nbDatas; i++ {
-		triple := rdf.NewTriple(subj, rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
-		graph.Add(triple)
-	}
-
-	// select all triple of the graph
-	for _ = range graph.Filter(subj, rdf.NewVariable("v"), rdf.NewVariable("w")) {
+	// select one triple specific triple pattern
+	for result := range graph.Filter(subj, pred, obj) {
+		if test, err := result.Equals(triple); !test || (err != nil) {
+			t.Error("expected", triple, "but instead got", result)
+		}
 		cpt++
 	}
 
-	if cpt != nbDatas {
-		t.Error("expected", nbDatas, "results but instead got", cpt, "results")
+	if cpt != 1 {
+		t.Error("expected 1 result but instead got", cpt, "results")
+	}
+
+	// select all triples
+	cpt = 0
+	for _ = range graph.Filter(rdf.NewVariable("v"), rdf.NewVariable("w"), rdf.NewVariable("z")) {
+		cpt++
+	}
+	if cpt != 31288 {
+		t.Error("expected 31288 results but instead got", cpt, "results")
+	}
+
+	// select multiple triples with the same subject
+	cpt = 0
+	for _ = range graph.Filter(rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/Offer0"), rdf.NewVariable("v"), rdf.NewVariable("w")) {
+		cpt++
+	}
+	if cpt != 9 {
+		t.Error("expected 9 results but instead got", cpt, "results")
+	}
+
+	// select multiple triples with the same predicate
+	cpt = 0
+	for _ = range graph.Filter(rdf.NewVariable("v"), rdf.NewURI("http://www.geonames.org/ontology#parentCountry"), rdf.NewVariable("w")) {
+		cpt++
+	}
+	if cpt != 240 {
+		t.Error("expected 240 results but instead got", cpt, "results")
+	}
+
+	// select multiple triples with the same object
+	cpt = 0
+	for _ = range graph.Filter(rdf.NewVariable("v"), rdf.NewVariable("w"), rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/Offer0")) {
+		cpt++
+	}
+	if cpt != 12 {
+		t.Error("expected 12 results but instead got", cpt, "results")
+	}
+
+	// select a triple that doesn't exist in the graph
+	cpt = 0
+	for _ = range graph.Filter(rdf.NewURI("http://example.org"), rdf.NewVariable("v1"), rdf.NewVariable("v2")) {
+		cpt++
+	}
+
+	if cpt > 0 {
+		t.Error("expected no result but instead found", cpt, "results")
 	}
 }
 
-func TestComplexFilterSubsetListGraph(t *testing.T) {
+func TestFilterSubsetListGraph(t *testing.T) {
 	graph := NewListGraph()
 	nbDatas, limit, offset := 1000, 600, 800
 	cpt := 0

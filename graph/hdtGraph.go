@@ -110,17 +110,18 @@ func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int,
 		}
 	} else {
 		node := (*datas[0])
-		// search in every sons if the current node is a viarable
 		switch node.(type) {
 		case rdf.Variable:
+			// search in every sons if the current node is a variable
 			for _, son := range root.sons {
 				go g.queryNodes(son, datas[1:], append(triple, son.id), out, wg, limit, offset)
 			}
 		default:
 			// search for a specific node
 			id, inDict := g.dictionnary.locate(node)
-			if _, inSons := root.sons[id]; inDict && (inSons || root.sons[id] == nil) {
-				go g.queryNodes(root.sons[id], datas[1:], append(triple, id), out, wg, limit, offset)
+			son, inSons := root.sons[id]
+			if inDict && inSons {
+				go g.queryNodes(son, datas[1:], append(triple, id), out, wg, limit, offset)
 				updateSons(id, wg)
 			} else {
 				updateSons(-1, wg)
@@ -167,7 +168,7 @@ func (g *HDTGraph) FilterSubset(subject rdf.Node, predicate rdf.Node, object rdf
 	limitCpt, offsetCpt := newAtomicCounter(0, limit), newAtomicCounter(0, offset)
 	// fetch data in the tree & wait for the operation to be complete before closing the pipeline
 	g.Lock()
-	wg.Add(g.root.depth() + 1)
+	wg.Add(g.root.length() + 1)
 	go g.queryNodes(g.root, []*rdf.Node{&subject, &predicate, &object}, make([]int, 0), results, &wg, limitCpt, offsetCpt)
 	// use a daemon to wait for the end of all related goroutines before closing the channel
 	go func() {

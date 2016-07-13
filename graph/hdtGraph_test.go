@@ -7,8 +7,16 @@ package graph
 import (
 	"github.com/Callidon/joseki/rdf"
 	"math/rand"
+	"os"
 	"testing"
 )
+
+// skip a test if a file does'nt exist
+func skipTest(file string, t *testing.T) {
+	if _, err := os.Stat(file); os.IsNotExist(err) {
+		t.Skip(file, "doesn't exist, skipping test")
+	}
+}
 
 func TestAddHDTGraph(t *testing.T) {
 	var node rdf.Node
@@ -61,80 +69,76 @@ func TestAddHDTGraph(t *testing.T) {
 	}
 }
 
-func TestSimpleFilterHDTGraph(t *testing.T) {
+func TestFilterHDTGraph(t *testing.T) {
+	skipTest("../parser/datas/watdiv1k.nt", t)
 	graph := NewHDTGraph()
-	subj := rdf.NewURI("dblp:Thomas")
-	predA := rdf.NewURI("foaf:age")
-	predB := rdf.NewURI("schema:livesIn")
-	objA := rdf.NewLiteral("22")
-	objB := rdf.NewURI("dbpedia:Nantes")
-	tripleA := rdf.NewTriple(subj, predA, objA)
-	tripleB := rdf.NewTriple(subj, predB, objB)
-	graph.Add(tripleA)
-	graph.Add(tripleB)
-
-	// select one triple
-	for result := range graph.Filter(subj, predA, objA) {
-		if test, err := result.Equals(tripleA); test && (err != nil) {
-			t.Error(tripleA, "not in results :", result)
-		}
-	}
-
-	// select multiple triples using Blank Nodes
+	graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
+	subj := rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/City195")
+	pred := rdf.NewURI("http://www.geonames.org/ontology#parentCountry")
+	obj := rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/Country0")
+	triple := rdf.NewTriple(subj, pred, obj)
 	cpt := 0
-	for _ = range graph.Filter(subj, rdf.NewVariable("v"), rdf.NewVariable("w")) {
+
+	// select one triple specific triple pattern
+	for result := range graph.Filter(subj, pred, obj) {
+		if test, err := result.Equals(triple); !test || (err != nil) {
+			t.Error("expected", triple, "but instead got", result)
+		}
 		cpt++
 	}
 
-}
+	if cpt != 1 {
+		t.Error("expected 1 result but instead got", cpt, "results")
+	}
 
-func TestFilterNoResultHDTGraph(t *testing.T) {
-	graph := NewHDTGraph()
-	subj := rdf.NewURI("dblp:Thomas")
-	predA := rdf.NewURI("foaf:age")
-	predB := rdf.NewURI("schema:livesIn")
-	objA := rdf.NewLiteral("22")
-	objB := rdf.NewURI("dbpedia:Nantes")
-	tripleA := rdf.NewTriple(subj, predA, objA)
-	tripleB := rdf.NewTriple(subj, predB, objB)
-	graph.Add(tripleA)
-	graph.Add(tripleB)
+	// select all triples
+	cpt = 0
+	for _ = range graph.Filter(rdf.NewVariable("v"), rdf.NewVariable("w"), rdf.NewVariable("z")) {
+		cpt++
+	}
+	if cpt != 31288 {
+		t.Error("expected 31288 results but instead got", cpt, "results")
+	}
+
+	// select multiple triples with the same subject
+	cpt = 0
+	for _ = range graph.Filter(rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/Offer0"), rdf.NewVariable("v"), rdf.NewVariable("w")) {
+		cpt++
+	}
+	if cpt != 9 {
+		t.Error("expected 9 results but instead got", cpt, "results")
+	}
+
+	// select multiple triples with the same predicate
+	cpt = 0
+	for _ = range graph.Filter(rdf.NewVariable("v"), rdf.NewURI("http://www.geonames.org/ontology#parentCountry"), rdf.NewVariable("w")) {
+		cpt++
+	}
+	if cpt != 240 {
+		t.Error("expected 240 results but instead got", cpt, "results")
+	}
+
+	// select multiple triples with the same object
+	cpt = 0
+	for _ = range graph.Filter(rdf.NewVariable("v"), rdf.NewVariable("w"), rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/Offer0")) {
+		cpt++
+	}
+	if cpt != 12 {
+		t.Error("expected 12 results but instead got", cpt, "results")
+	}
 
 	// select a triple that doesn't exist in the graph
-	cpt := 0
-	for _ = range graph.Filter(rdf.NewURI("<htt://example.org>"), rdf.NewVariable("v1"), rdf.NewVariable("v2")) {
+	cpt = 0
+	for _ = range graph.Filter(rdf.NewURI("http://example.org"), rdf.NewVariable("v1"), rdf.NewVariable("v2")) {
 		cpt++
 	}
 
 	if cpt > 0 {
 		t.Error("expected no result but instead found", cpt, "results")
 	}
-
 }
 
-func TestComplexFilterHDTGraph(t *testing.T) {
-	graph := NewHDTGraph()
-	nbDatas := 1000
-	cpt := 0
-	subj := rdf.NewURI("dblp:foo")
-
-	// insert random triples in the graph
-	for i := 0; i < nbDatas; i++ {
-		triple := rdf.NewTriple(subj, rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
-		graph.Add(triple)
-	}
-
-	// select all triple of the graph
-	for _ = range graph.Filter(subj, rdf.NewVariable("v"), rdf.NewVariable("w")) {
-		cpt++
-	}
-
-	if cpt != nbDatas {
-		t.Error("expected ", nbDatas, "results but instead found ", cpt, "results")
-	}
-}
-
-func TestComplexFilterSubsetHDTGraph(t *testing.T) {
+func TestFilterSubsetHDTGraph(t *testing.T) {
 	graph := NewHDTGraph()
 	nbDatas, limit, offset := 1000, 600, 800
 	cpt := 0
@@ -230,7 +234,6 @@ func BenchmarkAddHDTGraph(b *testing.B) {
 }
 
 func BenchmarkLoadFromFileHDTGraph(b *testing.B) {
-
 	for i := 0; i < b.N; i++ {
 		graph := NewHDTGraph()
 		graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
