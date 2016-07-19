@@ -142,7 +142,7 @@ func TestFilterSubsetHDTGraph(t *testing.T) {
 	graph := NewHDTGraph()
 	nbDatas, limit, offset := 1000, 600, 800
 	cpt := 0
-	subj := rdf.NewURI("dblp:foo")
+	subj := rdf.NewURI("http://dblp.com#foo")
 
 	// insert random triples in the graph
 	for i := 0; i < nbDatas; i++ {

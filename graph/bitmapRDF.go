@@ -64,8 +64,25 @@ func newBitmapTriple(subj, pred, obj int) bitmapTriple {
 	return bitmapTriple{subj, pred, obj}
 }
 
+// Equals returns True if two Bitmap Triple are equals, False otherwise
+func (b *bitmapTriple) Equals(other bitmapTriple) bool {
+	subjEq := b.subjectID == other.subjectID
+	predEq := b.predicateID == other.predicateID
+	objEq := b.objectID == other.objectID
+	if b.subjectID < 0 || other.subjectID < 0 {
+		subjEq = true
+	}
+	if b.predicateID < 0 || other.predicateID < 0 {
+		predEq = true
+	}
+	if b.objectID < 0 || other.objectID < 0 {
+		objEq = true
+	}
+	return subjEq && predEq && objEq
+}
+
 // Convert a BitMap Triple to a RDF Triple.
-func (t *bitmapTriple) Triple(dict *bimap) (rdf.Triple, error) {
+func (b *bitmapTriple) Triple(dict *bimap) (rdf.Triple, error) {
 	var triple rdf.Triple
 	subj, foundSubj := dict.extract(t.subjectID)
 	if !foundSubj {

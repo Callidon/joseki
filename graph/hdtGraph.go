@@ -153,7 +153,7 @@ func (g *HDTGraph) Add(triple rdf.Triple) {
 }
 
 // Delete triples from the graph that match a BGP given in parameters.
-func (g *HDTGraph) Delete(subject, object, predicate rdf.Node) {
+func (g *HDTGraph) Delete(subject, predicate, object rdf.Node) {
 	g.Lock()
 	defer g.Unlock()
 	g.removeNodes(g.root, []*rdf.Node{&subject, &predicate, &object})

@@ -20,7 +20,7 @@ type Graph interface {
 	// Add a new Triple pattern to the graph.
 	Add(triple rdf.Triple)
 	// Delete triples from the graph that match a BGP given in parameters.
-	Delete(subject, object, predicate rdf.Node)
+	Delete(subject, predicate, object rdf.Node)
 	// Fetch triples form the graph that match a BGP given in parameters.
 	Filter(subject, predicate, object rdf.Node) <-chan rdf.Triple
 	// Same as Filter, but with a Limit and an Offset
@@ -66,4 +66,11 @@ func (r *rdfReader) LoadFromFile(filename string, format string) error {
 		r.prefixes = p.Prefixes()
 	}
 	return nil
+}
+
+// Utility function for checking errors
+func check(err error) {
+	if err != nil {
+		panic(err)
+	}
 }

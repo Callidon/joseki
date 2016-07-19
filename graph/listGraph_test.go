@@ -17,8 +17,8 @@ func TestAddListGraph(t *testing.T) {
 	obj := rdf.NewLiteral("22")
 	triple := rdf.NewTriple(subj, pred, obj)
 	graph.Add(triple)
-
-	if test, err := graph.triples[0].Equals(triple); !test && (err != nil) {
+	graphTriple, _ := graph.triples[0].Triple(graph.dictionnary)
+	if test, err := graphTriple.Equals(triple); !test && (err != nil) {
 		t.Error(triple, "hasn't been inserted into the graph")
 	}
 }
@@ -139,7 +139,7 @@ func TestDeleteListGraph(t *testing.T) {
 	graph := NewListGraph()
 	nbDatas := 1000
 	cpt := 0
-	subj := rdf.NewURI("dblp:foo")
+	subj := rdf.NewURI("http://dblp.com#foo")
 
 	// insert random triples in the graph
 	for i := 0; i < nbDatas; i++ {
@@ -171,7 +171,7 @@ func TestLoadFromFileListGraph(t *testing.T) {
 	}
 
 	if cpt != 5 {
-		t.Error("the graph should contains 4 triples, but it contains", cpt, "triples")
+		t.Error("the graph should contains 5 triples, but it contains", cpt, "triples")
 	}
 }
 

@@ -11,7 +11,9 @@ import (
 
 // ListGraph is implementation of a RDF Graph, using a slice to store RDF Triples.
 type ListGraph struct {
-	triples []rdf.Triple
+	dictionnary *bimap
+	triples     []bitmapTriple
+	nextID      int
 	*sync.Mutex
 	*rdfReader
 }
@@ -19,31 +21,62 @@ type ListGraph struct {
 // NewListGraph creates a new List Graph.
 func NewListGraph() *ListGraph {
 	reader := newRDFReader()
-	g := &ListGraph{make([]rdf.Triple, 0), &sync.Mutex{}, reader}
+	g := &ListGraph{newBimap(), make([]bitmapTriple, 0), 0, &sync.Mutex{}, reader}
 	reader.graph = g
 	return g
+}
+
+// Register a new Node in the graph dictionnary, then return its unique ID.
+func (g *ListGraph) registerNode(node rdf.Node) int {
+	// insert the node in dictionnary only if it's not in
+	key, inDict := g.dictionnary.locate(node)
+	if !inDict {
+		g.dictionnary.push(g.nextID, node)
+		g.nextID++
+		return g.nextID - 1
+	}
+	return key
+}
+
+// identifyNode returns the id of a node in the graph dictionnary, and a boolean to
+// indicate if the node is known by the dictionnary
+func (g *ListGraph) identifyNode(node rdf.Node) (int, bool) {
+	if _, isVar := node.(rdf.Variable); isVar {
+		return -1, true
+	}
+	return g.dictionnary.locate(node)
 }
 
 // Add a new Triple pattern to the graph.
 func (g *ListGraph) Add(triple rdf.Triple) {
 	g.Lock()
 	defer g.Unlock()
-	g.triples = append(g.triples, triple)
+	// add each node of the triple to the dictionnary & then update the slice
+	subjID, predID, objID := g.registerNode(triple.Subject), g.registerNode(triple.Predicate), g.registerNode(triple.Object)
+	g.triples = append(g.triples, newBitmapTriple(subjID, predID, objID))
 }
 
 // Delete triples from the graph that match a BGP given in parameters.
-func (g *ListGraph) Delete(subject, object, predicate rdf.Node) {
-	var newTriples []rdf.Triple
-	refTriple := rdf.NewTriple(subject, predicate, object)
+func (g *ListGraph) Delete(subject, predicate, object rdf.Node) {
 	g.Lock()
 	defer g.Unlock()
-	// resinsert into the graph the elements we doesn't want to delete
-	for _, triple := range g.triples {
-		if test, _ := triple.Equals(refTriple); !test {
-			newTriples = append(newTriples, triple)
+	var newTriples []bitmapTriple
+	subjID, subjKnown := g.identifyNode(subject)
+	predID, predKnown := g.identifyNode(predicate)
+	objID, objKnown := g.identifyNode(object)
+	// continue onyl if we know all elements of the pattern
+	if subjKnown && predKnown && objKnown {
+		refTriple := newBitmapTriple(subjID, predID, objID)
+		// resinsert into the graph the elements we doesn't want to delete
+		for _, triple := range g.triples {
+			if test := triple.Equals(refTriple); !test {
+				newTriples = append(newTriples, triple)
+			}
 		}
+		// update the slice
+		g.triples = make([]bitmapTriple, len(newTriples))
+		copy(g.triples, newTriples)
 	}
-	g.triples = newTriples
 }
 
 // FilterSubset fetch triples form the graph that match a BGP given in parameters.
@@ -51,27 +84,34 @@ func (g *ListGraph) Delete(subject, object, predicate rdf.Node) {
 // and an Offset (the number of results to skip before sending them in the output channel) to the nodes requested.
 func (g *ListGraph) FilterSubset(subject rdf.Node, predicate rdf.Node, object rdf.Node, limit int, offset int) <-chan rdf.Triple {
 	results := make(chan rdf.Triple)
-	refTriple := rdf.NewTriple(subject, predicate, object)
-	cpt := 0
 	// search for matching triple pattern in graph
 	go func() {
 		g.Lock()
 		defer g.Unlock()
-		for _, triple := range g.triples {
-			test, err := refTriple.Equals(triple)
-			if (err == nil) && test {
-				// send the result only if the offset has been reached
-				if (offset == -1) || (cpt >= offset) {
-					results <- triple
+		defer close(results)
+		subjID, subjKnown := g.identifyNode(subject)
+		predID, predKnown := g.identifyNode(predicate)
+		objID, objKnown := g.identifyNode(object)
+		// continue onyl if we know all elements of the pattern
+		if subjKnown && predKnown && objKnown {
+			refTriple := newBitmapTriple(subjID, predID, objID)
+			cpt := 0
+			for _, triple := range g.triples {
+				if test := refTriple.Equals(triple); test {
+					// send the result only if the offset has been reached
+					if (offset == -1) || (cpt >= offset) {
+						value, err := triple.Triple(g.dictionnary)
+						check(err)
+						results <- value
+					}
+					cpt++
 				}
-				cpt++
-			}
-			// terminate the loop when the limit has been reached
-			if (limit != -1) && (cpt-offset > limit) {
-				break
+				// terminate the loop when the limit has been reached
+				if (limit != -1) && (cpt-offset > limit) {
+					break
+				}
 			}
 		}
-		close(results)
 	}()
 	return results
 }
