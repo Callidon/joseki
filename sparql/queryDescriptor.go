@@ -58,7 +58,7 @@ func (q *queryDescriptor) From(graph graph.Graph) {
 // Where add multiples triples pattern as a new BGP evualuted by the query
 // Multiple calls of this method will each time add a new BGP to the query.
 func (q *queryDescriptor) Where(triples ...rdf.Triple) {
-	var nodes []sparqlNode
+	nodes := make([]sparqlNode, 0, len(triples))
 	for _, triple := range triples {
 		nodes = append(nodes, newTripleNode(triple, q.graph, -1, -1))
 	}
@@ -111,7 +111,8 @@ func findJoin(leftNode sparqlNode, otherNodes ...sparqlNode) (sparqlNode, int) {
 // build analyse the query execution plan and return its first node
 func (q *queryDescriptor) build() sparqlNode {
 	var root, joinNode sparqlNode
-	var currentBGP, bgpRoots []sparqlNode
+	var currentBGP, nextBGP []sparqlNode
+	bgpRoots := make([]sparqlNode, 0, len(q.bgps))
 	var rightInd int
 	var processNodes []int
 	var joinFound bool
@@ -123,14 +124,14 @@ func (q *queryDescriptor) build() sparqlNode {
 
 	// find the possible joins for each BGP
 	for _, bgp := range q.bgps {
-		nextBGP := make([]sparqlNode, len(bgp))
+		nextBGP = make([]sparqlNode, len(bgp))
 		copy(nextBGP, bgp)
 		// look for joins until all nodes have been processed
 		for len(currentBGP) != len(nextBGP) {
 			currentBGP = make([]sparqlNode, len(nextBGP))
 			copy(currentBGP, nextBGP)
-			nextBGP = nil
-			processNodes = nil
+			nextBGP = make([]sparqlNode, 0, len(currentBGP))
+			processNodes = make([]int, 0, len(bgp))
 			joinFound = false
 
 			for leftInd, leftNode := range currentBGP {

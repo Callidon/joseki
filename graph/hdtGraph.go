@@ -164,12 +164,12 @@ func (g *HDTGraph) Delete(subject, predicate, object rdf.Node) {
 // and an Offset (the number of results to skip before sending them in the output channel) to the nodes requested.
 func (g *HDTGraph) FilterSubset(subject rdf.Node, predicate rdf.Node, object rdf.Node, limit int, offset int) <-chan rdf.Triple {
 	var wg sync.WaitGroup
-	results := make(chan rdf.Triple)
+	results := make(chan rdf.Triple, bufferSize)
 	limitCpt, offsetCpt := newAtomicCounter(0, limit), newAtomicCounter(0, offset)
 	// fetch data in the tree & wait for the operation to be complete before closing the pipeline
 	g.Lock()
 	wg.Add(g.root.length() + 1)
-	go g.queryNodes(g.root, []*rdf.Node{&subject, &predicate, &object}, make([]int, 0), results, &wg, limitCpt, offsetCpt)
+	go g.queryNodes(g.root, []*rdf.Node{&subject, &predicate, &object}, make([]int, 0, 3), results, &wg, limitCpt, offsetCpt)
 	// use a daemon to wait for the end of all related goroutines before closing the channel
 	go func() {
 		defer close(results)

@@ -50,15 +50,15 @@ func (n unionNode) executeWith(binding rdf.BindingsGroup) <-chan rdf.BindingsGro
 }
 
 // bindingNames returns the names of the bindings produced by this operation
-func (n unionNode) bindingNames() (bindingNames []string) {
-	bindingNames = n.leftNode.bindingNames()
+func (n unionNode) bindingNames() []string {
+	bindingNames := n.leftNode.bindingNames()
 	for _, name := range n.rightNode.bindingNames() {
 		if !containsString(bindingNames, name) {
 			bindingNames = append(bindingNames, name)
 		}
 	}
 	sort.Strings(bindingNames)
-	return
+	return bindingNames
 }
 
 // Equals test if two Union nodes are equals.

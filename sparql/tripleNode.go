@@ -103,7 +103,8 @@ func (n tripleNode) executeWith(group rdf.BindingsGroup) <-chan rdf.BindingsGrou
 }
 
 // bindingNames returns the names of the bindings produced.
-func (n tripleNode) bindingNames() (bindingNames []string) {
+func (n tripleNode) bindingNames() []string {
+	bindingNames := make([]string, 0, 3)
 	// find free vars in triple pattern
 	subject, freeSubject := n.pattern.Subject.(rdf.Variable)
 	predicate, freePredicate := n.pattern.Predicate.(rdf.Variable)
@@ -118,7 +119,7 @@ func (n tripleNode) bindingNames() (bindingNames []string) {
 		bindingNames = append(bindingNames, object.Value)
 	}
 	sort.Strings(bindingNames)
-	return
+	return bindingNames
 }
 
 // Equals test if two Triple nodes are equals.

@@ -60,7 +60,7 @@ func (g *ListGraph) Add(triple rdf.Triple) {
 func (g *ListGraph) Delete(subject, predicate, object rdf.Node) {
 	g.Lock()
 	defer g.Unlock()
-	var newTriples []bitmapTriple
+	newTriples := make([]bitmapTriple, 0, len(g.triples))
 	subjID, subjKnown := g.identifyNode(subject)
 	predID, predKnown := g.identifyNode(predicate)
 	objID, objKnown := g.identifyNode(object)
@@ -83,7 +83,7 @@ func (g *ListGraph) Delete(subject, predicate, object rdf.Node) {
 // It impose a Limit(the max number of results to be send in the output channel)
 // and an Offset (the number of results to skip before sending them in the output channel) to the nodes requested.
 func (g *ListGraph) FilterSubset(subject rdf.Node, predicate rdf.Node, object rdf.Node, limit int, offset int) <-chan rdf.Triple {
-	results := make(chan rdf.Triple)
+	results := make(chan rdf.Triple, bufferSize)
 	// search for matching triple pattern in graph
 	go func() {
 		g.Lock()

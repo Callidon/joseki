@@ -84,15 +84,15 @@ func (b *bitmapTriple) Equals(other bitmapTriple) bool {
 // Convert a BitMap Triple to a RDF Triple.
 func (b *bitmapTriple) Triple(dict *bimap) (rdf.Triple, error) {
 	var triple rdf.Triple
-	subj, foundSubj := dict.extract(t.subjectID)
+	subj, foundSubj := dict.extract(b.subjectID)
 	if !foundSubj {
 		return triple, errors.New("Error : cannot found the subject id in the dictionnary")
 	}
-	pred, foundPred := dict.extract(t.predicateID)
+	pred, foundPred := dict.extract(b.predicateID)
 	if !foundPred {
 		return triple, errors.New("Error : cannot found the predicate id in the dictionnary")
 	}
-	obj, foundObj := dict.extract(t.objectID)
+	obj, foundObj := dict.extract(b.objectID)
 	if !foundObj {
 		return triple, errors.New("Error : cannot found the object id in the dictionnary")
 	}

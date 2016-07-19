@@ -12,6 +12,11 @@ import (
 	"strings"
 )
 
+const (
+	// Max size for the buffer of this package
+	bufferSize = 100
+)
+
 // Graph represents a generic RDF Graph
 //
 // Package graph provides several implementations for this interface.
@@ -49,7 +54,7 @@ func (r *rdfReader) LoadFromFile(filename string, format string) error {
 	hasPrefixes := false
 	// determine which parser to use depending on the format
 	switch strings.ToLower(format) {
-	case "nt", "n-triples":
+	case "nt", "n-triples", "ntriples":
 		p = parser.NewNTParser()
 	case "ttl", "turtle":
 		p = parser.NewTurtleParser()

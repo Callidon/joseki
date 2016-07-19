@@ -25,7 +25,7 @@ func newJoinNode(outer, inner sparqlNode) *joinNode {
 // ÖZSU, M. Tamer et VALDURIEZ, Patrick. In Principles of distributed database systems. Springer Science & Business Media, 2011
 func (n joinNode) execute() <-chan rdf.BindingsGroup {
 	var wg sync.WaitGroup
-	var page []rdf.BindingsGroup
+	page := make([]rdf.BindingsGroup, 0, pageSize)
 	out := make(chan rdf.BindingsGroup, bufferSize)
 
 	// execute the inner loop with a page of bindings from the inner loop
@@ -51,7 +51,7 @@ func (n joinNode) execute() <-chan rdf.BindingsGroup {
 				wg.Add(1)
 				go executeInnerLoop(n.innerNode, page, out, &wg)
 				cpt = 0
-				page = nil
+				page = make([]rdf.BindingsGroup, 0, pageSize)
 			}
 		}
 		// process the last page if it's not empty
@@ -71,15 +71,15 @@ func (n joinNode) executeWith(binding rdf.BindingsGroup) <-chan rdf.BindingsGrou
 }
 
 // bindingNames returns the names of the bindings produced by this operation.
-func (n joinNode) bindingNames() (bindingNames []string) {
-	bindingNames = n.outerNode.bindingNames()
+func (n joinNode) bindingNames() []string {
+	bindingNames := n.outerNode.bindingNames()
 	for _, name := range n.innerNode.bindingNames() {
 		if !containsString(bindingNames, name) {
 			bindingNames = append(bindingNames, name)
 		}
 	}
 	sort.Strings(bindingNames)
-	return
+	return bindingNames
 }
 
 // Equals test if two Join nodes are equals.
