@@ -9,7 +9,13 @@ before_script:
 - go get github.com/mattn/goveralls
 - go get golang.org/x/tools/cmd/cover
 script:
-- "$HOME/gopath/bin/goveralls -service=travis-ci"
+- go test -coverprofile=graph.cover.out -coverpkg=./... graph
+- go test -coverprofile=graph.cover.out -coverpkg=./... ./graph
+- go test -coverprofile=parser.cover.out -coverpkg=./... ./parser
+- go test -coverprofile=rdf.cover.out -coverpkg=./... ./rdf
+- go test -coverprofile=sparql.cover.out -coverpkg=./... ./sparql
+- echo "mode: set" > coverage.out && cat *.cover.out | grep -v mode: | sort -r | awk '{if($1 != last) {print $0;last=$1}}' >> coverage.out
+- goveralls -coverprofile=coverage.out -service=travis-ci
 env:
   global:
     secure: nT5EKMXY/6xKDWZ6MpL9JRzaVbn5v35E8kflXLfsSboX1ALkDlVbnNw1Ll3ilfZ3yHYJ6rMa+fI2nnvDIyuMfJAdCUKoNrIvAhOkpHDBfA0zKTxK8vPLZDmuChUMW361w/2KGsy4CVy+5bqqy5TB6UzLfJhJHQn6nQJyjGznYpPNZhRW284kvZ++2199aLhhgT7tXQvpAnDg8m0e5ViY+xFUFlRxYPHGg+nxhJol2Rt7HIsYJmaXa/pnHpzmYCTqgJH91QqupR5gf4xlXNlwnGNThI+0aMXaGL+ii7/2xDCnr5gUaNJ25rp4Z1WQxd3HZT0bQdZvJu7poVFj0j96OTJMRaIN9RiqXzh+aSMyBUefemAqNoxca0CEGSTBlMvQV5q+XcESF+NtY7dZleMkbO/11UOz4B5Eh+vKxxR/tgAkQN96C2Hh4ykyancS9MaIkYwdx8+w3J4l/1yHCSUah0mSF1H1kFpr58oqgj2E3GJSyJvp75+htFLL0HIflscdWYb32P4lLGa1rTdW7a1W2vSz+19hp0nhRI1SUIxp58/CdfOxBQ446z+zUqKZl/AYSK0GG0O9VPNXZTFaQX+SO36LBDMCSAx/x5sLMjZfQFcio+VK3vyusEydJZ5aubyG34ep2t59qmugABeXqyodR41UBmEXT68AhvuRuhAqFvs=
