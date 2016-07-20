@@ -6,6 +6,7 @@ package parser
 
 import (
 	"github.com/Callidon/joseki/rdf"
+	"strings"
 	"testing"
 )
 
@@ -29,6 +30,9 @@ func TestReadTurtleParser(t *testing.T) {
 		rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples"),
 			rdf.NewURI("http://purl.org/dc/terms/title"),
 			rdf.NewTypedLiteral("Turtle", "<http://www.w3.org/2001/XMLSchema#string>")),
+		rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples"),
+			rdf.NewURI("http://purl.org/dc/terms/title"),
+			rdf.NewBlankNode("a")),
 		rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples"),
 			rdf.NewURI("http://xmlns.com/foaf/0.1/maker"),
 			rdf.NewVariable("v0")),
@@ -58,5 +62,30 @@ func TestReadTurtleParser(t *testing.T) {
 		if value != prefix[1] {
 			t.Error("for key", prefix[0], "expected value", prefix[1], "but got", value)
 		}
+	}
+}
+
+func TestIllegalTokenTurtleParser(t *testing.T) {
+	inputs := []string{
+		"@prefix incorrect_uri",
+		"@prefix <http://example.org> :",
+		"@prefix <http://example.org> : illegal_value",
+		"illegal_token",
+	}
+	expectedMsg := []string{
+		"Unexpected token : incorrect_uri at line : 1 row : 1",
+		"Unexpected token : <http://example.org> at line : 1 row : 1",
+		"Unexpected token : <http://example.org> at line : 1 row : 1",
+		"Unexpected token when scanning 'illegal_token' at line : 1 row : 1",
+	}
+	cpt := 0
+
+	for _, input := range inputs {
+		token := <-scanTurtle(strings.NewReader(input))
+		tokenErr := token.Interpret(nil, nil, nil).Error()
+		if tokenErr != expectedMsg[cpt] {
+			t.Error("expected illegal token", expectedMsg[cpt], "but instead got", tokenErr)
+		}
+		cpt++
 	}
 }

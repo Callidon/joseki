@@ -6,5 +6,5 @@
 sw:ntriples rdf:type foaf:Document ;
 rdf:type foaf:Document .
 # a filthy comment
-sw:ntriples dc:title "N-Triples"@en , "Turtle"^^<http://www.w3.org/2001/XMLSchema#string> .
-sw:ntriples foaf:maker [ dc:title "My Title" ] # another sneaky comment
+sw:ntriples dc:title "N-Triples"@en , "Turtle"^^<http://www.w3.org/2001/XMLSchema#string> , _:a .
+<http://www.w3.org/2001/sw/RDFCore/ntriples> foaf:maker [ dc:title "My Title" ] # another sneaky comment

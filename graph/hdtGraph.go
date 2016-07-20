@@ -55,18 +55,21 @@ func (g *HDTGraph) registerNode(node rdf.Node) int {
 
 // Recursively remove nodes that match criteria
 func (g *HDTGraph) removeNodes(root *bitmapNode, datas []*rdf.Node) {
-	// it's a blank node, delete all his sons
-	node := (*datas[0])
-	if _, isVar := node.(rdf.Variable); isVar {
-		root.removeSons()
-	} else {
-		// search for the specific node in the root's sons
-		refNodeID, inDict := g.dictionnary.locate(node)
-		if inDict {
-			son, inSons := root.sons[refNodeID]
-			if inSons {
-				// delete his sons that match the next criteria
-				g.removeNodes(son, datas[1:])
+	if len(datas) > 0 {
+		// it's a blank node, delete all his sons
+		node := (*datas[0])
+		if _, isVar := node.(rdf.Variable); isVar {
+			root.removeSons()
+		} else {
+			// search for the specific node in the root's sons
+			refNodeID, inDict := g.dictionnary.locate(node)
+			if inDict {
+				son, inSons := root.sons[refNodeID]
+				if inSons {
+					// apply the next criteria to the son, then delete the son itslef
+					g.removeNodes(son, datas[1:])
+					delete(root.sons, refNodeID)
+				}
 			}
 		}
 	}

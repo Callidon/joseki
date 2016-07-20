@@ -6,6 +6,7 @@ package parser
 
 import (
 	"github.com/Callidon/joseki/rdf"
+	"strings"
 	"testing"
 )
 
@@ -39,5 +40,15 @@ func TestReadNTParser(t *testing.T) {
 
 	if cpt != len(datas) {
 		t.Error("read", cpt, "nodes of the file instead of", len(datas))
+	}
+}
+
+func TestIllegalTokenNTParser(t *testing.T) {
+	input := "illegal_token"
+	expectedMsg := "Unexpected token when scanning 'illegal_token' at line : 1 row : 1"
+	token := <-scanNtriples(strings.NewReader(input))
+	tokenErr := token.Interpret(nil, nil, nil).Error()
+	if tokenErr != expectedMsg {
+		t.Error("expected illegal token", expectedMsg, "but instead got", tokenErr)
 	}
 }

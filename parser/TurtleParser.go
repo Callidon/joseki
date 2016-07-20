@@ -56,13 +56,13 @@ func scanTurtle(reader io.Reader) chan rdfToken {
 						prefixName, prefixValue = "", ""
 					case prefixName == "":
 						if string(elt[len(elt)-1]) != ":" {
-							out <- newTokenIllegal("Unexpected token "+elt, lineNumber, rowNumber)
+							out <- newTokenIllegal("Unexpected token : "+elt, lineNumber, rowNumber)
 							return
 						}
 						prefixName = elt[0 : len(elt)-1]
 					case prefixValue == "":
 						if string(elt[0]) != "<" && string(elt[len(elt)-1]) != ">" {
-							out <- newTokenIllegal("Unexpected token "+elt, lineNumber, rowNumber)
+							out <- newTokenIllegal("Unexpected token : "+elt, lineNumber, rowNumber)
 							return
 						}
 						prefixValue = elt[1 : len(elt)-1]

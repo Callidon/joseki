@@ -38,16 +38,6 @@ func (s *stack) Push(value interface{}) {
 	s.Unlock()
 }
 
-// Get the next element without popping the stack
-func (s *stack) Peek() interface{} {
-	s.Lock()
-	defer s.Unlock()
-	if s.size > 0 {
-		return s.top.value
-	}
-	return nil
-}
-
 // Remove the top element from the stack and return it's value
 // If the stack is empty, return nil
 func (s *stack) Pop() (value interface{}) {
@@ -59,11 +49,4 @@ func (s *stack) Pop() (value interface{}) {
 		return
 	}
 	return nil
-}
-
-// clear empty the stack
-func (s *stack) Clear() {
-	for s.Len() > 0 {
-		s.Pop()
-	}
 }

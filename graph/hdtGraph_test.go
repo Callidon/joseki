@@ -181,6 +181,7 @@ func TestFilterSubsetHDTGraph(t *testing.T) {
 }
 
 func TestDeleteHDTGraph(t *testing.T) {
+	var triple rdf.Triple
 	graph := NewHDTGraph()
 	nbDatas := 1000
 	cpt := 0
@@ -188,14 +189,25 @@ func TestDeleteHDTGraph(t *testing.T) {
 
 	// insert random triples in the graph
 	for i := 0; i < nbDatas; i++ {
-		triple := rdf.NewTriple(subj, rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
+		triple = rdf.NewTriple(subj, rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
 		graph.Add(triple)
+	}
+
+	// remove the last triple pattern inserted
+	graph.Delete(triple.Subject, triple.Predicate, triple.Object)
+	for _ = range graph.Filter(triple.Subject, triple.Predicate, triple.Object) {
+		cpt++
+	}
+
+	if cpt > 0 {
+		t.Error("the graph shouldn't contains the triple", triple)
 	}
 
 	// remove all triple with a given subject
 	graph.Delete(subj, rdf.NewVariable("v"), rdf.NewVariable("w"))
 
 	// select all triple of the graph
+	cpt = 0
 	for _ = range graph.Filter(subj, rdf.NewVariable("v"), rdf.NewVariable("w")) {
 		cpt++
 	}

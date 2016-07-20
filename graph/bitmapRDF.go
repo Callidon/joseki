@@ -28,11 +28,6 @@ func newBitmapNode(id int) *bitmapNode {
 	return &bitmapNode{id, make(map[int]*bitmapNode)}
 }
 
-// addSon add a son to a Bitmap Node.
-func (n *bitmapNode) addSon(id int) {
-	n.sons[id] = newBitmapNode(id)
-}
-
 // depth calculates the number of nodes in the tree, starting from this node.
 func (n *bitmapNode) length() int {
 	res := 0
