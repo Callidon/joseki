@@ -54,22 +54,19 @@ func (g *HDTGraph) registerNode(node rdf.Node) int {
 }
 
 // Recursively remove nodes that match criteria
-func (g *HDTGraph) removeNodes(root *bitmapNode, datas []*rdf.Node) {
-	if len(datas) > 0 {
-		// it's a blank node, delete all his sons
+func (g *HDTGraph) removeNodes(root, previous *bitmapNode, datas []*rdf.Node) {
+	if root != nil {
 		node := (*datas[0])
-		if _, isVar := node.(rdf.Variable); isVar {
-			root.removeSons()
-		} else {
-			// search for the specific node in the root's sons
-			refNodeID, inDict := g.dictionnary.locate(node)
-			if inDict {
-				son, inSons := root.sons[refNodeID]
-				if inSons {
-					// apply the next criteria to the son, then delete the son itslef
-					g.removeNodes(son, datas[1:])
-					delete(root.sons, refNodeID)
-				}
+		_, isVar := node.(rdf.Variable)
+		id, inDict := g.dictionnary.locate(node)
+		// delegate operation to root's sons if it's a Variable or if the root match the current citeria
+		if isVar || (inDict && root.id == id) {
+			for _, son := range root.sons {
+				g.removeNodes(son, root, datas[1:])
+			}
+			// if root doesn't have any sons after the operation, delete it
+			if len(root.sons) == 0 {
+				delete(previous.sons, root.id)
 			}
 		}
 	}
@@ -79,7 +76,7 @@ func (g *HDTGraph) removeNodes(root *bitmapNode, datas []*rdf.Node) {
 // The graph can be query with a Limit (the max number of rsults to send in the output channel)
 // and an Offset (the number of results to skip before sending them in the output channel).
 // These two parameters can be set to -1 to be ignored.
-func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int, out chan<- rdf.Triple, wg *sync.WaitGroup, limit *atomicCounter, offset *atomicCounter) {
+func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int, out chan<- rdf.Triple, wg *sync.WaitGroup, limit, offset *atomicCounter) {
 	limit.Lock()
 	defer wg.Done()
 	defer limit.Unlock()
@@ -159,7 +156,9 @@ func (g *HDTGraph) Add(triple rdf.Triple) {
 func (g *HDTGraph) Delete(subject, predicate, object rdf.Node) {
 	g.Lock()
 	defer g.Unlock()
-	g.removeNodes(g.root, []*rdf.Node{&subject, &predicate, &object})
+	for _, son := range g.root.sons {
+		g.removeNodes(son, g.root, []*rdf.Node{&subject, &predicate, &object})
+	}
 }
 
 // FilterSubset fetch triples form the graph that match a BGP given in parameters.

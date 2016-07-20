@@ -195,12 +195,22 @@ func TestDeleteHDTGraph(t *testing.T) {
 
 	// remove the last triple pattern inserted
 	graph.Delete(triple.Subject, triple.Predicate, triple.Object)
+
+	// check for the absence of the triple
 	for _ = range graph.Filter(triple.Subject, triple.Predicate, triple.Object) {
 		cpt++
 	}
-
 	if cpt > 0 {
 		t.Error("the graph shouldn't contains the triple", triple)
+	}
+
+	// check for the size of the graph
+	cpt = 0
+	for _ = range graph.Filter(rdf.NewVariable("v"), rdf.NewVariable("w"), rdf.NewVariable("y")) {
+		cpt++
+	}
+	if cpt != 999 {
+		t.Error("the graph should contains 999 triples, but instead it contains", cpt, "triples")
 	}
 
 	// remove all triple with a given subject
