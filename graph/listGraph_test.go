@@ -24,11 +24,11 @@ func TestAddListGraph(t *testing.T) {
 }
 
 func TestFilterListGraph(t *testing.T) {
-	skipTest("../parser/datas/watdiv1k.nt", t)
+	skipTest("./watdiv.30k.nt", t)
 	graph := NewListGraph()
-	graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
-	subj := rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/City195")
-	pred := rdf.NewURI("http://www.geonames.org/ontology#parentCountry")
+	graph.LoadFromFile("./watdiv.30k.nt", "nt")
+	subj := rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/Offer10001")
+	pred := rdf.NewURI("http://schema.org/eligibleRegion")
 	obj := rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/Country0")
 	triple := rdf.NewTriple(subj, pred, obj)
 	cpt := 0
@@ -50,13 +50,13 @@ func TestFilterListGraph(t *testing.T) {
 	for _ = range graph.Filter(rdf.NewVariable("v"), rdf.NewVariable("w"), rdf.NewVariable("z")) {
 		cpt++
 	}
-	if cpt != 31288 {
-		t.Error("expected 31288 results but instead got", cpt, "results")
+	if cpt != 30000 {
+		t.Error("expected 30000 results but instead got", cpt, "results")
 	}
 
 	// select multiple triples with the same subject
 	cpt = 0
-	for _ = range graph.Filter(rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/Offer0"), rdf.NewVariable("v"), rdf.NewVariable("w")) {
+	for _ = range graph.Filter(rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/Offer1375"), rdf.NewVariable("v"), rdf.NewVariable("w")) {
 		cpt++
 	}
 	if cpt != 9 {
@@ -74,11 +74,11 @@ func TestFilterListGraph(t *testing.T) {
 
 	// select multiple triples with the same object
 	cpt = 0
-	for _ = range graph.Filter(rdf.NewVariable("v"), rdf.NewVariable("w"), rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/Offer0")) {
+	for _ = range graph.Filter(rdf.NewVariable("v"), rdf.NewVariable("w"), rdf.NewLiteral("673")) {
 		cpt++
 	}
-	if cpt != 12 {
-		t.Error("expected 12 results but instead got", cpt, "results")
+	if cpt != 6 {
+		t.Error("expected 6 results but instead got", cpt, "results")
 	}
 
 	// select a triple that doesn't exist in the graph
@@ -180,7 +180,7 @@ func TestLoadFromFileListGraph(t *testing.T) {
 func BenchmarkAddListGraph(b *testing.B) {
 	b.Skip("skipped because it's currently not accurate")
 	graph := NewListGraph()
-	graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
+	graph.LoadFromFile("./watdiv.30k.nt", "nt")
 	triple := rdf.NewTriple(rdf.NewURI("http://example.org/subject"), rdf.NewURI("http://example.org/predicate"), rdf.NewURI("http://example.org/object"))
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -191,13 +191,13 @@ func BenchmarkAddListGraph(b *testing.B) {
 func BenchmarkLoadFromFileListGraph(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		graph := NewListGraph()
-		graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
+		graph.LoadFromFile("./watdiv.30k.nt", "nt")
 	}
 }
 
 func BenchmarkAllFilterListGraph(b *testing.B) {
 	graph := NewListGraph()
-	graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
+	graph.LoadFromFile("./watdiv.30k.nt", "nt")
 	cpt := 0
 	b.ResetTimer()
 
@@ -211,10 +211,10 @@ func BenchmarkAllFilterListGraph(b *testing.B) {
 
 func BenchmarkSpecificFilterListGraph(b *testing.B) {
 	graph := NewListGraph()
-	graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
-	subj := rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/User999")
-	pred := rdf.NewURI("http://xmlns.com/foaf/age")
-	obj := rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/AgeGroup2")
+	graph.LoadFromFile("./watdiv.30k.nt", "nt")
+	subj := rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/Offer10001")
+	pred := rdf.NewURI("http://schema.org/eligibleRegion")
+	obj := rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/Country0")
 	cpt := 0
 	b.ResetTimer()
 
@@ -228,7 +228,7 @@ func BenchmarkSpecificFilterListGraph(b *testing.B) {
 
 func BenchmarkAllFilterSubsetListGraph(b *testing.B) {
 	graph := NewListGraph()
-	graph.LoadFromFile("../parser/datas/watdiv1k.nt", "nt")
+	graph.LoadFromFile("./watdiv.30k.nt", "nt")
 	limit, offset := 600, 200
 	cpt := 0
 	b.ResetTimer()
