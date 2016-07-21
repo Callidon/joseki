@@ -8,8 +8,8 @@ import "testing"
 
 // Test the Equals operator of the URI struct
 func TestURIEquals(t *testing.T) {
-	uri := NewURI("dblp:foo")
-	otherURI := NewURI("foaf:hasFriend")
+	uri := NewURI("http://dblp.org#foo")
+	otherURI := NewURI("http://foaf.com/hasFriend")
 	literal := NewLiteral("Toto")
 	bnode := NewBlankNode("v")
 	variable := NewVariable("x")
@@ -35,9 +35,18 @@ func TestURIEquals(t *testing.T) {
 	}
 }
 
+func TestURIString(t *testing.T) {
+	uri := NewURI("http://dblp.org#foo")
+	expected := "<http://dblp.org#foo>"
+
+	if uri.String() != expected {
+		t.Error(uri.String(), "should be equals to", expected)
+	}
+}
+
 // Test the Equals operator of the Literal struct
 func TestLiteralEquals(t *testing.T) {
-	uri := NewURI("dblp:foo")
+	uri := NewURI("http://dblp.org#foo")
 	literal := NewLiteral("Toto")
 	otherLiteral := NewLiteral("20")
 	bnode := NewBlankNode("v")
@@ -64,9 +73,30 @@ func TestLiteralEquals(t *testing.T) {
 	}
 }
 
+func TestLiteralString(t *testing.T) {
+	literal := NewLiteral("22")
+	typedLiteral := NewTypedLiteral("22", "http://www.w3.org/2001/XMLSchema#string")
+	langLiteral := NewLangLiteral("World of Warcraft", "en")
+	expectedLiteral := "\"22\""
+	expectedTypedLiteral := "\"22\"^^<http://www.w3.org/2001/XMLSchema#string>"
+	expectedLangLiteral := "\"World of Warcraft\"@en"
+
+	if literal.String() != expectedLiteral {
+		t.Error(literal.String(), "should be equals to", expectedLiteral)
+	}
+
+	if typedLiteral.String() != expectedTypedLiteral {
+		t.Error(typedLiteral.String(), "should be equals to", expectedTypedLiteral)
+	}
+
+	if langLiteral.String() != expectedLangLiteral {
+		t.Error(langLiteral.String(), "should be equals to", expectedLangLiteral)
+	}
+}
+
 // Test the Equals operator of the BlankNode struct
 func TestBlankNodeEquals(t *testing.T) {
-	uri := NewURI("dblp:foo")
+	uri := NewURI("http://dblp.org#foo")
 	literal := NewLiteral("Toto")
 	bnode := NewBlankNode("v")
 	otherBnode := NewBlankNode("w")
@@ -93,9 +123,18 @@ func TestBlankNodeEquals(t *testing.T) {
 	}
 }
 
+func TestBlankNodeString(t *testing.T) {
+	bnode := NewBlankNode("a")
+	expected := "_:a"
+
+	if bnode.String() != expected {
+		t.Error(bnode.String(), "should be equals to", expected)
+	}
+}
+
 // Test the Equals operator of the Variable struct
 func TestVariableEquals(t *testing.T) {
-	uri := NewURI("dblp:foo")
+	uri := NewURI("http://dblp.org#foo")
 	literal := NewLiteral("Toto")
 	bnode := NewBlankNode("v")
 	variable := NewVariable("x")
@@ -119,5 +158,14 @@ func TestVariableEquals(t *testing.T) {
 
 	if test, err := bnode.Equals(bnode); !test || (err != nil) {
 		t.Error("a Variable and a Blank Node are always equals")
+	}
+}
+
+func TestVariableString(t *testing.T) {
+	variable := NewVariable("v")
+	expected := "?v"
+
+	if variable.String() != expected {
+		t.Error(variable.String(), "should be equals to", expected)
 	}
 }

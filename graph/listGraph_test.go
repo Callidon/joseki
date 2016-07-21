@@ -12,8 +12,8 @@ import (
 
 func TestAddListGraph(t *testing.T) {
 	graph := NewListGraph()
-	subj := rdf.NewURI("dblp:Thomas")
-	pred := rdf.NewURI("foaf:age")
+	subj := rdf.NewURI("http://dbpl.org#Thomas")
+	pred := rdf.NewURI("http://foaf.com/age")
 	obj := rdf.NewLiteral("22")
 	triple := rdf.NewTriple(subj, pred, obj)
 	graph.Add(triple)
@@ -96,7 +96,7 @@ func TestFilterSubsetListGraph(t *testing.T) {
 	graph := NewListGraph()
 	nbDatas, limit, offset := 1000, 600, 800
 	cpt := 0
-	subj := rdf.NewURI("dblp:foo")
+	subj := rdf.NewURI("http://dblp.org#foo")
 
 	// insert random triples in the graph
 	for i := 0; i < nbDatas; i++ {

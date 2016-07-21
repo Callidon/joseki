@@ -78,7 +78,7 @@ func (l Literal) Equals(n Node) (bool, error) {
 // Serialize a Literal to string and return it.
 func (l Literal) String() string {
 	if l.Type != "" {
-		return "\"" + l.Value + "\"^^" + l.Type
+		return "\"" + l.Value + "\"^^<" + l.Type + ">"
 	} else if l.Lang != "" {
 		return "\"" + l.Value + "\"@" + l.Lang
 	}

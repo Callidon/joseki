@@ -4,7 +4,10 @@
 
 package sparql
 
-import "github.com/Callidon/joseki/rdf"
+import (
+	"github.com/Callidon/joseki/rdf"
+	"strings"
+)
 
 // selectNode represent a Select operation in a SPARQL query execution plan.
 type selectNode struct {
@@ -59,5 +62,5 @@ func (n selectNode) Equals(other sparqlNode) bool {
 
 // String serialize the node in string format.
 func (n selectNode) String() string {
-	return "SELECT (" + n.node.String() + ")"
+	return "SELECT " + strings.Join(n.names, ",") + " (" + n.node.String() + ")"
 }

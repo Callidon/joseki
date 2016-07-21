@@ -22,9 +22,9 @@ func TestAddHDTGraph(t *testing.T) {
 	var node rdf.Node
 	graph := NewHDTGraph()
 
-	subj := rdf.NewURI("dblp:Thomas")
-	predA := rdf.NewURI("foaf:age")
-	predB := rdf.NewURI("schema:livesIn")
+	subj := rdf.NewURI("http://dbpl.org#Thomas")
+	predA := rdf.NewURI("http://foaf.com/age")
+	predB := rdf.NewURI("http://Schema.org#livesIn")
 	objA := rdf.NewLiteral("22")
 	objB := rdf.NewLiteral("Nantes")
 	tripleA := rdf.NewTriple(subj, predA, objA)
@@ -53,19 +53,19 @@ func TestAddHDTGraph(t *testing.T) {
 	}
 	node, _ = graph.dictionnary.extract(graph.root.sons[0].sons[1].id)
 	if test, _ := node.Equals(predA); !test {
-		t.Error("expected <foaf:age> to be the first predicate of <dblp:Thomas> but found", node)
+		t.Error("expected <http://foaf.com/age> to be the first predicate of <http://dbpl.org#Thomas> but found", node)
 	}
 	node, _ = graph.dictionnary.extract(graph.root.sons[0].sons[3].id)
 	if test, _ := node.Equals(predB); !test {
-		t.Error("expected <schema:livesIn> to be the second predicate of <dblp:Thomas> but found", node)
+		t.Error("expected <http://Schema.org#livesIn> to be the second predicate of <http://dbpl.org#Thomas> but found", node)
 	}
 	node, _ = graph.dictionnary.extract(graph.root.sons[0].sons[1].sons[2].id)
 	if test, _ := node.Equals(objA); !test {
-		t.Error("expected \"20\" to be the object of <dblp:Thomas> <foaf:age> but found", node)
+		t.Error("expected \"20\" to be the object of <http://dbpl.org#Thomas> <http://foaf.com/age> but found", node)
 	}
 	node, _ = graph.dictionnary.extract(graph.root.sons[0].sons[3].sons[4].id)
 	if test, _ := node.Equals(objB); !test {
-		t.Error("expected \"Nantes\" to be the object of <dblp:Thomas> <schema:livesIn> but found", node)
+		t.Error("expected \"Nantes\" to be the object of <http://dbpl.org#Thomas> <http://Schema.org#livesIn> but found", node)
 	}
 }
 
@@ -185,7 +185,7 @@ func TestDeleteHDTGraph(t *testing.T) {
 	graph := NewHDTGraph()
 	nbDatas := 1000
 	cpt := 0
-	subj := rdf.NewURI("dblp:foo")
+	subj := rdf.NewURI("http://dblp.org#foo")
 
 	// insert random triples in the graph
 	for i := 0; i < nbDatas; i++ {

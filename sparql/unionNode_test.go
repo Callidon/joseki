@@ -19,8 +19,8 @@ func TestExecuteUnionNode(t *testing.T) {
 	tripleB := rdf.NewTriple(rdf.NewVariable("v3"),
 		rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
 		rdf.NewURI("http://xmlns.com/foaf/0.1/Document"))
-	nodeA := newTripleNode(tripleA, graph, -1, -1)
-	nodeB := newTripleNode(tripleB, graph, -1, -1)
+	nodeA := newTripleNode(tripleA, graph, -1, 0)
+	nodeB := newTripleNode(tripleB, graph, -1, 0)
 	union := newUnionNode(nodeA, nodeB)
 	cpt := 0
 
@@ -59,8 +59,8 @@ func TestExecuteNoResultUnionNode(t *testing.T) {
 	tripleB := rdf.NewTriple(rdf.NewVariable("v1"),
 		rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
 		rdf.NewURI("https://schema.org/Book"))
-	nodeA := newTripleNode(tripleA, graph, -1, -1)
-	nodeB := newTripleNode(tripleB, graph, -1, -1)
+	nodeA := newTripleNode(tripleA, graph, -1, 0)
+	nodeB := newTripleNode(tripleB, graph, -1, 0)
 	union := newUnionNode(nodeA, nodeB)
 	cpt := 0
 
@@ -81,16 +81,16 @@ func TestBindingNamesUnionNode(t *testing.T) {
 	tripleB := rdf.NewTriple(rdf.NewVariable("v1"),
 		rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
 		rdf.NewURI("http://xmlns.com/foaf/0.1/Document"))
-	nodeA := newTripleNode(tripleA, graph, -1, -1)
-	nodeB := newTripleNode(tripleB, graph, -1, -1)
+	nodeA := newTripleNode(tripleA, graph, -1, 0)
+	nodeB := newTripleNode(tripleB, graph, -1, 0)
 	union := newUnionNode(nodeA, nodeB)
+
+	expected := []string{"v1", "v2"}
 	cpt := 0
 
-	datas := []string{"v1", "v2"}
-
 	for _, bindingName := range union.bindingNames() {
-		if datas[cpt] != bindingName {
-			t.Error("expected", datas[cpt], "but instead got", bindingName)
+		if expected[cpt] != bindingName {
+			t.Error("expected", expected[cpt], "but instead got", bindingName)
 		}
 		cpt++
 	}
