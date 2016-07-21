@@ -11,13 +11,15 @@ import (
 
 // selectNode represent a Select operation in a SPARQL query execution plan.
 type selectNode struct {
-	node  sparqlNode
-	names []string
+	node         sparqlNode
+	varNames     []string
+	bNames       []string
+	rebuildNames bool
 }
 
 // newSelectNode creates a new Select Node.
 func newSelectNode(node sparqlNode, bindings ...string) *selectNode {
-	return &selectNode{node, bindings}
+	return &selectNode{node, bindings, nil, true}
 }
 
 // applySelect apply a SELECT operation on a stream of groups of binding
@@ -26,7 +28,7 @@ func (n selectNode) applySelect(in <-chan rdf.BindingsGroup, out chan<- rdf.Bind
 	// request groups of bindings from the node below & filter them
 	for group := range in {
 		newGroup := rdf.NewBindingsGroup()
-		for _, bindingName := range n.names {
+		for _, bindingName := range n.varNames {
 			value, inGroup := group.Bindings[bindingName]
 			if inGroup {
 				newGroup.Bindings[bindingName] = value
@@ -39,7 +41,7 @@ func (n selectNode) applySelect(in <-chan rdf.BindingsGroup, out chan<- rdf.Bind
 // execute apply a SELECT operation to the bindings produced by
 // another node when applying the execute() operation to it.
 //
-// SELECT reference : https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#select
+// SPARQL 1.1 SELECT reference : https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#select
 func (n selectNode) execute() <-chan rdf.BindingsGroup {
 	out := make(chan rdf.BindingsGroup, bufferSize)
 	go n.applySelect(n.node.execute(), out)
@@ -49,7 +51,7 @@ func (n selectNode) execute() <-chan rdf.BindingsGroup {
 // executeWith apply a SELECT operation to the bindings produced by
 // another node when applying the executeWith() operation to it.
 //
-// SELECT reference : https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#select
+// SPARQL 1.1 SELECT reference : https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#select
 func (n selectNode) executeWith(bindings rdf.BindingsGroup) <-chan rdf.BindingsGroup {
 	out := make(chan rdf.BindingsGroup, bufferSize)
 	go n.applySelect(n.node.executeWith(bindings), out)
@@ -57,8 +59,14 @@ func (n selectNode) executeWith(bindings rdf.BindingsGroup) <-chan rdf.BindingsG
 }
 
 // bindingNames returns the names of the bindings produced by this operation.
+// Those names are stored in cache after the first call of this method, in
+// order to speed up later calls of the method.
 func (n selectNode) bindingNames() []string {
-	return n.node.bindingNames()
+	if n.rebuildNames {
+		n.bNames = n.node.bindingNames()
+		n.rebuildNames = false
+	}
+	return n.bNames
 }
 
 // Equals test if two Select nodes are equals.
@@ -72,5 +80,5 @@ func (n selectNode) Equals(other sparqlNode) bool {
 
 // String serialize the node in string format.
 func (n selectNode) String() string {
-	return "SELECT " + strings.Join(n.names, ",") + " (" + n.node.String() + ")"
+	return "SELECT " + strings.Join(n.varNames, ",") + " (" + n.node.String() + ")"
 }

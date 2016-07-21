@@ -13,11 +13,13 @@ import (
 // joinNode represent a Join Operator in a SPARQL query execution plan.
 type joinNode struct {
 	outerNode, innerNode sparqlNode
+	bNames               []string
+	rebuildNames         bool
 }
 
 // newJoinNode creates a new Join Node.
 func newJoinNode(outer, inner sparqlNode) *joinNode {
-	return &joinNode{outer, inner}
+	return &joinNode{outer, inner, nil, true}
 }
 
 // performJoin apply a join between a stream of groups of bindings from a node and another node.
@@ -76,15 +78,20 @@ func (n joinNode) executeWith(bindings rdf.BindingsGroup) <-chan rdf.BindingsGro
 }
 
 // bindingNames returns the names of the bindings produced by this operation.
+// Those names are stored in cache after the first call of this method, in
+// order to speed up later calls of the method.
 func (n joinNode) bindingNames() []string {
-	bindingNames := n.outerNode.bindingNames()
-	for _, name := range n.innerNode.bindingNames() {
-		if !containsString(bindingNames, name) {
-			bindingNames = append(bindingNames, name)
+	if n.rebuildNames {
+		n.bNames = n.outerNode.bindingNames()
+		for _, name := range n.innerNode.bindingNames() {
+			if !containsString(n.bNames, name) {
+				n.bNames = append(n.bNames, name)
+			}
 		}
+		sort.Strings(n.bNames)
+		n.rebuildNames = false
 	}
-	sort.Strings(bindingNames)
-	return bindingNames
+	return n.bNames
 }
 
 // Equals test if two Join nodes are equals.

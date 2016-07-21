@@ -16,11 +16,13 @@ type tripleNode struct {
 	pattern       rdf.Triple
 	graph         graph.Graph
 	limit, offset int
+	bNames        []string
+	rebuildNames  bool
 }
 
 // newTripleNode creates a new tripleNode.
 func newTripleNode(pattern rdf.Triple, graph graph.Graph, limit int, offset int) *tripleNode {
-	return &tripleNode{pattern, graph, limit, offset}
+	return &tripleNode{pattern, graph, limit, offset, nil, true}
 }
 
 // execute retrieves bindings from a graph that match a triple pattern.
@@ -103,23 +105,28 @@ func (n tripleNode) executeWith(group rdf.BindingsGroup) <-chan rdf.BindingsGrou
 }
 
 // bindingNames returns the names of the bindings produced.
+// Those names are stored in cache after the first call of this method, in
+// order to speed up later calls of the method.
 func (n tripleNode) bindingNames() []string {
-	bindingNames := make([]string, 0, 3)
-	// find free vars in triple pattern
-	subject, freeSubject := n.pattern.Subject.(rdf.Variable)
-	predicate, freePredicate := n.pattern.Predicate.(rdf.Variable)
-	object, freeObject := n.pattern.Object.(rdf.Variable)
-	if freeSubject {
-		bindingNames = append(bindingNames, subject.Value)
+	if n.rebuildNames {
+		n.bNames = make([]string, 0, 3)
+		// find free vars in triple pattern
+		subject, freeSubject := n.pattern.Subject.(rdf.Variable)
+		predicate, freePredicate := n.pattern.Predicate.(rdf.Variable)
+		object, freeObject := n.pattern.Object.(rdf.Variable)
+		if freeSubject {
+			n.bNames = append(n.bNames, subject.Value)
+		}
+		if freePredicate {
+			n.bNames = append(n.bNames, predicate.Value)
+		}
+		if freeObject {
+			n.bNames = append(n.bNames, object.Value)
+		}
+		sort.Strings(n.bNames)
+		n.rebuildNames = false
 	}
-	if freePredicate {
-		bindingNames = append(bindingNames, predicate.Value)
-	}
-	if freeObject {
-		bindingNames = append(bindingNames, object.Value)
-	}
-	sort.Strings(bindingNames)
-	return bindingNames
+	return n.bNames
 }
 
 // Equals test if two Triple nodes are equals.

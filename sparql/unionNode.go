@@ -13,71 +13,70 @@ import (
 // unionNode represent a Union Operator in a SPARQL query execution plan.
 type unionNode struct {
 	leftNode, rightNode sparqlNode
+	bNames              []string
+	rebuildNames        bool
 }
 
 // newUnionNode creates a new Union Node.
 func newUnionNode(left, right sparqlNode) *unionNode {
-	return &unionNode{left, right}
+	return &unionNode{left, right, nil, true}
 }
 
-// execute perform the Union between the two nodes of the Union Operator.
+// performUnion perform the Union between two streams of groups of bindings.
+func (n unionNode) performUnion(leftIn, rightIn <-chan rdf.BindingsGroup, out chan<- rdf.BindingsGroup) {
+	defer close(out)
+	var wg sync.WaitGroup
+
+	fetchBindings := func(input <-chan rdf.BindingsGroup, out chan<- rdf.BindingsGroup, wg *sync.WaitGroup) {
+		defer wg.Done()
+		for bindings := range input {
+			out <- bindings
+		}
+	}
+
+	// fetch the bindings from the left & the right nodes in parallel
+	wg.Add(2)
+	go fetchBindings(leftIn, out, &wg)
+	go fetchBindings(rightIn, out, &wg)
+	// wait for the completion of the previous operations before closing the channel
+	wg.Wait()
+}
+
+// execute perform the Union between the two nodes of the Union Operator
+// with the execute() operation apply to each of them.
+//
+// SPARQl 1.1 UNION reference : https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#alternatives
 func (n unionNode) execute() <-chan rdf.BindingsGroup {
-	var wg sync.WaitGroup
 	out := make(chan rdf.BindingsGroup, bufferSize)
-
-	fetchBindings := func(node sparqlNode, out chan rdf.BindingsGroup, wg *sync.WaitGroup) {
-		defer wg.Done()
-		for bindings := range node.execute() {
-			out <- bindings
-		}
-	}
-
-	// fetch the bindings from the left & the right nodes in parallel
-	wg.Add(2)
-	go fetchBindings(n.leftNode, out, &wg)
-	go fetchBindings(n.rightNode, out, &wg)
-	// wait for the completion of the previous operations before closing the channel
-	go func() {
-		wg.Wait()
-		close(out)
-	}()
+	go n.performUnion(n.leftNode.execute(), n.rightNode.execute(), out)
 	return out
 }
 
-// This operation has no particular meaning in the case of a unionNode, so it's equivalent to the execute method.
+//  execute perform the Union between the two nodes of the Union Operator
+// with the executeWith() operation apply to each of them.
+//
+// SPARQl 1.1 UNION reference : https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#alternatives
 func (n unionNode) executeWith(bindings rdf.BindingsGroup) <-chan rdf.BindingsGroup {
-	var wg sync.WaitGroup
 	out := make(chan rdf.BindingsGroup, bufferSize)
-
-	fetchBindings := func(node sparqlNode, out chan rdf.BindingsGroup, wg *sync.WaitGroup) {
-		defer wg.Done()
-		for bindings := range node.executeWith(bindings) {
-			out <- bindings
-		}
-	}
-
-	// fetch the bindings from the left & the right nodes in parallel
-	wg.Add(2)
-	go fetchBindings(n.leftNode, out, &wg)
-	go fetchBindings(n.rightNode, out, &wg)
-	// wait for the completion of the previous operations before closing the channel
-	go func() {
-		wg.Wait()
-		close(out)
-	}()
+	go n.performUnion(n.leftNode.executeWith(bindings), n.rightNode.executeWith(bindings), out)
 	return out
 }
 
-// bindingNames returns the names of the bindings produced by this operation
+// bindingNames returns the names of the bindings produced by this operation.
+// Those names are stored in cache after the first call of this method, in
+// order to speed up later calls of the method.
 func (n unionNode) bindingNames() []string {
-	bindingNames := n.leftNode.bindingNames()
-	for _, name := range n.rightNode.bindingNames() {
-		if !containsString(bindingNames, name) {
-			bindingNames = append(bindingNames, name)
+	if n.rebuildNames {
+		n.bNames = n.leftNode.bindingNames()
+		for _, name := range n.rightNode.bindingNames() {
+			if !containsString(n.bNames, name) {
+				n.bNames = append(n.bNames, name)
+			}
 		}
+		sort.Strings(n.bNames)
+		n.rebuildNames = false
 	}
-	sort.Strings(bindingNames)
-	return bindingNames
+	return n.bNames
 }
 
 // Equals test if two Union nodes are equals.
