@@ -45,8 +45,27 @@ func (n unionNode) execute() <-chan rdf.BindingsGroup {
 }
 
 // This operation has no particular meaning in the case of a unionNode, so it's equivalent to the execute method.
-func (n unionNode) executeWith(binding rdf.BindingsGroup) <-chan rdf.BindingsGroup {
-	return n.execute()
+func (n unionNode) executeWith(bindings rdf.BindingsGroup) <-chan rdf.BindingsGroup {
+	var wg sync.WaitGroup
+	out := make(chan rdf.BindingsGroup, bufferSize)
+
+	fetchBindings := func(node sparqlNode, out chan rdf.BindingsGroup, wg *sync.WaitGroup) {
+		defer wg.Done()
+		for bindings := range node.executeWith(bindings) {
+			out <- bindings
+		}
+	}
+
+	// fetch the bindings from the left & the right nodes in parallel
+	wg.Add(2)
+	go fetchBindings(n.leftNode, out, &wg)
+	go fetchBindings(n.rightNode, out, &wg)
+	// wait for the completion of the previous operations before closing the channel
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+	return out
 }
 
 // bindingNames returns the names of the bindings produced by this operation

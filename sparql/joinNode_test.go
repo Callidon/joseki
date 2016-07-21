@@ -22,7 +22,6 @@ func TestExecuteJoinNode(t *testing.T) {
 	nodeA := newTripleNode(tripleA, graph, -1, 0)
 	nodeB := newTripleNode(tripleB, graph, -1, 0)
 	join := newJoinNode(nodeA, nodeB)
-	cpt := 0
 
 	datas := []rdf.BindingsGroup{
 		rdf.NewBindingsGroup(),
@@ -32,6 +31,7 @@ func TestExecuteJoinNode(t *testing.T) {
 	datas[0].Bindings["v2"] = rdf.NewLangLiteral("N-Triples", "en")
 	datas[1].Bindings["v1"] = rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples")
 	datas[1].Bindings["v2"] = rdf.NewTypedLiteral("My Typed Literal", "<http://www.w3.org/2001/XMLSchema#string>")
+	cpt := 0
 
 	for bindings := range join.execute() {
 		testA, errA := bindings.Equals(datas[0])

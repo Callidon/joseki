@@ -22,7 +22,6 @@ func TestExecuteUnionNode(t *testing.T) {
 	nodeA := newTripleNode(tripleA, graph, -1, 0)
 	nodeB := newTripleNode(tripleB, graph, -1, 0)
 	union := newUnionNode(nodeA, nodeB)
-	cpt := 0
 
 	datas := []rdf.BindingsGroup{
 		rdf.NewBindingsGroup(),
@@ -34,6 +33,7 @@ func TestExecuteUnionNode(t *testing.T) {
 	datas[1].Bindings["v1"] = rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples")
 	datas[1].Bindings["v2"] = rdf.NewTypedLiteral("My Typed Literal", "<http://www.w3.org/2001/XMLSchema#string>")
 	datas[2].Bindings["v3"] = rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples")
+	cpt := 0
 
 	for bindings := range union.execute() {
 		testA, errA := bindings.Equals(datas[0])

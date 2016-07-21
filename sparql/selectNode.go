@@ -20,30 +20,40 @@ func newSelectNode(node sparqlNode, bindings ...string) *selectNode {
 	return &selectNode{node, bindings}
 }
 
-// execute apply a Select operation to the bindings produced by another node.
+// applySelect apply a SELECT operation on a stream of groups of binding
+func (n selectNode) applySelect(in <-chan rdf.BindingsGroup, out chan<- rdf.BindingsGroup) {
+	defer close(out)
+	// request groups of bindings from the node below & filter them
+	for group := range in {
+		newGroup := rdf.NewBindingsGroup()
+		for _, bindingName := range n.names {
+			value, inGroup := group.Bindings[bindingName]
+			if inGroup {
+				newGroup.Bindings[bindingName] = value
+			}
+		}
+		out <- newGroup
+	}
+}
+
+// execute apply a SELECT operation to the bindings produced by
+// another node when applying the execute() operation to it.
+//
+// SELECT reference : https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#select
 func (n selectNode) execute() <-chan rdf.BindingsGroup {
 	out := make(chan rdf.BindingsGroup, bufferSize)
-
-	go func() {
-		defer close(out)
-		// request groups of bindings from the node below & filter them
-		for group := range n.node.execute() {
-			newGroup := rdf.NewBindingsGroup()
-			for _, bindingName := range n.names {
-				value, inGroup := group.Bindings[bindingName]
-				if inGroup {
-					newGroup.Bindings[bindingName] = value
-				}
-			}
-			out <- newGroup
-		}
-	}()
+	go n.applySelect(n.node.execute(), out)
 	return out
 }
 
-// This operation has no particular meaning in the case of a selectNode, so it's equivalent to the execute method.
-func (n selectNode) executeWith(binding rdf.BindingsGroup) <-chan rdf.BindingsGroup {
-	return n.execute()
+// executeWith apply a SELECT operation to the bindings produced by
+// another node when applying the executeWith() operation to it.
+//
+// SELECT reference : https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#select
+func (n selectNode) executeWith(bindings rdf.BindingsGroup) <-chan rdf.BindingsGroup {
+	out := make(chan rdf.BindingsGroup, bufferSize)
+	go n.applySelect(n.node.executeWith(bindings), out)
+	return out
 }
 
 // bindingNames returns the names of the bindings produced by this operation.

@@ -18,7 +18,6 @@ func TestExecuteSelectNode(t *testing.T) {
 		rdf.NewVariable("v2"))
 	node := newTripleNode(triple, graph, -1, -1)
 	selectNode := newSelectNode(node, []string{"v1"}...)
-	cpt := 0
 
 	datas := []rdf.BindingsGroup{
 		rdf.NewBindingsGroup(),
@@ -26,6 +25,7 @@ func TestExecuteSelectNode(t *testing.T) {
 	}
 	datas[0].Bindings["v1"] = rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples")
 	datas[1].Bindings["v1"] = rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples")
+	cpt := 0
 
 	for bindings := range selectNode.execute() {
 		testA, errA := bindings.Equals(datas[0])
@@ -44,21 +44,23 @@ func TestExecuteSelectNode(t *testing.T) {
 func TestExecuteWithSelectNode(t *testing.T) {
 	var graph = graph.NewHDTGraph()
 	graph.LoadFromFile("../parser/datas/test.nt", "nt")
-	triple := rdf.NewTriple(rdf.NewVariable("v1"),
-		rdf.NewURI("http://purl.org/dc/terms/title"),
-		rdf.NewVariable("v2"))
+	triple := rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples"),
+		rdf.NewVariable("v2"),
+		rdf.NewVariable("v1"))
 	node := newTripleNode(triple, graph, -1, -1)
 	selectNode := newSelectNode(node, []string{"v1"}...)
-	cpt := 0
+	group := rdf.NewBindingsGroup()
+	group.Bindings["v2"] = rdf.NewURI("http://purl.org/dc/terms/title")
 
 	datas := []rdf.BindingsGroup{
 		rdf.NewBindingsGroup(),
 		rdf.NewBindingsGroup(),
 	}
-	datas[0].Bindings["v1"] = rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples")
-	datas[1].Bindings["v1"] = rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples")
+	datas[0].Bindings["v1"] = rdf.NewLangLiteral("N-Triples", "en")
+	datas[1].Bindings["v1"] = rdf.NewTypedLiteral("My Typed Literal", "<http://www.w3.org/2001/XMLSchema#string>")
+	cpt := 0
 
-	for bindings := range selectNode.executeWith(rdf.NewBindingsGroup()) {
+	for bindings := range selectNode.executeWith(group) {
 		testA, errA := bindings.Equals(datas[0])
 		testB, errB := bindings.Equals(datas[1])
 		if (!testA || (errA != nil)) && (!testB || (errB != nil)) {

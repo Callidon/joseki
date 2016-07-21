@@ -17,7 +17,6 @@ func TestExecuteBGPNode(t *testing.T) {
 		rdf.NewURI("http://purl.org/dc/terms/title"),
 		rdf.NewVariable("v1"))
 	node := newTripleNode(triple, graph, -1, 0)
-	cpt := 0
 
 	datas := []rdf.BindingsGroup{
 		rdf.NewBindingsGroup(),
@@ -25,6 +24,7 @@ func TestExecuteBGPNode(t *testing.T) {
 	}
 	datas[0].Bindings["v1"] = rdf.NewLangLiteral("N-Triples", "en")
 	datas[1].Bindings["v1"] = rdf.NewTypedLiteral("My Typed Literal", "<http://www.w3.org/2001/XMLSchema#string>")
+	cpt := 0
 
 	for bindings := range node.execute() {
 		testA, errA := bindings.Equals(datas[0])
@@ -67,7 +67,6 @@ func TestExecuteWithBGPNode(t *testing.T) {
 	node := newTripleNode(triple, graph, -1, 0)
 	group := rdf.NewBindingsGroup()
 	group.Bindings["v2"] = rdf.NewURI("http://purl.org/dc/terms/title")
-	cpt := 0
 
 	datas := []rdf.BindingsGroup{
 		rdf.NewBindingsGroup(),
@@ -77,6 +76,7 @@ func TestExecuteWithBGPNode(t *testing.T) {
 	datas[0].Bindings["v2"] = rdf.NewURI("http://purl.org/dc/terms/title")
 	datas[1].Bindings["v1"] = rdf.NewTypedLiteral("My Typed Literal", "<http://www.w3.org/2001/XMLSchema#string>")
 	datas[1].Bindings["v2"] = rdf.NewURI("http://purl.org/dc/terms/title")
+	cpt := 0
 
 	for bindings := range node.executeWith(group) {
 		testA, errA := bindings.Equals(datas[0])

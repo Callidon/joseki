@@ -20,13 +20,14 @@ func newJoinNode(outer, inner sparqlNode) *joinNode {
 	return &joinNode{outer, inner}
 }
 
-// execute perform the join between the two nodes of the Join Operator.
+// performJoin apply a join between a stream of groups of bindings from a node and another node.
 // It use a parallelized Nested Loop Join algorithm, as described by
 // ÖZSU, M. Tamer et VALDURIEZ, Patrick. In Principles of distributed database systems. Springer Science & Business Media, 2011
-func (n joinNode) execute() <-chan rdf.BindingsGroup {
+func (n joinNode) performJoin(in <-chan rdf.BindingsGroup, out chan<- rdf.BindingsGroup) {
+	defer close(out)
 	var wg sync.WaitGroup
 	page := make([]rdf.BindingsGroup, 0, pageSize)
-	out := make(chan rdf.BindingsGroup, bufferSize)
+	cpt := 0
 
 	// execute the inner loop with a page of bindings from the inner loop
 	executeInnerLoop := func(innerNode sparqlNode, page []rdf.BindingsGroup, out chan<- rdf.BindingsGroup, wg *sync.WaitGroup) {
@@ -38,36 +39,40 @@ func (n joinNode) execute() <-chan rdf.BindingsGroup {
 		wg.Done()
 	}
 
-	go func() {
-		defer close(out)
-		cpt := 0
-		// execute the outer loop, then the inner loop using each group of bindings previously retrieved
-		for outerBindings := range n.outerNode.execute() {
-			// accumule group of bindings to form pages, send them when they are completed
-			if cpt < pageSize {
-				page = append(page, outerBindings)
-			} else {
-				// execute the inner loop for the current page, then prepare the next one
-				wg.Add(1)
-				go executeInnerLoop(n.innerNode, page, out, &wg)
-				cpt = 0
-				page = make([]rdf.BindingsGroup, 0, pageSize)
-			}
-		}
-		// process the last page if it's not empty
-		if len(page) > 0 {
+	// execute the outer loop, then the inner loop using each group of bindings previously retrieved
+	for outerBindings := range in {
+		// accumule group of bindings to form pages, send them when they are completed
+		if cpt < pageSize {
+			page = append(page, outerBindings)
+		} else {
+			// execute the inner loop for the current page, then prepare the next one
 			wg.Add(1)
 			go executeInnerLoop(n.innerNode, page, out, &wg)
+			cpt = 0
+			page = make([]rdf.BindingsGroup, 0, pageSize)
 		}
-		// wait for all process to finish their jobs
-		wg.Wait()
-	}()
+	}
+	// process the last page if it's not empty
+	if len(page) > 0 {
+		wg.Add(1)
+		go executeInnerLoop(n.innerNode, page, out, &wg)
+	}
+	// wait for all process to finish their jobs
+	wg.Wait()
+}
+
+// execute perform the join between the two nodes of the Join Operator.
+func (n joinNode) execute() <-chan rdf.BindingsGroup {
+	out := make(chan rdf.BindingsGroup, bufferSize)
+	go n.performJoin(n.outerNode.execute(), out)
 	return out
 }
 
-// This operation has no particular meaning in the case of a joinNode, so it's equivalent to the execute method.
-func (n joinNode) executeWith(binding rdf.BindingsGroup) <-chan rdf.BindingsGroup {
-	return n.execute()
+// execute perform the join between the two nodes of the Join Operator using a group of bindings
+func (n joinNode) executeWith(bindings rdf.BindingsGroup) <-chan rdf.BindingsGroup {
+	out := make(chan rdf.BindingsGroup, bufferSize)
+	go n.performJoin(n.outerNode.executeWith(bindings), out)
+	return out
 }
 
 // bindingNames returns the names of the bindings produced by this operation.
