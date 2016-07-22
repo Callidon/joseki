@@ -6,6 +6,7 @@ notifications:
 before_script:
 - wget http://dsg.uwaterloo.ca/watdiv/watdiv.10M.tar.bz2 && tar jxvf watdiv.10M.tar.bz2
 - head -30000 watdiv.10M.nt > $HOME/gopath/src/github.com/Callidon/joseki/graph/watdiv.30k.nt
+- head -10000 watdiv.10M.nt > $HOME/gopath/src/github.com/Callidon/joseki/sparql/watdiv.10k.nt
 - go get github.com/mattn/goveralls
 - go get golang.org/x/tools/cmd/cover
 script:

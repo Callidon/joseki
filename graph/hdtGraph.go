@@ -72,60 +72,59 @@ func (g *HDTGraph) removeNodes(root, previous *bitmapNode, datas []*rdf.Node) {
 	}
 }
 
+// sendValue is an utilitary function to send a triple found during a queryNodes() operation in a graph.
+func sendValue(triple []int, out chan<- rdf.Triple, dict *bimap, limit, offset *atomicCounter) {
+	defer offset.Unlock()
+	offset.Lock()
+	// skip result and update offset if its threashold hasn't been reached
+	if offset.cpt < offset.threshold {
+		offset.cpt++
+	} else {
+		// when possible, create a new triple pattern & send it into the output pipeline
+		bitmapTriple := newBitmapTriple(triple[0], triple[1], triple[2])
+		triple, err := bitmapTriple.Triple(dict)
+		if err != nil {
+			panic(err)
+		}
+		out <- triple
+		limit.cpt++
+	}
+}
+
 // Recursively collect data from the graph in order to form triple pattern matching criterias.
 // The graph can be query with a Limit (the max number of rsults to send in the output channel)
 // and an Offset (the number of results to skip before sending them in the output channel).
 // These two parameters can be set to -1 to be ignored.
 func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int, out chan<- rdf.Triple, wg *sync.WaitGroup, limit, offset *atomicCounter) {
-	limit.Lock()
 	defer wg.Done()
 	defer limit.Unlock()
-	// utilitary function to update WaitGroup when skipping sons
-	updateSons := func(skipKey int, wg *sync.WaitGroup) {
-		for key, son := range root.sons {
-			if key != skipKey {
-				son.updateCounter(wg)
-			}
+	limit.Lock()
+	// utilitary function to update WaitGroup counter when skipping sons
+	skipSons := func(wg *sync.WaitGroup) {
+		for _, son := range root.sons {
+			son.updateCounter(wg)
 		}
 	}
 
 	// skip the node if the limit have a default value or has been reached
-	if (limit.threshold != -1) && (limit.cpt >= limit.threshold) {
-		updateSons(-1, wg)
-	} else if len(triple) >= 3 {
-		offset.Lock()
-		defer offset.Unlock()
-		// skip result and update offset if its threashold hasn't been reached
-		if offset.cpt < offset.threshold {
-			offset.cpt++
-		} else {
-			// when possible, create a new triple pattern & send it into the output pipeline
-			bitmapTriple := newBitmapTriple(triple[0], triple[1], triple[2])
-			triple, err := bitmapTriple.Triple(g.dictionnary)
-			if err != nil {
-				panic(err)
-			}
-			out <- triple
-			limit.cpt++
-		}
+	if limit.threshold != -1 && limit.cpt >= limit.threshold {
+		skipSons(wg)
 	} else {
 		node := (*datas[0])
-		switch node.(type) {
-		case rdf.Variable:
-			// search in every sons if the current node is a variable
-			for _, son := range root.sons {
-				go g.queryNodes(son, datas[1:], append(triple, son.id), out, wg, limit, offset)
-			}
-		default:
-			// search for a specific node
-			id, inDict := g.dictionnary.locate(node)
-			son, inSons := root.sons[id]
-			if inDict && inSons {
-				go g.queryNodes(son, datas[1:], append(triple, id), out, wg, limit, offset)
-				updateSons(id, wg)
+		_, isVar := node.(rdf.Variable)
+		id, inDict := g.dictionnary.locate(node)
+		// when the root is a variable or the value we need, save it & delegate the operation to its sons
+		if isVar || (inDict && root.id == id) {
+			if len(root.sons) == 0 {
+				sendValue(append(triple, root.id), out, g.dictionnary, limit, offset)
 			} else {
-				updateSons(-1, wg)
+				for _, son := range root.sons {
+					go g.queryNodes(son, datas[1:], append(triple, root.id), out, wg, limit, offset)
+				}
 			}
+		} else {
+			// the node doesn't match our query, so there's no need to visit its sons
+			skipSons(wg)
 		}
 	}
 }
@@ -170,8 +169,10 @@ func (g *HDTGraph) FilterSubset(subject rdf.Node, predicate rdf.Node, object rdf
 	limitCpt, offsetCpt := newAtomicCounter(0, limit), newAtomicCounter(0, offset)
 	// fetch data in the tree & wait for the operation to be complete before closing the pipeline
 	g.Lock()
-	wg.Add(g.root.length() + 1)
-	go g.queryNodes(g.root, []*rdf.Node{&subject, &predicate, &object}, make([]int, 0, 3), results, &wg, limitCpt, offsetCpt)
+	for _, son := range g.root.sons {
+		wg.Add(son.length() + 1)
+		go g.queryNodes(son, []*rdf.Node{&subject, &predicate, &object}, make([]int, 0, 3), results, &wg, limitCpt, offsetCpt)
+	}
 	// use a daemon to wait for the end of all related goroutines before closing the channel
 	go func() {
 		defer close(results)

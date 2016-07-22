@@ -10,13 +10,23 @@ import (
 	"testing"
 )
 
-func TestExecuteBGPNode(t *testing.T) {
-	var graph = graph.NewHDTGraph()
-	graph.LoadFromFile("../parser/datas/test.nt", "nt")
+var smallGraph = func() graph.Graph {
+	g := graph.NewHDTGraph()
+	g.LoadFromFile("../parser/datas/test.nt", "nt")
+	return g
+}()
+
+var bigGraph = func() graph.Graph {
+	g := graph.NewHDTGraph()
+	g.LoadFromFile("./watdiv.10k.nt", "nt")
+	return g
+}()
+
+func TestExecuteTripleNode(t *testing.T) {
 	triple := rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples"),
 		rdf.NewURI("http://purl.org/dc/terms/title"),
 		rdf.NewVariable("v1"))
-	node := newTripleNode(triple, graph, -1, 0)
+	node := newTripleNode(triple, smallGraph, -1, 0)
 
 	datas := []rdf.BindingsGroup{
 		rdf.NewBindingsGroup(),
@@ -40,13 +50,11 @@ func TestExecuteBGPNode(t *testing.T) {
 	}
 }
 
-func TestExecuteNoResultBGPNode(t *testing.T) {
-	var graph = graph.NewHDTGraph()
-	graph.LoadFromFile("../parser/datas/test.nt", "nt")
+func TestExecuteNoResultTripleNode(t *testing.T) {
 	triple := rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples"),
 		rdf.NewURI("http://example.org/funny-predicate"),
 		rdf.NewVariable("v1"))
-	node := newTripleNode(triple, graph, -1, 0)
+	node := newTripleNode(triple, smallGraph, -1, 0)
 	cpt := 0
 
 	for _ = range node.execute() {
@@ -58,13 +66,11 @@ func TestExecuteNoResultBGPNode(t *testing.T) {
 	}
 }
 
-func TestExecuteWithBGPNode(t *testing.T) {
-	var graph = graph.NewHDTGraph()
-	graph.LoadFromFile("../parser/datas/test.nt", "nt")
+func TestExecuteWithTripleNode(t *testing.T) {
 	triple := rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples"),
 		rdf.NewVariable("v2"),
 		rdf.NewVariable("v1"))
-	node := newTripleNode(triple, graph, -1, 0)
+	node := newTripleNode(triple, smallGraph, -1, 0)
 	group := rdf.NewBindingsGroup()
 	group.Bindings["v2"] = rdf.NewURI("http://purl.org/dc/terms/title")
 

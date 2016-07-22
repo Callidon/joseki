@@ -28,6 +28,7 @@ func newTripleNode(pattern rdf.Triple, graph graph.Graph, limit int, offset int)
 // execute retrieves bindings from a graph that match a triple pattern.
 func (n tripleNode) execute() <-chan rdf.BindingsGroup {
 	out := make(chan rdf.BindingsGroup, bufferSize)
+
 	// find free vars in triple pattern
 	subject, freeSubject := n.pattern.Subject.(rdf.Variable)
 	predicate, freePredicate := n.pattern.Predicate.(rdf.Variable)
@@ -55,39 +56,18 @@ func (n tripleNode) execute() <-chan rdf.BindingsGroup {
 
 // executeWith retrieves bindings from a graph that match a triple pattern, completed by a given binding.
 func (n tripleNode) executeWith(group rdf.BindingsGroup) <-chan rdf.BindingsGroup {
-	var querySubj, queryPred, queryObj rdf.Node
 	out := make(chan rdf.BindingsGroup, bufferSize)
-	// find free vars in triple pattern
-	subject, freeSubject := n.pattern.Subject.(rdf.Variable)
-	predicate, freePredicate := n.pattern.Predicate.(rdf.Variable)
-	object, freeObject := n.pattern.Object.(rdf.Variable)
 
-	// complete triple pattern using the group of bindings given in parameter
-	for bindingKey, bindingValue := range group.Bindings {
-		if freeSubject && subject.Value == bindingKey {
-			querySubj = bindingValue
-			freeSubject = false
-		} else {
-			querySubj = n.pattern.Subject
-		}
-		if freePredicate && predicate.Value == bindingKey {
-			queryPred = bindingValue
-			freePredicate = false
-		} else {
-			queryPred = n.pattern.Predicate
-		}
-		if freeObject && object.Value == bindingKey {
-			queryObj = bindingValue
-			freeObject = false
-		} else {
-			queryObj = n.pattern.Object
-		}
-	}
+	// complete the triple attern using a groupf of bindings, then find its free vars
+	newTriple := n.pattern.Complete(group)
+	subject, freeSubject := newTriple.Subject.(rdf.Variable)
+	predicate, freePredicate := newTriple.Predicate.(rdf.Variable)
+	object, freeObject := newTriple.Object.(rdf.Variable)
 
 	// retrieves triples & form bindings to send
 	go func() {
 		defer close(out)
-		for triple := range n.graph.FilterSubset(querySubj, queryPred, queryObj, n.limit, n.offset) {
+		for triple := range n.graph.FilterSubset(newTriple.Subject, newTriple.Predicate, newTriple.Object, n.limit, n.offset) {
 			newGroup := group.Clone()
 			if freeSubject {
 				newGroup.Bindings[subject.Value] = triple.Subject

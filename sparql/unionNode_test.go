@@ -11,16 +11,16 @@ import (
 )
 
 func TestExecuteUnionNode(t *testing.T) {
-	var graph = graph.NewHDTGraph()
-	graph.LoadFromFile("../parser/datas/test.nt", "nt")
+	g := graph.NewHDTGraph()
+	g.LoadFromFile("../parser/datas/test.nt", "nt")
 	tripleA := rdf.NewTriple(rdf.NewVariable("v1"),
 		rdf.NewURI("http://purl.org/dc/terms/title"),
 		rdf.NewVariable("v2"))
 	tripleB := rdf.NewTriple(rdf.NewVariable("v3"),
 		rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
 		rdf.NewURI("http://xmlns.com/foaf/0.1/Document"))
-	nodeA := newTripleNode(tripleA, graph, -1, 0)
-	nodeB := newTripleNode(tripleB, graph, -1, 0)
+	nodeA := newTripleNode(tripleA, g, -1, 0)
+	nodeB := newTripleNode(tripleB, g, -1, 0)
 	union := newUnionNode(nodeA, nodeB)
 
 	datas := []rdf.BindingsGroup{
@@ -51,16 +51,16 @@ func TestExecuteUnionNode(t *testing.T) {
 }
 
 func TestExecuteNoResultUnionNode(t *testing.T) {
-	var graph = graph.NewHDTGraph()
-	graph.LoadFromFile("../parser/datas/test.nt", "nt")
+	g := graph.NewHDTGraph()
+	g.LoadFromFile("../parser/datas/test.nt", "nt")
 	tripleA := rdf.NewTriple(rdf.NewVariable("v1"),
 		rdf.NewURI("http://example.org/funny-predicate"),
 		rdf.NewVariable("v2"))
 	tripleB := rdf.NewTriple(rdf.NewVariable("v1"),
 		rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
 		rdf.NewURI("https://schema.org/Book"))
-	nodeA := newTripleNode(tripleA, graph, -1, 0)
-	nodeB := newTripleNode(tripleB, graph, -1, 0)
+	nodeA := newTripleNode(tripleA, g, -1, 0)
+	nodeB := newTripleNode(tripleB, g, -1, 0)
 	union := newUnionNode(nodeA, nodeB)
 	cpt := 0
 
@@ -74,15 +74,15 @@ func TestExecuteNoResultUnionNode(t *testing.T) {
 }
 
 func TestBindingNamesUnionNode(t *testing.T) {
-	var graph = graph.NewHDTGraph()
+	g := graph.NewHDTGraph()
 	tripleA := rdf.NewTriple(rdf.NewVariable("v1"),
 		rdf.NewURI("http://purl.org/dc/terms/title"),
 		rdf.NewVariable("v2"))
 	tripleB := rdf.NewTriple(rdf.NewVariable("v1"),
 		rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
 		rdf.NewURI("http://xmlns.com/foaf/0.1/Document"))
-	nodeA := newTripleNode(tripleA, graph, -1, 0)
-	nodeB := newTripleNode(tripleB, graph, -1, 0)
+	nodeA := newTripleNode(tripleA, g, -1, 0)
+	nodeB := newTripleNode(tripleB, g, -1, 0)
 	union := newUnionNode(nodeA, nodeB)
 
 	expected := []string{"v1", "v2"}
@@ -95,5 +95,3 @@ func TestBindingNamesUnionNode(t *testing.T) {
 		cpt++
 	}
 }
-
-// No need to test unionNode.executeWith(), since it's equivalent to a call to unionNode.execute()

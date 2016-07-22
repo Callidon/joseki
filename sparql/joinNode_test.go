@@ -5,22 +5,19 @@
 package sparql
 
 import (
-	"github.com/Callidon/joseki/graph"
 	"github.com/Callidon/joseki/rdf"
 	"testing"
 )
 
-func TestExecuteJoinNode(t *testing.T) {
-	var graph = graph.NewHDTGraph()
-	graph.LoadFromFile("../parser/datas/test.nt", "nt")
+func TestSimpleExecuteJoinNode(t *testing.T) {
 	tripleA := rdf.NewTriple(rdf.NewVariable("v1"),
 		rdf.NewURI("http://purl.org/dc/terms/title"),
 		rdf.NewVariable("v2"))
 	tripleB := rdf.NewTriple(rdf.NewVariable("v1"),
 		rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
 		rdf.NewURI("http://xmlns.com/foaf/0.1/Document"))
-	nodeA := newTripleNode(tripleA, graph, -1, 0)
-	nodeB := newTripleNode(tripleB, graph, -1, 0)
+	nodeA := newTripleNode(tripleA, smallGraph, -1, 0)
+	nodeB := newTripleNode(tripleB, smallGraph, -1, 0)
 	join := newJoinNode(nodeA, nodeB)
 
 	datas := []rdf.BindingsGroup{
@@ -47,17 +44,48 @@ func TestExecuteJoinNode(t *testing.T) {
 	}
 }
 
+func TestComplexExecuteJoinNode(t *testing.T) {
+	tripleA := rdf.NewTriple(rdf.NewVariable("v1"),
+		rdf.NewURI("http://purl.org/goodrelations/price"),
+		rdf.NewVariable("v2"))
+	tripleB := rdf.NewTriple(rdf.NewVariable("v1"),
+		rdf.NewURI("http://schema.org/eligibleQuantity"),
+		rdf.NewVariable("v3"))
+	nodeA := newTripleNode(tripleA, bigGraph, -1, 0)
+	nodeB := newTripleNode(tripleB, bigGraph, -1, 0)
+	join := newJoinNode(nodeA, nodeB)
+
+	expected := 1378
+	cpt := 0
+	for _ = range join.execute() {
+		cpt++
+	}
+
+	if cpt != expected {
+		t.Error("expected", expected, "results but instead got", cpt)
+	}
+
+	// test if the join operation is commutative
+	join = newJoinNode(nodeB, nodeA)
+	cpt = 0
+	for _ = range join.execute() {
+		cpt++
+	}
+
+	if cpt != expected {
+		t.Error("join operation should be commutative : expected", expected, "results but instead got", cpt)
+	}
+}
+
 func TestExecuteNoResultJoinNode(t *testing.T) {
-	var graph = graph.NewHDTGraph()
-	graph.LoadFromFile("../parser/datas/test.nt", "nt")
 	tripleA := rdf.NewTriple(rdf.NewVariable("v1"),
 		rdf.NewURI("http://example.org/funny-predicate"),
 		rdf.NewVariable("v2"))
 	tripleB := rdf.NewTriple(rdf.NewVariable("v1"),
 		rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
 		rdf.NewURI("http://xmlns.com/foaf/0.1/Document"))
-	nodeA := newTripleNode(tripleA, graph, -1, 0)
-	nodeB := newTripleNode(tripleB, graph, -1, 0)
+	nodeA := newTripleNode(tripleA, smallGraph, -1, 0)
+	nodeB := newTripleNode(tripleB, smallGraph, -1, 0)
 	join := newJoinNode(nodeA, nodeB)
 	cpt := 0
 
@@ -71,15 +99,14 @@ func TestExecuteNoResultJoinNode(t *testing.T) {
 }
 
 func TestBindingNamesJoinNode(t *testing.T) {
-	var graph = graph.NewHDTGraph()
 	tripleA := rdf.NewTriple(rdf.NewVariable("v1"),
 		rdf.NewURI("http://purl.org/dc/terms/title"),
 		rdf.NewVariable("v2"))
 	tripleB := rdf.NewTriple(rdf.NewVariable("v1"),
 		rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
 		rdf.NewURI("http://xmlns.com/foaf/0.1/Document"))
-	nodeA := newTripleNode(tripleA, graph, -1, 0)
-	nodeB := newTripleNode(tripleB, graph, -1, 0)
+	nodeA := newTripleNode(tripleA, smallGraph, -1, 0)
+	nodeB := newTripleNode(tripleB, smallGraph, -1, 0)
 	join := newJoinNode(nodeA, nodeB)
 
 	expected := []string{"v1", "v2"}
@@ -92,5 +119,3 @@ func TestBindingNamesJoinNode(t *testing.T) {
 		cpt++
 	}
 }
-
-// No need to test joinNode.executeWith(), since it's equivalent to a call to joinNode.execute()

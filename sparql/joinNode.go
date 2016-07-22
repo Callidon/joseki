@@ -44,16 +44,17 @@ func (n joinNode) performJoin(in <-chan rdf.BindingsGroup, out chan<- rdf.Bindin
 	// execute the outer loop, then the inner loop using each group of bindings previously retrieved
 	for outerBindings := range in {
 		// accumule group of bindings to form pages, send them when they are completed
-		if cpt < pageSize {
-			page = append(page, outerBindings)
-		} else {
+		if cpt >= pageSize {
 			// execute the inner loop for the current page, then prepare the next one
 			wg.Add(1)
 			go executeInnerLoop(n.innerNode, page, out, &wg)
 			cpt = 0
 			page = make([]rdf.BindingsGroup, 0, pageSize)
 		}
+		page = append(page, outerBindings)
+		cpt++
 	}
+
 	// process the last page if it's not empty
 	if len(page) > 0 {
 		wg.Add(1)

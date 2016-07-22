@@ -38,7 +38,7 @@ func (t Triple) Equals(other Triple) (bool, error) {
 // Complete use a group of bindings to complete the variable in the triple pattern
 // and then return a new completed Triple pattern
 func (t Triple) Complete(group BindingsGroup) Triple {
-	var newSubj, newPred, newObj Node
+	newSubj, newPred, newObj := t.Subject, t.Predicate, t.Object
 	// find the nodes of the triple wich can be completed
 	subject, freeSubject := t.Subject.(Variable)
 	predicate, freePredicate := t.Predicate.(Variable)

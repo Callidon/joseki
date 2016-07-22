@@ -93,44 +93,39 @@ func TestFilterListGraph(t *testing.T) {
 }
 
 func TestFilterSubsetListGraph(t *testing.T) {
+	skipTest("./watdiv.30k.nt", t)
 	graph := NewListGraph()
-	nbDatas, limit, offset := 1000, 600, 800
+	graph.LoadFromFile("./watdiv.30k.nt", "nt")
+	nbDatas, limit, offset := 30000, 600, 800
 	cpt := 0
-	subj := rdf.NewURI("http://dblp.org#foo")
-
-	// insert random triples in the graph
-	for i := 0; i < nbDatas; i++ {
-		triple := rdf.NewTriple(subj, rdf.NewURI(string(rand.Intn(nbDatas))), rdf.NewLiteral(string(rand.Intn(nbDatas))))
-		graph.Add(triple)
-	}
 
 	// test a FilterSubset with a simple Limit
-	for _ = range graph.FilterSubset(subj, rdf.NewVariable("v"), rdf.NewVariable("w"), limit, -1) {
+	for _ = range graph.FilterSubset(rdf.NewVariable("x"), rdf.NewVariable("v"), rdf.NewVariable("w"), limit, -1) {
 		cpt++
 	}
 
 	if cpt != limit {
-		t.Log("simple limit")
 		t.Error("expected ", limit, "results but instead found ", cpt, "results")
 	}
 
 	// test a FilterSubset with a simple offset
 	cpt = 0
-	for _ = range graph.FilterSubset(subj, rdf.NewVariable("v"), rdf.NewVariable("w"), -1, offset) {
+	for _ = range graph.FilterSubset(rdf.NewVariable("x"), rdf.NewVariable("v"), rdf.NewVariable("w"), -1, offset) {
 		cpt++
 	}
+
 	if cpt != nbDatas-offset {
-		t.Log("simple offset")
 		t.Error("expected ", nbDatas-offset, "results but instead found ", cpt, "results")
 	}
 
 	// test with a offset than doesn't allow enough results to reach the limit
 	cpt = 0
-	for _ = range graph.FilterSubset(subj, rdf.NewVariable("v"), rdf.NewVariable("w"), limit, offset) {
+	offset = nbDatas - 10
+	for _ = range graph.FilterSubset(rdf.NewVariable("x"), rdf.NewVariable("v"), rdf.NewVariable("w"), limit, offset) {
 		cpt++
 	}
+
 	if cpt != nbDatas-offset {
-		t.Log("offset > limit")
 		t.Error("expected ", nbDatas-offset, "results but instead found ", cpt, "results")
 	}
 }

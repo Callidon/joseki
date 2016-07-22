@@ -25,24 +25,49 @@ func TestTripleEquals(t *testing.T) {
 
 // Test the Equals operator for Triple struct
 func TestTripleComplete(t *testing.T) {
-	var completeData Triple
+	var completed Triple
 	datas := []Triple{
 		NewTriple(NewVariable("x"), NewURI("example.org#pred"), NewLiteral("22")),
 		NewTriple(NewVariable("x"), NewVariable("y"), NewLiteral("22")),
 		NewTriple(NewVariable("x"), NewVariable("y"), NewVariable("z")),
 		NewTriple(NewURI("example.org#subj"), NewVariable("y"), NewLiteral("22")),
 		NewTriple(NewURI("example.org#subj"), NewVariable("y"), NewVariable("z")),
+		NewTriple(NewVariable("w"), NewURI("example.org#pred"), NewLiteral("22")),
+		NewTriple(NewVariable("x"), NewVariable("w"), NewLiteral("22")),
+		NewTriple(NewVariable("x"), NewVariable("y"), NewVariable("w")),
+		NewTriple(NewURI("example.org#subj"), NewURI("example.org#pred"), NewLiteral("22")),
 	}
-	expected := NewTriple(NewURI("example.org#subj"), NewURI("example.org#pred"), NewLiteral("22"))
+	expected := []Triple{
+		NewTriple(NewURI("example.org#subj"), NewURI("example.org#pred"), NewLiteral("22")),
+		NewTriple(NewURI("example.org#subj"), NewURI("example.org#pred"), NewLiteral("22")),
+		NewTriple(NewURI("example.org#subj"), NewURI("example.org#pred"), NewLiteral("22")),
+		NewTriple(NewURI("example.org#subj"), NewURI("example.org#pred"), NewLiteral("22")),
+		NewTriple(NewURI("example.org#subj"), NewURI("example.org#pred"), NewLiteral("22")),
+		NewTriple(NewVariable("w"), NewURI("example.org#pred"), NewLiteral("22")),
+		NewTriple(NewURI("example.org#subj"), NewVariable("w"), NewLiteral("22")),
+		NewTriple(NewURI("example.org#subj"), NewURI("example.org#pred"), NewVariable("w")),
+		NewTriple(NewURI("example.org#subj"), NewURI("example.org#pred"), NewLiteral("22")),
+	}
+	cpt := 0
+
 	group := NewBindingsGroup()
 	group.Bindings["x"] = NewURI("example.org#subj")
 	group.Bindings["y"] = NewURI("example.org#pred")
 	group.Bindings["z"] = NewLiteral("22")
 
 	for _, data := range datas {
-		completeData = data.Complete(group)
-		if test, err := expected.Equals(completeData); !test || err != nil {
-			t.Error(completeData, "should be equal to", expected)
+		completed = data.Complete(group)
+		switch {
+		case completed.Subject == nil:
+			t.Error("complete", data, "with", group, "shouldn't produce result with nil subject")
+		case completed.Predicate == nil:
+			t.Error("complete", data, "with", group, "shouldn't produce result with nil predicate")
+		case completed.Object == nil:
+			t.Error("complete", data, "with", group, "shouldn't produce result with nil object")
 		}
+		if test, err := expected[cpt].Equals(completed); !test || err != nil {
+			t.Error(completed, "should be equal to", expected[cpt])
+		}
+		cpt++
 	}
 }

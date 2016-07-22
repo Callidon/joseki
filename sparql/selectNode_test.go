@@ -11,12 +11,12 @@ import (
 )
 
 func TestExecuteSelectNode(t *testing.T) {
-	var graph = graph.NewHDTGraph()
-	graph.LoadFromFile("../parser/datas/test.nt", "nt")
+	g := graph.NewHDTGraph()
+	g.LoadFromFile("../parser/datas/test.nt", "nt")
 	triple := rdf.NewTriple(rdf.NewVariable("v1"),
 		rdf.NewURI("http://purl.org/dc/terms/title"),
 		rdf.NewVariable("v2"))
-	node := newTripleNode(triple, graph, -1, -1)
+	node := newTripleNode(triple, g, -1, -1)
 	selectNode := newSelectNode(node, []string{"v1"}...)
 
 	datas := []rdf.BindingsGroup{
@@ -42,12 +42,12 @@ func TestExecuteSelectNode(t *testing.T) {
 }
 
 func TestExecuteWithSelectNode(t *testing.T) {
-	var graph = graph.NewHDTGraph()
-	graph.LoadFromFile("../parser/datas/test.nt", "nt")
+	g := graph.NewHDTGraph()
+	g.LoadFromFile("../parser/datas/test.nt", "nt")
 	triple := rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples"),
 		rdf.NewVariable("v2"),
 		rdf.NewVariable("v1"))
-	node := newTripleNode(triple, graph, -1, -1)
+	node := newTripleNode(triple, g, -1, -1)
 	selectNode := newSelectNode(node, []string{"v1"}...)
 	group := rdf.NewBindingsGroup()
 	group.Bindings["v2"] = rdf.NewURI("http://purl.org/dc/terms/title")
