@@ -62,12 +62,12 @@
 //  graph := graph.NewHDTGraph()
 //  // Datas stored in a file can be easily loaded into a graph
 //  graph.LoadFromFile("datas/awesome-books.ttl", "turtle")
-//  // Let's fetch the authors of all the books in our graph !
+//  // Let's fetch the titles of all the books in our graph !
 //  subject := rdf.NewVariable("title")
 //  predicate := rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
 //  object := rdf.NewURI("https://schema.org/Book")
-//  for triple := range graph.Filter(subject, predicate, object) {
-//      fmt.Println(triple)
+//  for bindings := range graph.Filter(subject, predicate, object) {
+//      fmt.Println(bindings)
 //  }
 //
 // For more informations about specific features, see the documentation of each subpackage.

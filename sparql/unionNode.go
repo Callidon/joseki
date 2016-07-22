@@ -90,5 +90,5 @@ func (n unionNode) Equals(other sparqlNode) bool {
 
 // String serialize the node in string format.
 func (n unionNode) String() string {
-	return "Union (" + n.leftNode.String() + ", " + n.rightNode.String() + ")"
+	return "UNION (" + n.leftNode.String() + ", " + n.rightNode.String() + ")"
 }

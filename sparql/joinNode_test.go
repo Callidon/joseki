@@ -40,7 +40,7 @@ func TestSimpleExecuteJoinNode(t *testing.T) {
 	}
 
 	if cpt != len(datas) {
-		t.Error(cpt, "bindings found instead of", len(datas))
+		t.Error("expected", len(datas), "bindings but instead found", cpt, "bindings")
 	}
 }
 
@@ -62,7 +62,7 @@ func TestComplexExecuteJoinNode(t *testing.T) {
 	}
 
 	if cpt != expected {
-		t.Error("expected", expected, "results but instead got", cpt)
+		t.Error("expected", expected, "bindings but instead got", cpt, "bindings")
 	}
 
 	// test if the join operation is commutative
@@ -73,7 +73,44 @@ func TestComplexExecuteJoinNode(t *testing.T) {
 	}
 
 	if cpt != expected {
-		t.Error("join operation should be commutative : expected", expected, "results but instead got", cpt)
+		t.Error("join operation should be commutative : expected", expected, "bindings but instead got", cpt, "bindings")
+	}
+}
+
+func TestComplexExecuteWithJoinNode(t *testing.T) {
+	tripleA := rdf.NewTriple(rdf.NewVariable("v1"),
+		rdf.NewURI("http://purl.org/goodrelations/price"),
+		rdf.NewVariable("v2"))
+	tripleB := rdf.NewTriple(rdf.NewVariable("v1"),
+		rdf.NewURI("http://schema.org/eligibleQuantity"),
+		rdf.NewVariable("v3"))
+	nodeA := newTripleNode(tripleA, bigGraph, -1, 0)
+	nodeB := newTripleNode(tripleB, bigGraph, -1, 0)
+	join := newJoinNode(nodeA, nodeB)
+
+	group := rdf.NewBindingsGroup()
+	group.Bindings["v1"] = rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/Offer10071")
+
+	expected := 1
+	cpt := 0
+	for _ = range join.executeWith(group) {
+		cpt++
+	}
+
+	if cpt != expected {
+		t.Error("expected", expected, "bindings but instead got", cpt, "bindings")
+	}
+
+	// test if the join operation isn't commutative where there is no join
+	join = newJoinNode(nodeB, nodeA)
+	expected = 1378
+	cpt = 0
+	for _ = range join.execute() {
+		cpt++
+	}
+
+	if cpt != expected {
+		t.Error("expected", expected, "bindings but instead got", cpt, "bindings")
 	}
 }
 
@@ -94,7 +131,7 @@ func TestExecuteNoResultJoinNode(t *testing.T) {
 	}
 
 	if cpt > 0 {
-		t.Error("should not found any bindings, but instead found", cpt, "bindings")
+		t.Error("shouldn't find any bindings, but instead got", cpt, "bindings")
 	}
 }
 
@@ -117,5 +154,45 @@ func TestBindingNamesJoinNode(t *testing.T) {
 			t.Error("expected", expected[cpt], "but instead got", bindingName)
 		}
 		cpt++
+	}
+}
+
+func TestEqualsJoinNode(t *testing.T) {
+	tripleA := rdf.NewTriple(rdf.NewVariable("v1"),
+		rdf.NewURI("http://purl.org/dc/terms/title"),
+		rdf.NewVariable("v2"))
+	tripleB := rdf.NewTriple(rdf.NewVariable("v1"),
+		rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+		rdf.NewURI("http://xmlns.com/foaf/0.1/Document"))
+	nodeA := newTripleNode(tripleA, nil, -1, 0)
+	nodeB := newTripleNode(tripleB, nil, -1, 0)
+	join := newJoinNode(nodeA, nodeB)
+	otherJoin := newJoinNode(nodeB, nodeA)
+
+	if !join.Equals(join) {
+		t.Error(join, "should be equal to itself")
+	}
+	if join.Equals(otherJoin) {
+		t.Error(join, "shouldn't be equals to", otherJoin)
+	}
+	if join.Equals(nodeA) {
+		t.Error(join, "shouldn't be equals to", nodeA)
+	}
+}
+
+func TestStringJoinNode(t *testing.T) {
+	tripleA := rdf.NewTriple(rdf.NewVariable("v1"),
+		rdf.NewURI("http://purl.org/dc/terms/title"),
+		rdf.NewVariable("v2"))
+	tripleB := rdf.NewTriple(rdf.NewVariable("v1"),
+		rdf.NewURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+		rdf.NewURI("http://xmlns.com/foaf/0.1/Document"))
+	nodeA := newTripleNode(tripleA, nil, -1, 0)
+	nodeB := newTripleNode(tripleB, nil, -1, 0)
+	join := newJoinNode(nodeA, nodeB)
+	expected := "JOIN (" + nodeA.String() + ", " + nodeB.String() + ")"
+
+	if join.String() != expected {
+		t.Error(join.String(), "should be equals to", expected)
 	}
 }
