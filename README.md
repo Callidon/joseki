@@ -1,4 +1,4 @@
-# joseki [![license](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=2592000)]() [![GoDoc](https://godoc.org/github.com/Callidon/joseki/rdf?status.svg)](https://godoc.org/github.com/Callidon/joseki/) [![Build Status](https://travis-ci.org/Callidon/joseki.svg?branch=master)](https://travis-ci.org/Callidon/joseki) [![Coverage Status](https://coveralls.io/repos/github/Callidon/joseki/badge.svg?branch=master&dummy=false)](https://coveralls.io/github/Callidon/joseki?branch=master)
+# joseki [![license](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=2592000)]() [![GoDoc](https://godoc.org/github.com/Callidon/joseki/rdf?status.svg)](https://godoc.org/github.com/Callidon/joseki/) [![Build Status](https://travis-ci.org/Callidon/joseki.svg?branch=master)](https://travis-ci.org/Callidon/joseki) [![Coverage Status](https://coveralls.io/repos/github/Callidon/joseki/badge.svg?branch=master&dummy=0)](https://coveralls.io/github/Callidon/joseki?branch=master)
 
 Joseki is a pure Go library for working with RDF, a powerful framework for representing informations as graphs.
 
