@@ -24,7 +24,7 @@ func newTokenEnd(line, row int) *tokenEnd {
 // Interpret evaluate the token & produce an action.
 // In the case of a tokenEnd, it form a new triple using the nodes in the stack
 func (t tokenEnd) Interpret(nodeStack *stack, prefixes *map[string]string, out chan rdf.Triple) error {
-	if nodeStack.Len() > 3 {
+	if nodeStack.Len() != 3 {
 		return errors.New("encountered a malformed triple pattern at " + t.position())
 	}
 	object, objIsNode := nodeStack.Pop().(rdf.Node)
@@ -53,7 +53,7 @@ func newTokenSep(value string, line int, row int) *tokenSep {
 func (t tokenSep) Interpret(nodeStack *stack, prefixes *map[string]string, out chan rdf.Triple) error {
 	// case of a object separator
 	if t.value == "[" {
-		if nodeStack.Len() > 2 {
+		if nodeStack.Len() != 2 {
 			return errors.New("encountered a malformed triple pattern at " + t.position())
 		}
 		predicate, predIsNode := nodeStack.Pop().(rdf.Node)
@@ -65,7 +65,7 @@ func (t tokenSep) Interpret(nodeStack *stack, prefixes *map[string]string, out c
 		out <- rdf.NewTriple(subject, predicate, object)
 		nodeStack.Push(object)
 	} else {
-		if nodeStack.Len() > 3 {
+		if nodeStack.Len() != 3 {
 			return errors.New("encountered a malformed triple pattern at " + t.position())
 		}
 		object, objIsNode := nodeStack.Pop().(rdf.Node)
