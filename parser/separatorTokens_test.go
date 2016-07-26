@@ -129,13 +129,12 @@ func TestInterpretErrorsTokenSep(t *testing.T) {
 
 	// test with the separator "[" and not enough nodes in the stack
 	token.value = "["
-	stack.Push(rdf.NewURI("http://example.org/subject"))
-
 	if err := token.Interpret(stack, nil, out); err == nil {
 		t.Error("interpretation of a TokenSep with the separator '[' & not enough tokens in the stack should produce an error")
 	}
 
 	// test with the separator "[" and not enough nodes in the stack
+	stack.Pop()
 	stack.Push("incorrect node")
 	if err := token.Interpret(stack, nil, out); err == nil {
 		t.Error("interpretation of a TokenSep with the separator '[' & an incorrect element in the stack should produce an error")

@@ -58,6 +58,9 @@ func newTokenType(value string, line int, row int) *tokenType {
 // Interpret evaluate the token & produce an action.
 // In the case of a tokenType, it push a typed Literal on top of the stack
 func (t tokenType) Interpret(nodeStack *stack, prefixes *map[string]string, out chan rdf.Triple) error {
+	if nodeStack.Len() < 1 {
+		return errors.New("encountered a malformed literal at " + t.position())
+	}
 	literal, isLiteral := nodeStack.Pop().(rdf.Literal)
 	if !isLiteral {
 		return errors.New("A XML type can only be associated with a RDF Literal, at " + t.position())
@@ -81,6 +84,9 @@ func newTokenLang(value string, line int, row int) *tokenLang {
 // Interpret evaluate the token & produce an action.
 // In the case of a tokenLang, it push a Literal with its associated language on top of the stack
 func (t tokenLang) Interpret(nodeStack *stack, prefixes *map[string]string, out chan rdf.Triple) error {
+	if nodeStack.Len() < 1 {
+		return errors.New("encountered a malformed literal at " + t.position())
+	}
 	literal, isLiteral := nodeStack.Pop().(rdf.Literal)
 	if !isLiteral {
 		return errors.New("A localization information can only be associated with a RDF Literal, at " + t.position())

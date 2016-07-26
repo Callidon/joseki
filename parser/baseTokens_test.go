@@ -69,6 +69,10 @@ func TestInterpretErrorsTokenType(t *testing.T) {
 	stack := newStack()
 
 	// Test for incorrect interpretation of the token
+	if err := token.Interpret(stack, nil, nil); err == nil {
+		t.Error("interpretation of a tokenType when they aren't anough nodes in the stack should produce an error")
+	}
+
 	stack.Push(rdf.NewURI("http://example.org/subject"))
 	if err := token.Interpret(stack, nil, nil); err == nil {
 		t.Error("interpretation of a tokenType when the top of the stack is a non-Literal node should produce an error")
@@ -83,11 +87,11 @@ func TestInterpretTokenLang(t *testing.T) {
 	// Test for correct interpretation of the token
 	stack.Push(rdf.NewLiteral("Harry Potter"))
 	if err := token.Interpret(stack, nil, nil); err != nil {
-		t.Error("interpretation of a correct tokenType shouldn't produce the error :", err)
+		t.Error("interpretation of a correct tokenLang shouldn't produce the error :", err)
 	}
 	node, _ := stack.Pop().(rdf.Node)
 	if test, err := expectedNode.Equals(node); !test || err != nil {
-		t.Error(expectedNode, "produced by tokenType.Interpret should be equals to", node)
+		t.Error(expectedNode, "produced by tokenLang.Interpret should be equals to", node)
 	}
 	if stack.Len()+1 != 1 {
 		t.Error("after an interpretation of the token, the stack's size should be exactly equals to 1'")
@@ -99,6 +103,10 @@ func TestInterpretErrorsTokenLang(t *testing.T) {
 	stack := newStack()
 
 	// Test for incorrect interpretation of the token
+	if err := token.Interpret(stack, nil, nil); err == nil {
+		t.Error("interpretation of a tokenLang when they aren't anough nodes in the stack should produce an error")
+	}
+
 	stack.Push(rdf.NewURI("http://example.org/subject"))
 	if err := token.Interpret(stack, nil, nil); err == nil {
 		t.Error("interpretation of a tokenLang when the top of the stack is a non-Literal node should produce an error")
