@@ -81,7 +81,9 @@ func TestIllegalTokenTurtleParser(t *testing.T) {
 	cpt := 0
 
 	for _, input := range inputs {
-		token := <-scanTurtle(strings.NewReader(input))
+		out := make(chan rdfToken, bufferSize)
+		scanTurtle(strings.NewReader(input), out, newLineCutter(wordRegexp))
+		token := <-out
 		tokenErr := token.Interpret(nil, nil, nil).Error()
 		if tokenErr != expectedMsg[cpt] {
 			t.Error("expected illegal token", expectedMsg[cpt], "but instead got", tokenErr)

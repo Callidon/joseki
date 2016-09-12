@@ -13,6 +13,8 @@ import (
 const (
 	// Max size for the buffer of this package
 	bufferSize = 100
+	// Regexp used to isolate triples and their elements
+	wordRegexp = "'.*?'|\".*?\"|\\S+"
 )
 
 // Parser represent a generic interface for parsing every RDF format.
@@ -23,16 +25,26 @@ type Parser interface {
 	Prefixes() map[string]string
 }
 
+// lineCutter wraps up the regexp used isolate triples and their elements in the RDF standard
+// It's main purpose is to ensure that the regexp is compiled only once, since it's a high cost operation.
+type lineCutter struct {
+	*regexp.Regexp
+}
+
+// newLineCutter creates a new lineCutter
+func newLineCutter(reg string) *lineCutter {
+	return &lineCutter{regexp.MustCompile(reg)}
+}
+
+// extractSegments parse a string and split the segments into a slice.
+// A segment is a string quoted or separated from the other by whitespaces.
+func (l lineCutter) extractSegments(line string) []string {
+	return l.FindAllString(line, -1)
+}
+
 // Utility function for checking errors
 func check(err error) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-// extractSegments parse a string and split the segments into a slice.
-// A segment is a string quoted or separated from the other by whitespaces.
-func extractSegments(line string) []string {
-	r := regexp.MustCompile("'.*?'|\".*?\"|\\S+")
-	return r.FindAllString(line, -1)
 }

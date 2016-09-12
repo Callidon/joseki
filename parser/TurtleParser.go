@@ -17,13 +17,13 @@ import (
 // Turtle reference : https://www.w3.org/TR/turtle/
 type TurtleParser struct {
 	prefixes map[string]string
+	cutter   *lineCutter
 }
 
 // scanTurtle read a file in Turtle format, identify and extract token with their values.
 //
 // The results are sent through a channel, which is closed when the scan of the file has been completed.
-func scanTurtle(reader io.Reader) chan rdfToken {
-	out := make(chan rdfToken, bufferSize)
+func scanTurtle(reader io.Reader, out chan<- rdfToken, l *lineCutter) {
 	// walk through the file using a goroutine
 	go func() {
 		defer close(out)
@@ -33,7 +33,7 @@ func scanTurtle(reader io.Reader) chan rdfToken {
 		scanner := bufio.NewScanner(reader)
 		lineNumber := 1
 		for scanner.Scan() {
-			line := extractSegments(scanner.Text())
+			line := l.extractSegments(scanner.Text())
 			rowNumber := 1
 			// skip blank lines & comments
 			if (len(line) == 0) || (line[0] == "#") {
@@ -98,12 +98,11 @@ func scanTurtle(reader io.Reader) chan rdfToken {
 			lineNumber++
 		}
 	}()
-	return out
 }
 
 // NewTurtleParser creates a new TurtleParser
 func NewTurtleParser() *TurtleParser {
-	return &TurtleParser{make(map[string]string)}
+	return &TurtleParser{make(map[string]string), newLineCutter(wordRegexp)}
 }
 
 // Prefixes returns the prefixes read by the parser during the last parsing.
@@ -115,6 +114,7 @@ func (p TurtleParser) Prefixes() map[string]string {
 //
 // Triples generated are send throught a channel, which is closed when the parsing of the file has been completed.
 func (p *TurtleParser) Read(filename string) chan rdf.Triple {
+	tokenPipe := make(chan rdfToken, bufferSize)
 	out := make(chan rdf.Triple, bufferSize)
 	stack := newStack()
 
@@ -124,8 +124,9 @@ func (p *TurtleParser) Read(filename string) chan rdf.Triple {
 		f, err := os.Open(filename)
 		check(err)
 		defer f.Close()
-
-		for token := range scanTurtle(bufio.NewReader(f)) {
+		// launch the scan, then interpret each token produced
+		go scanTurtle(bufio.NewReader(f), tokenPipe, p.cutter)
+		for token := range tokenPipe {
 			err = token.Interpret(stack, &p.prefixes, out)
 			check(err)
 		}

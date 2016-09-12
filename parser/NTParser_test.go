@@ -46,7 +46,10 @@ func TestReadNTParser(t *testing.T) {
 func TestIllegalTokenNTParser(t *testing.T) {
 	input := "illegal_token"
 	expectedMsg := "Unexpected token when scanning 'illegal_token' at line : 1 row : 1"
-	token := <-scanNtriples(strings.NewReader(input))
+	out := make(chan rdfToken, bufferSize)
+	scanNtriples(strings.NewReader(input), out, newLineCutter(wordRegexp))
+
+	token := <-out
 	tokenErr := token.Interpret(nil, nil, nil).Error()
 	if tokenErr != expectedMsg {
 		t.Error("expected illegal token", expectedMsg, "but instead got", tokenErr)
