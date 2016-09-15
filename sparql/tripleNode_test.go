@@ -11,13 +11,13 @@ import (
 )
 
 var smallGraph = func() graph.Graph {
-	g := graph.NewHDTGraph()
+	g := graph.NewTreeGraph()
 	g.LoadFromFile("../parser/datas/test.nt", "nt")
 	return g
 }()
 
 var bigGraph = func() graph.Graph {
-	g := graph.NewHDTGraph()
+	g := graph.NewTreeGraph()
 	g.LoadFromFile("./watdiv.10k.nt", "nt")
 	return g
 }()

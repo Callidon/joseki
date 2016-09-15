@@ -18,9 +18,9 @@ func skipTest(file string, t *testing.T) {
 	}
 }
 
-func TestAddHDTGraph(t *testing.T) {
+func TestAddTreeGraph(t *testing.T) {
 	var node rdf.Node
-	graph := NewHDTGraph()
+	graph := NewTreeGraph()
 
 	subj := rdf.NewURI("http://dbpl.org#Thomas")
 	predA := rdf.NewURI("http://foaf.com/age")
@@ -69,9 +69,9 @@ func TestAddHDTGraph(t *testing.T) {
 	}
 }
 
-func TestFilterHDTGraph(t *testing.T) {
+func TestFilterTreeGraph(t *testing.T) {
 	skipTest("./watdiv.30k.nt", t)
-	graph := NewHDTGraph()
+	graph := NewTreeGraph()
 	graph.LoadFromFile("./watdiv.30k.nt", "nt")
 	subj := rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/Offer10001")
 	pred := rdf.NewURI("http://schema.org/eligibleRegion")
@@ -138,9 +138,9 @@ func TestFilterHDTGraph(t *testing.T) {
 	}
 }
 
-func TestFilterSubsetHDTGraph(t *testing.T) {
+func TestFilterSubsetTreeGraph(t *testing.T) {
 	skipTest("./watdiv.30k.nt", t)
-	graph := NewHDTGraph()
+	graph := NewTreeGraph()
 	graph.LoadFromFile("./watdiv.30k.nt", "nt")
 	nbDatas, limit, offset := 30000, 600, 800
 	cpt := 0
@@ -176,9 +176,9 @@ func TestFilterSubsetHDTGraph(t *testing.T) {
 	}
 }
 
-func TestDeleteHDTGraph(t *testing.T) {
+func TestDeleteTreeGraph(t *testing.T) {
 	var triple rdf.Triple
-	graph := NewHDTGraph()
+	graph := NewTreeGraph()
 	nbDatas := 1000
 	cpt := 0
 	subj := rdf.NewURI("http://dblp.org#foo")
@@ -223,8 +223,8 @@ func TestDeleteHDTGraph(t *testing.T) {
 	}
 }
 
-func TestLoadFromFileHDTGraph(t *testing.T) {
-	graph := NewHDTGraph()
+func TestLoadFromFileTreeGraph(t *testing.T) {
+	graph := NewTreeGraph()
 	cpt := 0
 	graph.LoadFromFile("../parser/datas/test.nt", "nt")
 
@@ -240,9 +240,9 @@ func TestLoadFromFileHDTGraph(t *testing.T) {
 
 // Benchmarking
 
-func BenchmarkAddHDTGraph(b *testing.B) {
+func BenchmarkAddTreeGraph(b *testing.B) {
 	b.Skip("skipped because it's currently not accurate")
-	graph := NewHDTGraph()
+	graph := NewTreeGraph()
 	graph.LoadFromFile("./watdiv.30k.nt", "nt")
 	triple := rdf.NewTriple(rdf.NewURI("http://example.org/subject"), rdf.NewURI("http://example.org/predicate"), rdf.NewURI("http://example.org/object"))
 	b.ResetTimer()
@@ -251,15 +251,15 @@ func BenchmarkAddHDTGraph(b *testing.B) {
 	}
 }
 
-func BenchmarkLoadFromFileHDTGraph(b *testing.B) {
+func BenchmarkLoadFromFileTreeGraph(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		graph := NewHDTGraph()
+		graph := NewTreeGraph()
 		graph.LoadFromFile("./watdiv.30k.nt", "nt")
 	}
 }
 
-func BenchmarkAllFilterHDTGraph(b *testing.B) {
-	graph := NewHDTGraph()
+func BenchmarkAllFilterTreeGraph(b *testing.B) {
+	graph := NewTreeGraph()
 	graph.LoadFromFile("./watdiv.30k.nt", "nt")
 	cpt := 0
 	b.ResetTimer()
@@ -272,8 +272,8 @@ func BenchmarkAllFilterHDTGraph(b *testing.B) {
 	}
 }
 
-func BenchmarkSpecificFilterHDTGraph(b *testing.B) {
-	graph := NewHDTGraph()
+func BenchmarkSpecificFilterTreeGraph(b *testing.B) {
+	graph := NewTreeGraph()
 	graph.LoadFromFile("./watdiv.30k.nt", "nt")
 	subj := rdf.NewURI("http://db.uwaterloo.ca/~galuc/wsdbm/Offer10001")
 	pred := rdf.NewURI("http://schema.org/eligibleRegion")
@@ -289,8 +289,8 @@ func BenchmarkSpecificFilterHDTGraph(b *testing.B) {
 	}
 }
 
-func BenchmarkAllFilterSubsetHDTGraph(b *testing.B) {
-	graph := NewHDTGraph()
+func BenchmarkAllFilterSubsetTreeGraph(b *testing.B) {
+	graph := NewTreeGraph()
 	graph.LoadFromFile("./watdiv.30k.nt", "nt")
 	limit, offset := 600, 200
 	cpt := 0

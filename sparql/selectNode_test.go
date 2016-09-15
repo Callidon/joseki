@@ -11,7 +11,7 @@ import (
 )
 
 func TestExecuteSelectNode(t *testing.T) {
-	g := graph.NewHDTGraph()
+	g := graph.NewTreeGraph()
 	g.LoadFromFile("../parser/datas/test.nt", "nt")
 	triple := rdf.NewTriple(rdf.NewVariable("v1"),
 		rdf.NewURI("http://purl.org/dc/terms/title"),
@@ -42,7 +42,7 @@ func TestExecuteSelectNode(t *testing.T) {
 }
 
 func TestExecuteWithSelectNode(t *testing.T) {
-	g := graph.NewHDTGraph()
+	g := graph.NewTreeGraph()
 	g.LoadFromFile("../parser/datas/test.nt", "nt")
 	triple := rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples"),
 		rdf.NewVariable("v2"),

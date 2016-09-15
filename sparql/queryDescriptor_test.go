@@ -87,7 +87,7 @@ func TestBuildQueryDescriptor(t *testing.T) {
 }
 
 func TestLimitQueryDescriptor(t *testing.T) {
-	graph := graph.NewHDTGraph()
+	graph := graph.NewTreeGraph()
 	graph.LoadFromFile("../parser/datas/test.nt", "nt")
 	triple := rdf.NewTriple(rdf.NewURI("http://www.w3.org/2001/sw/RDFCore/ntriples"), rdf.NewVariable("v"), rdf.NewVariable("w"))
 	cpt := 0

@@ -12,7 +12,7 @@ import "github.com/Callidon/joseki/rdf"
 // SPARQL SELECT query reference : https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#select
 //
 // The following example shows how to build a simple SELECT query :
-//  graph := graph.NewHDTGraph().LoadFromFile("datas.nt", "nt")
+//  graph := graph.NewTreeGraph().LoadFromFile("datas.nt", "nt")
 //  triples := []rdf.Triple {
 //    // let's initialize some triples here ...
 //  }
@@ -47,7 +47,7 @@ func (q SelectQuery) Execute() <-chan rdf.BindingsGroup {
 // SPARQL ASK query reference : https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#ask
 //
 // The following example shows how to build a simple ASK query :
-//  graph := graph.NewHDTGraph().LoadFromFile("datas.nt", "nt")
+//  graph := graph.NewTreeGraph().LoadFromFile("datas.nt", "nt")
 //  triples := []rdf.Triple {
 //    // let's initialize some triples here ...
 //  }
@@ -84,7 +84,7 @@ func (q AskQuery) Execute() bool {
 // SPARQL CONSTRUCT query reference : https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#construct
 //
 // The following example shows how to build a simple ASK query :
-//  graph := graph.NewHDTGraph().LoadFromFile("datas.nt", "nt")
+//  graph := graph.NewTreeGraph().LoadFromFile("datas.nt", "nt")
 //	triple := rdf.NewTriple(rdf.NEWURI("http://example.org/person#Alice"), rdf.NewVariable("x"), rdf.NewLiteral("22"))
 //  bgp := []rdf.Triple {
 //    // let's initialize some triples here ...

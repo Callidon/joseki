@@ -21,10 +21,10 @@ func newAtomicCounter(cpt, limit int) *atomicCounter {
 	return &atomicCounter{cpt, limit, &sync.Mutex{}}
 }
 
-// HDTGraph is a implementation of a RDF Graph based on the HDT-MR model proposed by Giménez-García et al.
+// TreeGraph is a implementation of a RDF Graph based on the HDT-MR model proposed by Giménez-García et al.
 //
 // For more details, see http://dataweb.infor.uva.es/projects/hdt-mr/
-type HDTGraph struct {
+type TreeGraph struct {
 	dictionnary *bimap
 	root        *bitmapNode
 	nextID      int
@@ -33,16 +33,16 @@ type HDTGraph struct {
 	*rdfReader
 }
 
-// NewHDTGraph creates a new empty HDT Graph.
-func NewHDTGraph() *HDTGraph {
+// NewTreeGraph creates a new empty Tree Graph.
+func NewTreeGraph() *TreeGraph {
 	reader := newRDFReader()
-	g := &HDTGraph{newBimap(), newBitmapNode(-1), 0, make(map[string][]rdf.Triple), &sync.Mutex{}, reader}
+	g := &TreeGraph{newBimap(), newBitmapNode(-1), 0, make(map[string][]rdf.Triple), &sync.Mutex{}, reader}
 	reader.graph = g
 	return g
 }
 
 // Register a new Node in the graph dictionnary, then return its unique ID.
-func (g *HDTGraph) registerNode(node rdf.Node) int {
+func (g *TreeGraph) registerNode(node rdf.Node) int {
 	// insert the node in dictionnary only if it's not in
 	key, inDict := g.dictionnary.locate(node)
 	if !inDict {
@@ -54,7 +54,7 @@ func (g *HDTGraph) registerNode(node rdf.Node) int {
 }
 
 // Recursively remove nodes that match criteria
-func (g *HDTGraph) removeNodes(root, previous *bitmapNode, datas []*rdf.Node) {
+func (g *TreeGraph) removeNodes(root, previous *bitmapNode, datas []*rdf.Node) {
 	if root != nil {
 		node := (*datas[0])
 		_, isVar := node.(rdf.Variable)
@@ -95,7 +95,7 @@ func sendValue(triple []int, out chan<- rdf.Triple, dict *bimap, limit, offset *
 // The graph can be query with a Limit (the max number of rsults to send in the output channel)
 // and an Offset (the number of results to skip before sending them in the output channel).
 // These two parameters can be set to -1 to be ignored.
-func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int, out chan<- rdf.Triple, wg *sync.WaitGroup, limit, offset *atomicCounter) {
+func (g *TreeGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int, out chan<- rdf.Triple, wg *sync.WaitGroup, limit, offset *atomicCounter) {
 	defer wg.Done()
 	defer limit.Unlock()
 	limit.Lock()
@@ -130,7 +130,7 @@ func (g *HDTGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int,
 }
 
 // Add a new Triple pattern to the graph.
-func (g *HDTGraph) Add(triple rdf.Triple) {
+func (g *TreeGraph) Add(triple rdf.Triple) {
 	defer g.Unlock()
 	// add each node of the triple to the dictionnary & then update the graph
 	subjID, predID, objID := g.registerNode(triple.Subject), g.registerNode(triple.Predicate), g.registerNode(triple.Object)
@@ -152,7 +152,7 @@ func (g *HDTGraph) Add(triple rdf.Triple) {
 }
 
 // Delete triples from the graph that match a BGP given in parameters.
-func (g *HDTGraph) Delete(subject, predicate, object rdf.Node) {
+func (g *TreeGraph) Delete(subject, predicate, object rdf.Node) {
 	g.Lock()
 	defer g.Unlock()
 	for _, son := range g.root.sons {
@@ -163,7 +163,7 @@ func (g *HDTGraph) Delete(subject, predicate, object rdf.Node) {
 // FilterSubset fetch triples form the graph that match a BGP given in parameters.
 // It impose a Limit(the max number of results to be send in the output channel)
 // and an Offset (the number of results to skip before sending them in the output channel) to the nodes requested.
-func (g *HDTGraph) FilterSubset(subject rdf.Node, predicate rdf.Node, object rdf.Node, limit int, offset int) <-chan rdf.Triple {
+func (g *TreeGraph) FilterSubset(subject rdf.Node, predicate rdf.Node, object rdf.Node, limit int, offset int) <-chan rdf.Triple {
 	var wg sync.WaitGroup
 	results := make(chan rdf.Triple, bufferSize)
 	limitCpt, offsetCpt := newAtomicCounter(0, limit), newAtomicCounter(0, offset)
@@ -183,6 +183,6 @@ func (g *HDTGraph) FilterSubset(subject rdf.Node, predicate rdf.Node, object rdf
 }
 
 // Filter fetch triples form the graph that match a BGP given in parameters.
-func (g *HDTGraph) Filter(subject, predicate, object rdf.Node) <-chan rdf.Triple {
+func (g *TreeGraph) Filter(subject, predicate, object rdf.Node) <-chan rdf.Triple {
 	return g.FilterSubset(subject, predicate, object, -1, 0)
 }

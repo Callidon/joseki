@@ -40,7 +40,7 @@
 //  // Output : {<http://example.org/book/book1> <http://purl.org/dc/terms/title> "Harry Potter and the Order of the Phoenix"}
 //
 // You can also store your RDF Triples in a RDF Graph, using various type of graphs.
-// Here, we use a HDT Graph to store our triple :
+// Here, we use a Tree Graph to store our triple :
 //
 //  import (
 //      "github.com/Callidon/joseki/rdf"
@@ -49,7 +49,7 @@
 //  subject := rdf.NewURI("http://example.org/book/book1")
 //  predicate := rdf.NewURI("http://purl.org/dc/terms/title")
 //  object := rdf.NewLiteral("Harry Potter and the Order of the Phoenix")
-//  graph := graph.NewHDTGraph()
+//  graph := graph.NewTreeGraph()
 //  graph.Add(rdf.NewTriple(subject, predicate, object))
 //
 // You can also query any triple from a RDF Graph, using a low level API or a SPARQL query.
@@ -59,7 +59,7 @@
 //      "github.com/Callidon/joseki/graph"
 //      "fmt"
 //  )
-//  graph := graph.NewHDTGraph()
+//  graph := graph.NewTreeGraph()
 //  // Datas stored in a file can be easily loaded into a graph
 //  graph.LoadFromFile("datas/awesome-books.ttl", "turtle")
 //  // Let's fetch the titles of all the books in our graph !
