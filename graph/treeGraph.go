@@ -9,18 +9,6 @@ import (
 	"sync"
 )
 
-// atomicCounter respresent a synchronized counter
-type atomicCounter struct {
-	cpt       int
-	threshold int
-	*sync.Mutex
-}
-
-// newAtomicCounter creates a new Atomic Counter
-func newAtomicCounter(cpt, limit int) *atomicCounter {
-	return &atomicCounter{cpt, limit, &sync.Mutex{}}
-}
-
 // TreeGraph is a implementation of a RDF Graph based on the HDT-MR model proposed by Giménez-García et al.
 //
 // For more details, see http://dataweb.infor.uva.es/projects/hdt-mr/
@@ -29,14 +17,14 @@ type TreeGraph struct {
 	root        *bitmapNode
 	nextID      int
 	triples     map[string][]rdf.Triple
-	*sync.Mutex
+	*sync.RWMutex
 	*rdfReader
 }
 
 // NewTreeGraph creates a new empty Tree Graph.
 func NewTreeGraph() *TreeGraph {
 	reader := newRDFReader()
-	g := &TreeGraph{newBimap(), newBitmapNode(-1), 0, make(map[string][]rdf.Triple), &sync.Mutex{}, reader}
+	g := &TreeGraph{newBimap(), newBitmapNode(-1), 0, make(map[string][]rdf.Triple), &sync.RWMutex{}, reader}
 	reader.graph = g
 	return g
 }
@@ -72,22 +60,20 @@ func (g *TreeGraph) removeNodes(root, previous *bitmapNode, datas []*rdf.Node) {
 	}
 }
 
-// sendValue is an utilitary function to send a triple found during a queryNodes() operation in a graph.
-func sendValue(triple []int, out chan<- rdf.Triple, dict *bimap, limit, offset *atomicCounter) {
-	defer offset.Unlock()
-	offset.Lock()
-	// skip result and update offset if its threashold hasn't been reached
-	if offset.cpt < offset.threshold {
-		offset.cpt++
-	} else {
-		// when possible, create a new triple pattern & send it into the output pipeline
-		bitmapTriple := newBitmapTriple(triple[0], triple[1], triple[2])
-		triple, err := bitmapTriple.Triple(dict)
-		if err != nil {
-			panic(err)
+// sendTriples sends triples collected by another process, and respect the limit & offset of a query
+func sendTriple(input <-chan bitmapTriple, out chan<- rdf.Triple, dict *bimap, limit, offset int) {
+	defer close(out)
+	cpt := 0
+	for bTriple := range input {
+		// send the triple if the offset threshold has been reached but not the limit threashold
+		if cpt >= offset && (cpt-offset <= limit || limit == -1) {
+			triple, err := bTriple.Triple(dict)
+			if err != nil {
+				panic(err)
+			}
+			out <- triple
 		}
-		out <- triple
-		limit.cpt++
+		cpt++
 	}
 }
 
@@ -95,10 +81,8 @@ func sendValue(triple []int, out chan<- rdf.Triple, dict *bimap, limit, offset *
 // The graph can be query with a Limit (the max number of rsults to send in the output channel)
 // and an Offset (the number of results to skip before sending them in the output channel).
 // These two parameters can be set to -1 to be ignored.
-func (g *TreeGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int, out chan<- rdf.Triple, wg *sync.WaitGroup, limit, offset *atomicCounter) {
+func (g *TreeGraph) findNodes(root *bitmapNode, datas []*rdf.Node, triple []int, out chan<- bitmapTriple, wg *sync.WaitGroup) {
 	defer wg.Done()
-	defer limit.Unlock()
-	limit.Lock()
 	// utilitary function to update WaitGroup counter when skipping sons
 	skipSons := func(wg *sync.WaitGroup) {
 		for _, son := range root.sons {
@@ -107,25 +91,22 @@ func (g *TreeGraph) queryNodes(root *bitmapNode, datas []*rdf.Node, triple []int
 	}
 
 	// skip the node if the limit have a default value or has been reached
-	if limit.threshold != -1 && limit.cpt >= limit.threshold {
-		skipSons(wg)
-	} else {
-		node := (*datas[0])
-		_, isVar := node.(rdf.Variable)
-		id, inDict := g.dictionnary.locate(node)
-		// when the root is a variable or the value we need, save it & delegate the operation to its sons
-		if isVar || (inDict && root.id == id) {
-			if len(root.sons) == 0 {
-				sendValue(append(triple, root.id), out, g.dictionnary, limit, offset)
-			} else {
-				for _, son := range root.sons {
-					go g.queryNodes(son, datas[1:], append(triple, root.id), out, wg, limit, offset)
-				}
-			}
+	node := (*datas[0])
+	_, isVar := node.(rdf.Variable)
+	id, inDict := g.dictionnary.locate(node)
+	// when the root is a variable or the value we need, save it & delegate the operation to its sons
+	if isVar || (inDict && root.id == id) {
+		if len(root.sons) == 0 {
+			out <- newBitmapTriple(triple[0], triple[1], root.id)
+			//sendValue(append(triple, root.id), out, g.dictionnary, limit, offset)
 		} else {
-			// the node doesn't match our query, so there's no need to visit its sons
-			skipSons(wg)
+			for _, son := range root.sons {
+				go g.findNodes(son, datas[1:], append(triple, root.id), out, wg)
+			}
 		}
+	} else {
+		// the node doesn't match our query, so there's no need to visit its sons
+		skipSons(wg)
 	}
 }
 
@@ -165,18 +146,20 @@ func (g *TreeGraph) Delete(subject, predicate, object rdf.Node) {
 // and an Offset (the number of results to skip before sending them in the output channel) to the nodes requested.
 func (g *TreeGraph) FilterSubset(subject rdf.Node, predicate rdf.Node, object rdf.Node, limit int, offset int) <-chan rdf.Triple {
 	var wg sync.WaitGroup
+	bitmapResults := make(chan bitmapTriple, bufferSize)
 	results := make(chan rdf.Triple, bufferSize)
-	limitCpt, offsetCpt := newAtomicCounter(0, limit), newAtomicCounter(0, offset)
+
 	// fetch data in the tree & wait for the operation to be complete before closing the pipeline
-	g.Lock()
+	g.RLock()
+	go sendTriple(bitmapResults, results, g.dictionnary, limit, offset)
 	for _, son := range g.root.sons {
 		wg.Add(son.length() + 1)
-		go g.queryNodes(son, []*rdf.Node{&subject, &predicate, &object}, make([]int, 0, 3), results, &wg, limitCpt, offsetCpt)
+		go g.findNodes(son, []*rdf.Node{&subject, &predicate, &object}, make([]int, 0, 3), bitmapResults, &wg)
 	}
 	// use a daemon to wait for the end of all related goroutines before closing the channel
 	go func() {
-		defer close(results)
-		defer g.Unlock()
+		defer close(bitmapResults)
+		defer g.RUnlock()
 		wg.Wait()
 	}()
 	return results

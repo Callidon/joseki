@@ -14,14 +14,14 @@ type ListGraph struct {
 	dictionnary *bimap
 	triples     []bitmapTriple
 	nextID      int
-	*sync.Mutex
+	*sync.RWMutex
 	*rdfReader
 }
 
 // NewListGraph creates a new List Graph.
 func NewListGraph() *ListGraph {
 	reader := newRDFReader()
-	g := &ListGraph{newBimap(), make([]bitmapTriple, 0), 0, &sync.Mutex{}, reader}
+	g := &ListGraph{newBimap(), make([]bitmapTriple, 0), 0, &sync.RWMutex{}, reader}
 	reader.graph = g
 	return g
 }
@@ -86,8 +86,8 @@ func (g *ListGraph) FilterSubset(subject rdf.Node, predicate rdf.Node, object rd
 	results := make(chan rdf.Triple, bufferSize)
 	// search for matching triple pattern in graph
 	go func() {
-		g.Lock()
-		defer g.Unlock()
+		g.RLock()
+		defer g.RUnlock()
 		defer close(results)
 		subjID, subjKnown := g.identifyNode(subject)
 		predID, predKnown := g.identifyNode(predicate)
@@ -99,7 +99,7 @@ func (g *ListGraph) FilterSubset(subject rdf.Node, predicate rdf.Node, object rd
 			for _, triple := range g.triples {
 				if test := refTriple.Equals(triple); test {
 					// send the result only if the offset has been reached
-					if (offset == -1) || (cpt >= offset) {
+					if cpt >= offset {
 						value, err := triple.Triple(g.dictionnary)
 						check(err)
 						results <- value
