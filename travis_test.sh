@@ -1,5 +1,5 @@
 #!/bin/bash
-PACKAGES="graph parser rdf sparql"
+PACKAGES="graph parser rdf"
 for pkg in $PACKAGES; do
   go test -coverprofile=$pkg.cover.out -coverpkg=./... ./$pkg
 done
