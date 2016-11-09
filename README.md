@@ -9,10 +9,9 @@ Joseki provides the following features to work with RDF :
 * Structures to represent and manipulate the RDF model (URIs, Literals, Blank Nodes, Triples, etc)
 * RDF Graphs to store data, with several implentations provided.
 * A Low level API to query data stored in graphs.
-* A High level API to query data using the [SPARQL 1.1 query language](https://www.w3.org/TR/sparql11-overview/). (WIP)
+* A High level API to query data using the [SPARQL 1.1 query language](https://www.w3.org/TR/sparql11-overview/). (WIP - Unstable)
 * Query processing using modern techniques such as join ordering or optimized query execution plans.
 * Load RDF data stored in files in various formats (N-Triples, Turtle, etc) into any graph.
-* Serialize a RDF Graph into various formats. (WIP)
 
 ## Getting Started
 This package aims to work with RDF graphs, which are composed of RDF Triple {Subject Object Predicate}.
